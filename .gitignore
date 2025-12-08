@@ -1,0 +1,8 @@
+.aider
+.DS_Store
+.envrc
+_build
+.expert
+.elixir_ls
+config/runtime.exs
+.vscode.cursor
