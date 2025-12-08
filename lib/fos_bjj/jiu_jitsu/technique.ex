@@ -51,6 +51,16 @@ defmodule FosBjj.JiuJitsu.Technique do
       public? true
     end
 
+    # Many-to-many to Grip through join table
+    many_to_many :grips, FosBjj.JiuJitsu.Grip do
+      through FosBjj.JiuJitsu.TechniqueGrip
+      source_attribute :id
+      source_attribute_on_join_resource :technique_id
+      destination_attribute :name
+      destination_attribute_on_join_resource :grip_name
+      public? true
+    end
+
     belongs_to :orientation, FosBjj.JiuJitsu.Orientation do
       source_attribute :orientation_name
       destination_attribute :name

@@ -9,8 +9,10 @@ defmodule FosBjj.JiuJitsu do
     resource FosBjj.JiuJitsu.Position
     resource FosBjj.JiuJitsu.SubPosition
     resource FosBjj.JiuJitsu.Orientation
+    resource FosBjj.JiuJitsu.Grip
     resource FosBjj.JiuJitsu.Technique
     resource FosBjj.JiuJitsu.TechniquePosition
     resource FosBjj.JiuJitsu.TechniqueSubPosition
+    resource FosBjj.JiuJitsu.TechniqueGrip
   end
 end
