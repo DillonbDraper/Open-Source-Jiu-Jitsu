@@ -5,4 +5,5 @@ _build
 .expert
 .elixir_ls
 config/runtime.exs
-.vscode.cursor
+.vscode
+.cursor

@@ -20,32 +20,38 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
      |> assign(:selected_position, nil)
      |> assign(:selected_sub_positions, [])
      |> assign(:selected_orientation, nil)
-     |> assign(:orientation_disabled, true)
+     |> assign(:child_fields_disabled, true)
      |> assign(:available_orientations, [])
      |> assign(:available_sub_positions, [])}
   end
 
   @impl true
   def handle_event("validate", %{"technique" => params}, socket) do
-    # Update selected position and sub_positions from form
-    selected_position = Map.get(params, "position") |> case do
-      "" -> nil
-      nil -> nil
-      value -> value
-    end
-    selected_sub_positions = Map.get(params, "sub_positions", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
+    selected_position =
+      Map.get(params, "position")
+      |> case do
+        "" -> nil
+        nil -> nil
+        value -> value
+      end
+
+    selected_sub_positions =
+      Map.get(params, "sub_positions", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
+
     selected_orientation = Map.get(params, "orientation_name")
 
-    {orientation_disabled, available_orientations} = get_orientation_options(selected_position)
+    {child_fields_disabled, available_orientations} = get_orientation_options(selected_position)
 
     # Filter sub_positions to only show those belonging to selected position
-    available_sub_positions = get_available_sub_positions(socket.assigns.sub_positions, selected_position)
+    available_sub_positions =
+      get_available_sub_positions(socket.assigns.sub_positions, selected_position)
 
-    # Filter out any selected sub_positions that are no longer valid for selected position
+    # Remove any sub-positions that are no longer valid for the selected position
     valid_sub_position_names = Enum.map(available_sub_positions, & &1.name)
-    filtered_selected_sub_positions = Enum.filter(selected_sub_positions, &(&1 in valid_sub_position_names))
 
-    # Update params to reflect filtered sub_positions
+    filtered_selected_sub_positions =
+      Enum.filter(selected_sub_positions, &(&1 in valid_sub_position_names))
+
     updated_params = Map.put(params, "sub_positions", filtered_selected_sub_positions)
 
     form = AshPhoenix.Form.validate(socket.assigns.form, updated_params)
@@ -56,7 +62,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
      |> assign(:selected_position, selected_position)
      |> assign(:selected_sub_positions, filtered_selected_sub_positions)
      |> assign(:selected_orientation, selected_orientation)
-     |> assign(:orientation_disabled, orientation_disabled)
+     |> assign(:child_fields_disabled, child_fields_disabled)
      |> assign(:available_orientations, available_orientations)
      |> assign(:available_sub_positions, available_sub_positions)}
   end
@@ -111,7 +117,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
       selected_position == "standing" ->
         {true, []}
 
-      selected_position == "back" ->
+      selected_position in ["back", "leg_entanglement"] ->
         {false, ["superior", "inferior"]}
 
       true ->
@@ -153,10 +159,12 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
             <%!-- Position Single Select --%>
             <.combobox
+              id="position-select"
               name="technique[position]"
               label="Position"
               value={@selected_position}
               placeholder="Select a position"
+              size="extra_large"
             >
               <:option :for={position <- @positions} value={position.name}>
                 <%= position.label %>
@@ -165,34 +173,39 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
             <%!-- Sub-Position Multi-Select --%>
             <.combobox
+              id={"sub-positions-select-#{@selected_position || "none"}"}
               name="technique[sub_positions][]"
               label="Sub-Positions"
               multiple={true}
               value={@selected_sub_positions}
               placeholder={if is_nil(@selected_position), do: "Select a position first", else: "Select sub-positions"}
               disabled={is_nil(@selected_position)}
+              size="extra_large"
             >
               <:option :for={sub_position <- @available_sub_positions} value={sub_position.name}>
                 <%= sub_position.label %>
               </:option>
             </.combobox>
 
+            <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
+              Select a position to enable Subpositions
+            </p>
+
             <%!-- Orientation Select --%>
             <.native_select
               field={@form[:orientation_name]}
               label="Orientation"
-              disabled={@orientation_disabled}
+              disabled={@child_fields_disabled}
             >
-              <option value="">Select orientation</option>
-              <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
+            <:option :for={orientation_name <- @available_orientations} value={orientation_name} selected={orientation_name == @selected_orientation}>
                 <%= @orientations
                 |> Enum.find(&(&1.name == orientation_name))
                 |> then(& &1.label) %>
               </:option>
             </.native_select>
 
-            <p :if={@orientation_disabled} class="text-sm text-gray-500 mt-1">
-              Select a position to enable orientation
+            <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
+              Select a position to enable Orientation
             </p>
 
             <%!-- Submit Buttons --%>
