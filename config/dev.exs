@@ -70,6 +70,9 @@ config :fos_bjj, FosBjjWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :fos_bjj, dev_routes: true, token_signing_secret: "ZVpm/+bnoyOwLqa0nCe0bfgPZvFdcp9m"
 
+# Automatically log in as dev@localhost in development
+config :fos_bjj, :dev_auto_login, true
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 

@@ -194,6 +194,7 @@ defmodule FosBjj.Accounts.User do
 
     read :get_by_email do
       description "Looks up a user by their email"
+      argument :email, :ci_string, allow_nil?: false
       get_by :email
     end
 
@@ -265,7 +266,7 @@ defmodule FosBjj.Accounts.User do
   end
 
   attributes do
-    uuid_primary_key :id
+    integer_primary_key :id
 
     attribute :email, :ci_string do
       allow_nil? false

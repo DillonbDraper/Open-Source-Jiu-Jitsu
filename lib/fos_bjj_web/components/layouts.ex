@@ -27,9 +27,9 @@ defmodule FosBjjWeb.Layouts do
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
 
-  attr :current_scope, :map,
+  attr :current_user, :map,
     default: nil,
-    doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
+    doc: "the currently authenticated user, if any"
 
   slot :inner_block, required: true
 
@@ -44,8 +44,24 @@ defmodule FosBjjWeb.Layouts do
       <div class="flex-none">
         <ul class="flex flex-row px-1 space-x-4 items-center">
           <li>
-            <a href="#" class="btn btn-ghost">About Open Source BJJ</a>
+            <.link navigate={~p"/mission"} class="text-sm text-base-content/70 hover:text-base-content transition-colors">
+              Mission Statement
+            </.link>
           </li>
+          <%= if @current_user do %>
+            <li class="flex items-center gap-3">
+              <span class="text-sm text-base-content/60">{@current_user.email}</span>
+              <.link href={~p"/sign-out"} class="btn btn-sm btn-outline">
+                Sign Out
+              </.link>
+            </li>
+          <% else %>
+            <li>
+              <.link navigate={~p"/sign-in"} class="btn btn-sm btn-primary">
+                Login / Sign Up
+              </.link>
+            </li>
+          <% end %>
         </ul>
       </div>
     </header>

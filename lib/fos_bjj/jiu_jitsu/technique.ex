@@ -10,7 +10,20 @@ defmodule FosBjj.JiuJitsu.Technique do
   end
 
   actions do
-    defaults [:read, :destroy, create: :*, update: :*]
+    defaults [:read, :destroy]
+
+    create :create do
+      accept [:name, :orientation_name]
+
+      change relate_actor(:created_by)
+      change relate_actor(:updated_by)
+    end
+
+    update :update do
+      accept [:name, :orientation_name]
+
+      change relate_actor(:updated_by)
+    end
   end
 
   attributes do
@@ -51,20 +64,29 @@ defmodule FosBjj.JiuJitsu.Technique do
       public? true
     end
 
-    # Many-to-many to Grip through join table
-    many_to_many :grips, FosBjj.JiuJitsu.Grip do
-      through FosBjj.JiuJitsu.TechniqueGrip
-      source_attribute :id
-      source_attribute_on_join_resource :technique_id
-      destination_attribute :name
-      destination_attribute_on_join_resource :grip_name
-      public? true
-    end
-
     belongs_to :orientation, FosBjj.JiuJitsu.Orientation do
       source_attribute :orientation_name
       destination_attribute :name
       attribute_type :string
+      public? true
+    end
+
+    # One technique can have many videos
+    has_many :videos, FosBjj.JiuJitsu.Video do
+      destination_attribute :technique_id
+      public? true
+    end
+
+    # User tracking
+    belongs_to :created_by, FosBjj.Accounts.User do
+      attribute_type :integer
+      allow_nil? true
+      public? true
+    end
+
+    belongs_to :updated_by, FosBjj.Accounts.User do
+      attribute_type :integer
+      allow_nil? true
       public? true
     end
   end

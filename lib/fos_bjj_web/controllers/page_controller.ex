@@ -9,4 +9,8 @@ defmodule FosBjjWeb.PageController do
 
     render(conn, :home, positions: positions)
   end
+
+  def mission(conn, _params) do
+    render(conn, :mission)
+  end
 end

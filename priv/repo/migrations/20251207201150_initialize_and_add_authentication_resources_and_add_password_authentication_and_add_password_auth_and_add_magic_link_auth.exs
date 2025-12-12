@@ -8,8 +8,7 @@ defmodule FosBjj.Repo.Migrations.InitializeAndAddAuthenticationResourcesAndAddPa
   use Ecto.Migration
 
   def up do
-    create table(:users, primary_key: false) do
-      add :id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true
+    create table(:users) do
       add :email, :citext, null: false
       add :hashed_password, :text
       add :confirmed_at, :utc_datetime_usec

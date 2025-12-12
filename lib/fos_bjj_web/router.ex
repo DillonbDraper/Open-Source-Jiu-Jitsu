@@ -13,6 +13,7 @@ defmodule FosBjjWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :load_from_session
+    plug FosBjjWeb.Plugs.DevAutoLogin
   end
 
   pipeline :api do
@@ -42,8 +43,10 @@ defmodule FosBjjWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/mission", PageController, :mission
 
     live "/techniques/new", TechniqueLive.NewTechniqueForm, :new_technique_form
+    live "/videos/new", VideoLive.NewVideoForm, :new_video_form
 
     auth_routes AuthController, FosBjj.Accounts.User, path: "/auth"
     sign_out_route AuthController
