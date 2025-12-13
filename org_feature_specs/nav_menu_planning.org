@@ -1,0 +1,51 @@
+#+title: Feature Spec: Technique Navigation Tree
+
+* **Goal**
+  Create a hierarchical "Tree View" navigation menu for the technique system, similar to the classic navigation style found on mginaction.com.
+
+* **Tech Stack**
+  - **Framework:** Phoenix LiveView
+  - **UI Library:** Mishka Chelekom (specifically `FosBjjWeb.Components.ScrollArea`) & Phoenix CoreComponents (Heroicons)
+
+* **Data Hierarchy**
+  The tree depth is strictly defined as:
+  1. Position (Root)
+  2. Orientation (Child of Position)
+  3. SubPosition (Child of Orientation)
+  4. Technique (Leaf Node - Link)
+
+* **UI Components**
+  - **Container:**
+    Wrap the entire tree inside the existing `FosBjjWeb.Components.ScrollArea` component.
+  - **Expansion Icons:**
+    Use **Plus/Minus** icons to indicate state:
+    - **Collapsed:** `hero-plus-small` (or `hero-plus`)
+    - **Expanded:** `hero-minus-small` (or `hero-minus`)
+  - **Leaf Nodes:**
+    The final `Technique` items are not expandable. They should be rendered as standard Phoenix `.link` components.
+
+* **Behavioral Logic**
+  - **State Management:**
+    - Maintain a `Set` of `expanded_ids` in the LiveView socket assigns (e.g., `assigns.expanded_ids`).
+    - **Do not** use boolean flags on the data structs themselves.
+  - **Toggle Logic:**
+    - Clicking a parent row (Position/Orientation/SubPosition) toggles its ID in the `expanded_ids` set.
+    - **Expand:** If adding to the set, fetch children (if using lazy loading) and render them.
+    - **Collapse:** If removing from the set, hide the children.
+  - **Data Loading (Lazy Loading Strategy):**
+    - Load the root `Positions` list on `mount`.
+    - When a user expands a node, trigger an event to fetch its specific children via Ash (e.g., `FosBjj.JiuJitsu.Orientation.read!`) if they are not already loaded in the socket.
+
+* **Visual Implementation (Tree Lines)**
+  - **Layout:**
+    Render the tree using nested `<div>` or `<ul>` elements.
+    - **Indentation:**
+    - Apply padding (`pl-4` or similar) to nested levels to create the visual hierarchy.
+  - **Row Styling:**
+    - Make the entire row clickable (cursor pointer, hover background color), not just the icon.
+    - Align the +/- icon to the left of the text.
+
+* **Specific Requirements**
+  - Use `Phoenix.Component.icon` (CoreComponents) for the icons.
+  - Use the existing `FosBjj.JiuJitsu` resources for data fetching.
+  - Clicking a Technique leaf node should navigate to `~p"/techniques/:id"` (This does not yet exist).

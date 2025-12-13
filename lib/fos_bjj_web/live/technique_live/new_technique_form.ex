@@ -1,14 +1,20 @@
 defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
   use FosBjjWeb, :live_view
 
+  on_mount {AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}}
+
   @impl true
   def mount(_params, _session, socket) do
     positions = Ash.read!(FosBjj.JiuJitsu.Position)
     sub_positions = Ash.read!(FosBjj.JiuJitsu.SubPosition)
     orientations = Ash.read!(FosBjj.JiuJitsu.Orientation)
+    current_user = socket.assigns[:current_user]
 
     form =
-      AshPhoenix.Form.for_create(FosBjj.JiuJitsu.Technique, :create, as: "technique")
+      AshPhoenix.Form.for_create(FosBjj.JiuJitsu.Technique, :create,
+        as: "technique",
+        actor: current_user
+      )
       |> to_form()
 
     {:ok,
@@ -36,7 +42,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
       end
 
     selected_sub_positions =
-      Map.get(params, "sub_positions", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
+      Map.get(params, "sub_positions", []) |> Enum.reject(&(&1 == ""))
 
     selected_orientation = Map.get(params, "orientation_name")
 
@@ -54,7 +60,10 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
     updated_params = Map.put(params, "sub_positions", filtered_selected_sub_positions)
 
-    form = AshPhoenix.Form.validate(socket.assigns.form, updated_params)
+    form =
+      AshPhoenix.Form.validate(socket.assigns.form, updated_params,
+        actor: socket.assigns[:current_user]
+      )
 
     {:noreply,
      socket
@@ -70,8 +79,12 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
   @impl true
   def handle_event("save", %{"technique" => params}, socket) do
     selected_position = socket.assigns.selected_position
-    selected_sub_positions = socket.assigns.selected_sub_positions
     current_user = socket.assigns[:current_user]
+
+    selected_sub_positions =
+      Map.get(params, "sub_positions", [])
+      |> List.wrap()
+      |> Enum.reject(&(&1 == ""))
 
     # Wrap single position in a list for the relationship
     selected_positions = if selected_position, do: [selected_position], else: []
@@ -107,6 +120,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
          |> push_navigate(to: ~p"/")}
 
       {:error, form} ->
+        IO.inspect(form)
         {:noreply, assign(socket, form: form)}
     end
   end

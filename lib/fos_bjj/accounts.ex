@@ -8,5 +8,6 @@ defmodule FosBjj.Accounts do
   resources do
     resource FosBjj.Accounts.Token
     resource FosBjj.Accounts.User
+    resource FosBjj.Accounts.Role
   end
 end

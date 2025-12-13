@@ -87,6 +87,9 @@ defmodule FosBjjWeb do
       # Core UI components
       use FosBjjWeb.Components.MishkaComponents
 
+      # Authorization components
+      import FosBjjWeb.Components.Authorization
+
       # Common modules used in templates
       alias Phoenix.LiveView.JS
       alias FosBjjWeb.Layouts

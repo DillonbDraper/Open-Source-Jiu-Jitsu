@@ -245,7 +245,7 @@ defmodule FosBjjWeb.Components.EmailField do
           placeholder={@placeholder}
           class={[
             "flex-1 py-1 px-2 text-sm disabled:opacity-80 block w-full appearance-none",
-            "bg-transparent border-0 focus:outline-none focus:ring-0",
+            "bg-transparent border-0 focus:outline-none focus:ring-0 placeholder:text-xs placeholder:opacity-50",
             @input_class
           ]}
           {@rest}

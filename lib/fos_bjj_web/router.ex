@@ -6,24 +6,24 @@ defmodule FosBjjWeb.Router do
   import AshAuthentication.Plug.Helpers
 
   pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, html: {FosBjjWeb.Layouts, :root}
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
-    plug :load_from_session
-    plug FosBjjWeb.Plugs.DevAutoLogin
+    plug(:accepts, ["html"])
+    plug(:fetch_session)
+    plug(:fetch_live_flash)
+    plug(:put_root_layout, html: {FosBjjWeb.Layouts, :root})
+    plug(:protect_from_forgery)
+    plug(:put_secure_browser_headers)
+    plug(:load_from_session)
+    plug(FosBjjWeb.Plugs.DevAutoLogin)
   end
 
   pipeline :api do
-    plug :accepts, ["json"]
-    plug :load_from_bearer
-    plug :set_actor, :user
+    plug(:accepts, ["json"])
+    plug(:load_from_bearer)
+    plug(:set_actor, :user)
   end
 
   scope "/", FosBjjWeb do
-    pipe_through :browser
+    pipe_through(:browser)
 
     ash_authentication_live_session :authenticated_routes do
       # in each liveview, add one of the following at the top of the module:
@@ -36,42 +36,46 @@ defmodule FosBjjWeb.Router do
       #
       # If an authenticated user must *not* be present:
       # on_mount {FosBjjWeb.LiveUserAuth, :live_no_user}
+      live("/techniques/new", TechniqueLive.NewTechniqueForm, :new_technique_form)
+      live("/videos/new", VideoLive.NewVideoForm, :new_video_form)
     end
   end
 
   scope "/", FosBjjWeb do
-    pipe_through :browser
+    pipe_through(:browser)
 
-    get "/", PageController, :home
-    get "/mission", PageController, :mission
+    get("/", PageController, :home)
+    get("/mission", PageController, :mission)
 
-    live "/techniques/new", TechniqueLive.NewTechniqueForm, :new_technique_form
-    live "/videos/new", VideoLive.NewVideoForm, :new_video_form
-
-    auth_routes AuthController, FosBjj.Accounts.User, path: "/auth"
-    sign_out_route AuthController
+    auth_routes(AuthController, FosBjj.Accounts.User, path: "/auth")
+    sign_out_route(AuthController)
 
     # Remove these if you'd like to use your own authentication views
-    sign_in_route register_path: "/register",
-                  reset_path: "/reset",
-                  auth_routes_prefix: "/auth",
-                  on_mount: [{FosBjjWeb.LiveUserAuth, :live_no_user}],
-                  overrides: [
-                    FosBjjWeb.AuthOverrides,
-                    Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
-                  ]
+    sign_in_route(
+      register_path: "/register",
+      reset_path: "/reset",
+      auth_routes_prefix: "/auth",
+      on_mount: [{FosBjjWeb.LiveUserAuth, :live_no_user}],
+      overrides: [
+        FosBjjWeb.AuthOverrides,
+        Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
+      ]
+    )
 
     # Remove this if you do not want to use the reset password feature
-    reset_route auth_routes_prefix: "/auth",
-                overrides: [
-                  FosBjjWeb.AuthOverrides,
-                  Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
-                ]
+    reset_route(
+      auth_routes_prefix: "/auth",
+      overrides: [
+        FosBjjWeb.AuthOverrides,
+        Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI
+      ]
+    )
 
     # Remove this if you do not use the confirmation strategy
-    confirm_route FosBjj.Accounts.User, :confirm_new_user,
+    confirm_route(FosBjj.Accounts.User, :confirm_new_user,
       auth_routes_prefix: "/auth",
       overrides: [FosBjjWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
+    )
 
     # Remove this if you do not use the magic link strategy.
     magic_sign_in_route(FosBjj.Accounts.User, :magic_link,
@@ -95,10 +99,10 @@ defmodule FosBjjWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through :browser
+      pipe_through(:browser)
 
-      live_dashboard "/dashboard", metrics: FosBjjWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+      live_dashboard("/dashboard", metrics: FosBjjWeb.Telemetry)
+      forward("/mailbox", Plug.Swoosh.MailboxPreview)
     end
   end
 
@@ -106,9 +110,9 @@ defmodule FosBjjWeb.Router do
     import AshAdmin.Router
 
     scope "/admin" do
-      pipe_through :browser
+      pipe_through(:browser)
 
-      ash_admin "/"
+      ash_admin("/")
     end
   end
 end

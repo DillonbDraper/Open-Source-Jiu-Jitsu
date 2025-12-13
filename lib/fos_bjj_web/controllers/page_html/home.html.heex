@@ -1,17 +1,27 @@
 <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold">Welcome to Open Source BJJ</h1>
-    <div class="flex gap-3">
-      <.link navigate={~p"/techniques/new"} class="btn btn-primary">
-        Add A Technique
-      </.link>
-      <.link navigate={~p"/videos/new"} class="btn btn-secondary">
-        Add A Video
-      </.link>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-4xl font-bold">Welcome to Open Source BJJ</h1>
+        <div class="flex gap-3">
+            <.coach_or_admin_only current_user={@current_user}>
+          <.link navigate={~p"/techniques/new"} class="btn btn-primary">
+            Add A Technique
+          </.link>
+          <.link navigate={~p"/videos/new"} class="btn btn-secondary">
+            Add A Video
+          </.link>
+        </.coach_or_admin_only>
+        </div>
+      </div>
+
+      <p class="text-lg text-base-content/70">
+        Curated collection of high-quality Brazilian Jiu-Jitsu instructional videos.
+      </p>
+    </div>
+
+    <div class="lg:col-span-1">
+       <%= live_render(@conn, FosBjjWeb.TechniqueTreeLive, id: "technique-tree", session: %{}) %>
     </div>
   </div>
-
-  <p class="text-lg text-center text-base-content/70">
-    Curated collection of high-quality Brazilian Jiu-Jitsu instructional videos.
-  </p>
 </Layouts.app>

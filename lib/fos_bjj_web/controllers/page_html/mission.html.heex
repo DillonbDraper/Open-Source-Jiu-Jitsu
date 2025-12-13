@@ -1,0 +1,31 @@
+<Layouts.app flash={@flash} current_user={assigns[:current_user]}>
+  <div class="text-center space-y-6">
+    <.h1 class="mb-8 text-center" font_weight="font-bold">Mission Statement</.h1>
+
+    <div class="max-w-4xl mx-auto text-left space-y-6">
+      <.p size="large" class="leading-relaxed">
+        The mission of this project is to be a free and high quality repository of grappling video instruction with a focus on Brazilian Jiu-Jitsu (BJJ).
+        This project seeks to provide value to your Jiu Jitsu journey in two key ways:
+      </.p>
+
+      <.ol style="list-decimal" size="large" space="medium" class="ps-8">
+        <.li>
+          An adapted, easy to use version of the famous inAction navigation system, making it easy to find material on exactly what you are looking for
+        </.li>
+        <.li>
+          <div class="space-y-3">
+            <.p>
+              A trusted, curated source of free online instruction that you can trust. While much of the available free Jiu-Jitsu content is excellent, a good deal of it is also either of lesser quality, an ad masquerading as coaching, or at worst outright technical information. To combat this, each video resource this site uses is guaranteed to meet the following criteria:
+            </.p>
+
+            <.ul style="list-disc" size="large" space="small" class="ps-8 mt-3">
+              <.li>High quality, real-world accurate instruction</.li>
+              <.li>Not an ad - videos may contain some amount of promotion, but focus primarily on instruction and do not waste your time</.li>
+              <.li>Minimum acceptable production values - None of the videos here will contain egregiously poor audio or video, and should feel "watchable" for all users</.li>
+            </.ul>
+          </div>
+        </.li>
+      </.ol>
+    </div>
+  </div>
+</Layouts.app>

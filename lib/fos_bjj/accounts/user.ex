@@ -278,9 +278,37 @@ defmodule FosBjj.Accounts.User do
     end
 
     attribute :confirmed_at, :utc_datetime_usec
+
+    attribute :role_name, :string do
+      allow_nil? true
+      default "student"
+      public? true
+    end
+  end
+
+  relationships do
+    belongs_to :role, FosBjj.Accounts.Role do
+      source_attribute :role_name
+      destination_attribute :name
+      attribute_type :string
+      define_attribute? false
+      public? true
+    end
   end
 
   identities do
     identity :unique_email, [:email]
   end
+
+  @doc "Check if user has admin role"
+  def admin?(%{role_name: "admin"}), do: true
+  def admin?(_), do: false
+
+  @doc "Check if user has coach role"
+  def coach?(%{role_name: "coach"}), do: true
+  def coach?(_), do: false
+
+  @doc "Check if user has coach or admin role"
+  def coach_or_admin?(%{role_name: role}) when role in ["coach", "admin"], do: true
+  def coach_or_admin?(_), do: false
 end
