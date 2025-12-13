@@ -4,6 +4,7 @@ defmodule FosBjjWeb.Layouts do
   used by your application.
   """
   use FosBjjWeb, :html
+  import FosBjjWeb.Components.Navbar
 
   # Embed all files in layouts/* within this module.
   # The default root.html.heex file contains the HTML
@@ -35,36 +36,55 @@ defmodule FosBjjWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <span class="text-lg font-semibold">Open Source BJJ</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-row px-1 space-x-4 items-center">
-          <li>
-            <.link navigate={~p"/mission"} class="text-sm text-base-content/70 hover:text-base-content transition-colors">
-              Mission Statement
+    <.navbar
+      id="main-navbar"
+      name="Open Source BJJ"
+      link={~p"/"}
+      class="px-4 sm:px-6 lg:px-8"
+    >
+      <:list>
+        <.link
+          navigate={~p"/mission"}
+          class="text-sm text-base-content/70 hover:text-base-content transition-colors"
+        >
+          Mission Statement
+        </.link>
+      </:list>
+
+      <:list>
+        <.coach_or_admin_only current_user={@current_user}>
+          <div class="flex items-center gap-4">
+            <.link
+              navigate={~p"/techniques/new"}
+              class="text-sm text-base-content/70 hover:text-base-content transition-colors"
+            >
+              Add Technique
             </.link>
-          </li>
-          <%= if @current_user do %>
-            <li class="flex items-center gap-3">
-              <span class="text-sm text-base-content/60">{@current_user.email}</span>
-              <.link href={~p"/sign-out"} class="btn btn-sm btn-outline">
-                Sign Out
-              </.link>
-            </li>
-          <% else %>
-            <li>
-              <.link navigate={~p"/sign-in"} class="btn btn-sm btn-primary">
-                Login / Sign Up
-              </.link>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-    </header>
+            <.link
+              navigate={~p"/videos/new"}
+              class="text-sm text-base-content/70 hover:text-base-content transition-colors"
+            >
+              Add Video
+            </.link>
+          </div>
+        </.coach_or_admin_only>
+      </:list>
+
+      <:list>
+        <%= if @current_user do %>
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-base-content/60">{@current_user.email}</span>
+            <.link href={~p"/sign-out"} class="btn btn-sm btn-outline">
+              Sign Out
+            </.link>
+          </div>
+        <% else %>
+          <.link navigate={~p"/sign-in"} class="btn btn-sm btn-primary">
+            Login / Sign Up
+          </.link>
+        <% end %>
+      </:list>
+    </.navbar>
 
     <main class="px-4 py-20 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-2xl space-y-4">
