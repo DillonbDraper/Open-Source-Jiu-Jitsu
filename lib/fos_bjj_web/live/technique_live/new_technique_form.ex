@@ -1,38 +1,41 @@
 defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
-  use FosBjjWeb, :live_view
-
-  on_mount {AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}}
+  use FosBjjWeb, :live_component
 
   @impl true
-  def mount(_params, _session, socket) do
-    positions =
-      FosBjj.JiuJitsu.Position
-      |> Ash.Query.load(:orientations)
-      |> Ash.read!()
+  def update(assigns, socket) do
+    socket = assign(socket, assigns)
 
-    sub_positions = Ash.read!(FosBjj.JiuJitsu.SubPosition)
-    orientations = Ash.read!(FosBjj.JiuJitsu.Orientation)
-    current_user = socket.assigns[:current_user]
+    if Map.has_key?(socket.assigns, :form) do
+      {:ok, socket}
+    else
+      positions =
+        FosBjj.JiuJitsu.Position
+        |> Ash.Query.load(:orientations)
+        |> Ash.read!()
 
-    form =
-      AshPhoenix.Form.for_create(FosBjj.JiuJitsu.Technique, :create,
-        as: "technique",
-        actor: current_user
-      )
-      |> to_form()
+      sub_positions = Ash.read!(FosBjj.JiuJitsu.SubPosition)
+      orientations = Ash.read!(FosBjj.JiuJitsu.Orientation)
+      current_user = socket.assigns[:current_user]
 
-    {:ok,
-     socket
-     |> assign(:form, form)
-     |> assign(:positions, positions)
-     |> assign(:sub_positions, sub_positions)
-     |> assign(:orientations, orientations)
-     |> assign(:selected_position, nil)
-     |> assign(:selected_sub_position, nil)
-     |> assign(:selected_orientation, nil)
-     |> assign(:child_fields_disabled, true)
-     |> assign(:available_orientations, [])
-     |> assign(:available_sub_positions, [])}
+      form =
+        AshPhoenix.Form.for_create(FosBjj.JiuJitsu.Technique, :create,
+          as: "technique",
+          actor: current_user
+        )
+
+      {:ok,
+       socket
+       |> assign(:form, form)
+       |> assign(:positions, positions)
+       |> assign(:sub_positions, sub_positions)
+       |> assign(:orientations, orientations)
+       |> assign(:selected_position, nil)
+       |> assign(:selected_sub_position, nil)
+       |> assign(:selected_orientation, nil)
+       |> assign(:child_fields_disabled, true)
+       |> assign(:available_orientations, [])
+       |> assign(:available_sub_positions, [])}
+    end
   end
 
   @impl true
@@ -116,11 +119,9 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
            before_submit: before_submit,
            actor: current_user
          ) do
-      {:ok, _technique} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Technique created successfully")
-         |> push_navigate(to: ~p"/")}
+      {:ok, technique} ->
+        send(self(), {__MODULE__, {:technique_created, technique}})
+        {:noreply, socket}
 
       {:error, form} ->
         IO.inspect(form)
@@ -159,90 +160,81 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-      <div class="max-w-2xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-3xl font-bold">Add New Technique</h1>
-          <.link navigate={~p"/"} class="btn btn-ghost">
-            ← Back
-          </.link>
-        </div>
-
-        <.form_wrapper for={@form} id="technique-form" phx-change="validate" phx-submit="save">
-          <div class="space-y-6">
-            <%!-- Technique Name --%>
-            <.text_field
-              field={@form[:name]}
-              label="Technique Name"
-              placeholder="Enter technique name"
-              required
-            />
-
-            <%!-- Position Single Select --%>
-            <.combobox
-              id="position-select"
-              name="technique[position]"
-              label="Position"
-              value={@selected_position}
-              placeholder="Select a position"
-              size="extra_large"
-            >
-              <:option :for={position <- @positions} value={position.name}>
-                <%= position.label %>
-              </:option>
-            </.combobox>
-
-            <%!-- Sub-Position Single Select --%>
-            <.combobox
-              id={"sub-position-select-#{@selected_position || "none"}"}
-              name="technique[sub_position_name]"
-              label="Sub-Position"
-              multiple={false}
-              value={@selected_sub_position}
-              placeholder={if is_nil(@selected_position), do: "Select a position first", else: "Select a sub-position"}
-              disabled={is_nil(@selected_position)}
-              size="extra_large"
-            >
-              <:option :for={sub_position <- @available_sub_positions} value={sub_position.name}>
-                <%= sub_position.label %>
-              </:option>
-            </.combobox>
-
-            <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
-              Select a position to enable Subpositions
-            </p>
-
-            <%!-- Orientation Select --%>
-            <.native_select
-              field={@form[:orientation_name]}
-              label="Orientation"
-              disabled={@child_fields_disabled}
-            >
-              <option value="">Select orientation</option>
-              <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
-                <%= @orientations
-                |> Enum.find(&(&1.name == orientation_name))
-                |> then(& &1.label) %>
-              </:option>
-            </.native_select>
-
-            <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
-              Select a position to enable Orientation
-            </p>
-
-            <%!-- Submit Buttons --%>
-            <div class="flex gap-4">
-              <.button type="submit" class="btn btn-primary">
-                Create Technique
-              </.button>
-              <.button type="button" class="btn btn-ghost" phx-click={JS.navigate(~p"/")}>
-                Cancel
-              </.button>
-            </div>
-          </div>
-        </.form_wrapper>
+    <div>
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold">Add New Technique</h1>
       </div>
-    </Layouts.app>
+
+      <.form_wrapper for={@form} id="technique-form" phx-change="validate" phx-submit="save" phx-target={@myself}>
+        <div class="space-y-6">
+          <%!-- Technique Name --%>
+          <.text_field
+            field={@form[:name]}
+            label="Technique Name"
+            placeholder="Enter technique name"
+            required
+          />
+
+          <%!-- Position Single Select --%>
+          <.combobox
+            id="position-select"
+            name="technique[position]"
+            label="Position"
+            value={@selected_position}
+            placeholder="Select a position"
+            size="extra_large"
+          >
+            <:option :for={position <- @positions} value={position.name}>
+              <%= position.label %>
+            </:option>
+          </.combobox>
+
+          <%!-- Sub-Position Single Select --%>
+          <.combobox
+            id={"sub-position-select-#{@selected_position || "none"}"}
+            name="technique[sub_position_name]"
+            label="Sub-Position"
+            value={@selected_sub_position}
+            placeholder={if is_nil(@selected_position), do: "Select a position first", else: "Select a sub-position"}
+            disabled={is_nil(@selected_position)}
+            size="extra_large"
+          >
+            <:option :for={sub_position <- @available_sub_positions} value={sub_position.name}>
+              <%= sub_position.label %>
+            </:option>
+          </.combobox>
+
+          <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
+            Select a position to enable Subpositions
+          </p>
+
+          <%!-- Orientation Select --%>
+          <.native_select
+            field={@form[:orientation_name]}
+            label="Orientation"
+            disabled={@child_fields_disabled}
+          >
+            <option value="">Select orientation</option>
+            <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
+              <%= @orientations
+              |> Enum.find(&(&1.name == orientation_name))
+              |> then(& &1.label) %>
+            </:option>
+          </.native_select>
+
+          <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
+            Select a position to enable Orientation
+          </p>
+
+          <%!-- Submit Buttons --%>
+          <div class="flex gap-4">
+            <.button type="submit" class="btn btn-primary">
+              Create Technique
+            </.button>
+          </div>
+        </div>
+      </.form_wrapper>
+    </div>
     """
   end
 end

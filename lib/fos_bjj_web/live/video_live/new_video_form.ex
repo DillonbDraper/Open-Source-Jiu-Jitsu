@@ -1,7 +1,7 @@
 defmodule FosBjjWeb.VideoLive.NewVideoForm do
   use FosBjjWeb, :live_view
   import FosBjjWeb.Components.Drawer
-  alias FosBjjWeb.TechniqueLive.TechniqueForm
+  alias FosBjjWeb.TechniqueLive.NewTechniqueForm
 
   on_mount({AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}})
 
@@ -57,7 +57,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     selected_grips = socket.assigns.selected_grips
     current_user = socket.assigns[:current_user]
 
-    # Merge relationship data into params
     params_with_relationships = Map.put(params, "grips", selected_grips)
 
     # Use before_submit to manage relationships manually
@@ -82,7 +81,13 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
          |> push_navigate(to: ~p"/")}
 
       {:error, form} ->
-        {:noreply, assign(socket, form: form)}
+        IO.puts("HELLO")
+        IO.inspect(form)
+
+        {:noreply,
+         socket
+         |> put_flash(:error, "Something went wrong")
+         |> assign(form: form)}
     end
   end
 
@@ -97,7 +102,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   end
 
   @impl true
-  def handle_info({TechniqueForm, {:technique_created, technique}}, socket) do
+  def handle_info({NewTechniqueForm, {:technique_created, technique}}, socket) do
     # Update the form to select the new technique
     params =
       socket.assigns.form.params
@@ -119,131 +124,131 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-      <div class="max-w-2xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-3xl font-bold">Add New Video</h1>
-          <.link navigate={~p"/"} class="btn btn-ghost">
-            ← Back
-          </.link>
-        </div>
+    <div class="max-w-2xl mx-auto">
+      <.flash kind={:info} title="Success" flash={@flash} />
+      <.flash kind={:error} title="Error" flash={@flash} />
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Add New Video</h1>
+        <.link navigate={~p"/"} class="btn btn-ghost">
+          ← Back
+        </.link>
+      </div>
 
-        <.form_wrapper for={@form} id="video-form" phx-change="validate" phx-submit="save">
-          <div class="space-y-6">
-            <.url_field
-              field={@form[:url]}
-              label="Video URL"
-              placeholder="https://youtube.com/watch?v=..."
-              required
-            />
+      <.form_wrapper for={@form} id="video-form" phx-change="validate" phx-submit="save">
+        <div class="space-y-6">
+          <.url_field
+            field={@form[:url]}
+            label="Video URL"
+            placeholder="https://youtube.com/watch?v=..."
+            required
+          />
 
-            <.textarea_field
-              field={@form[:description]}
-              label="Description (Optional)"
-              placeholder="Brief description of the video content"
-              rows="3"
-            />
+          <.textarea_field
+            field={@form[:description]}
+            label="Description (Optional)"
+            placeholder="Brief description of the video content"
+            rows="3"
+          />
 
-            <div class="space-y-2">
-              <label class="text-sm font-semibold">Attire *</label>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={@form[:attire].name}
-                    value="gi"
-                    checked={to_string(@form[:attire].value) == "gi"}
-                    class="radio"
-                    required
-                  />
-                  <span>Gi</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={@form[:attire].name}
-                    value="no_gi"
-                    checked={to_string(@form[:attire].value) == "no_gi"}
-                    class="radio"
-                    required
-                  />
-                  <span>No-Gi</span>
-                </label>
-              </div>
-            </div>
-
-            <%!-- Technique Select/Add --%>
-            <div class="grid grid-cols-3 gap-2 items-end">
-              <div class="col-span-2">
-                <.combobox
-                  id={"technique-select-#{@combobox_version || 0}"}
-                  name="video[technique_id]"
-                  label="Technique"
-                  value={@selected_technique_id && to_string(@selected_technique_id)}
-                  placeholder="Search for a technique..."
-                  searchable={true}
-                  size="extra_large"
-                  required
-                >
-                  <:option :for={technique <- @techniques} value={to_string(technique.id)}>
-                    <%= technique.name %>
-                  </:option>
-                </.combobox>
-              </div>
-              <div class="col-span-1">
-                <.button
-                  type="button"
-                  class="w-full"
-                  phx-click="open_drawer"
-                  title="Add New Technique"
-                >
-                  Add New Technique (If Not Found)
-                </.button>
-              </div>
-            </div>
-
-            <.combobox
-              id="grips-select"
-              name="video[grips][]"
-              label="Grips"
-              multiple={true}
-              value={@selected_grips}
-              placeholder="Select grips (optional)"
-              searchable={true}
-              size="extra_large"
-            >
-              <:option :for={grip <- @grips} value={grip.name}>
-                <%= grip.label %>
-              </:option>
-            </.combobox>
-
+          <div class="space-y-2">
+            <label class="text-sm font-semibold">Attire *</label>
             <div class="flex gap-4">
-              <.button type="submit" class="btn btn-primary">
-                Add Video
-              </.button>
-              <.button type="button" class="btn btn-ghost" phx-click={JS.navigate(~p"/")}>
-                Cancel
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={@form[:attire].name}
+                  value="gi"
+                  checked={to_string(@form[:attire].value) == "gi"}
+                  class="radio"
+                  required
+                />
+                <span>Gi</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={@form[:attire].name}
+                  value="no_gi"
+                  checked={to_string(@form[:attire].value) == "no_gi"}
+                  class="radio"
+                  required
+                />
+                <span>No-Gi</span>
+              </label>
+            </div>
+          </div>
+
+          <%!-- Technique Select/Add --%>
+          <div class="grid grid-cols-3 gap-2 items-end">
+            <div class="col-span-2">
+              <.combobox
+                id={"technique-select-#{@combobox_version || 0}"}
+                name="video[technique_id]"
+                label="Technique"
+                value={@selected_technique_id && to_string(@selected_technique_id)}
+                placeholder="Search for a technique..."
+                searchable={true}
+                size="extra_large"
+                required
+              >
+                <:option :for={technique <- @techniques} value={to_string(technique.id)}>
+                  <%= technique.name %>
+                </:option>
+              </.combobox>
+            </div>
+            <div class="col-span-1">
+              <.button
+                type="button"
+                class="w-full"
+                phx-click="open_drawer"
+                title="Add New Technique"
+              >
+                Add New Technique (If Not Found)
               </.button>
             </div>
           </div>
-        </.form_wrapper>
-      </div>
 
-      <.drawer
-        :if={@show_drawer}
-        id="technique-drawer"
-        show={true}
-        on_hide={JS.push("close_drawer")}
-        position="right"
-        title="Add New Technique"
-      >
-        <.live_component
-          module={TechniqueForm}
-          id="new-technique-form"
-          current_user={@current_user}
-        />
-      </.drawer>
-    </Layouts.app>
+          <.combobox
+            id="grips-select"
+            name="video[grips][]"
+            label="Grips"
+            multiple={true}
+            value={@selected_grips}
+            placeholder="Select grips (optional)"
+            searchable={true}
+            size="extra_large"
+          >
+            <:option :for={grip <- @grips} value={grip.name}>
+              <%= grip.label %>
+            </:option>
+          </.combobox>
+
+          <div class="flex gap-4">
+            <.button type="submit" class="btn btn-primary">
+              Add Video
+            </.button>
+            <.button type="button" class="btn btn-ghost" phx-click={JS.navigate(~p"/")}>
+              Cancel
+            </.button>
+          </div>
+        </div>
+      </.form_wrapper>
+    </div>
+
+    <.drawer
+      :if={@show_drawer}
+      id="technique-drawer"
+      show={true}
+      on_hide={JS.push("close_drawer")}
+      position="right"
+      title="Add New Technique"
+    >
+      <.live_component
+        module={NewTechniqueForm}
+        id="new-technique-form"
+        current_user={@current_user}
+      />
+    </.drawer>
     """
   end
 end
