@@ -10,7 +10,12 @@ defmodule FosBjj.JiuJitsu.Video do
   end
 
   actions do
-    defaults([:read, :destroy])
+    defaults([:destroy])
+
+    read :read do
+      primary? true
+      pagination offset?: true, countable: true
+    end
 
     create :create do
       accept([:video_id, :description, :attire, :technique_id, :thumbnail_url])

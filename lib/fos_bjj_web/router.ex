@@ -44,6 +44,7 @@ defmodule FosBjjWeb.Router do
     pipe_through(:browser)
 
     get("/", PageController, :home)
+    live("/database", DatabaseLive)
     get("/mission", PageController, :mission)
 
     auth_routes(AuthController, FosBjj.Accounts.User, path: "/auth")
