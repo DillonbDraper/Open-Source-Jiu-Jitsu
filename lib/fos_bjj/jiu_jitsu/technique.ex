@@ -13,14 +13,14 @@ defmodule FosBjj.JiuJitsu.Technique do
     defaults [:read, :destroy]
 
     create :create do
-      accept [:name, :orientation_name]
+      accept [:name, :orientation_name, :sub_position_name]
 
       change relate_actor(:created_by)
       change relate_actor(:updated_by)
     end
 
     update :update do
-      accept [:name, :orientation_name]
+      accept [:name, :orientation_name, :sub_position_name]
 
       change relate_actor(:updated_by)
     end
@@ -39,6 +39,11 @@ defmodule FosBjj.JiuJitsu.Technique do
       public? true
     end
 
+    attribute :sub_position_name, :string do
+      allow_nil? false
+      public? true
+    end
+
     create_timestamp :inserted_at
     update_timestamp :updated_at
   end
@@ -54,13 +59,10 @@ defmodule FosBjj.JiuJitsu.Technique do
       public? true
     end
 
-    # Many-to-many to SubPosition through join table
-    many_to_many :sub_positions, FosBjj.JiuJitsu.SubPosition do
-      through FosBjj.JiuJitsu.TechniqueSubPosition
-      source_attribute :id
-      source_attribute_on_join_resource :technique_id
+    belongs_to :sub_position, FosBjj.JiuJitsu.SubPosition do
+      source_attribute :sub_position_name
       destination_attribute :name
-      destination_attribute_on_join_resource :sub_position_name
+      attribute_type :string
       public? true
     end
 

@@ -55,12 +55,6 @@ defmodule FosBjjWeb.Layouts do
         <.coach_or_admin_only current_user={@current_user}>
           <div class="flex items-center gap-4">
             <.link
-              navigate={~p"/techniques/new"}
-              class="text-sm text-base-content/70 hover:text-base-content transition-colors"
-            >
-              Add Technique
-            </.link>
-            <.link
               navigate={~p"/videos/new"}
               class="text-sm text-base-content/70 hover:text-base-content transition-colors"
             >

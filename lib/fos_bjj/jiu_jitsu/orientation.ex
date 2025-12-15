@@ -2,43 +2,40 @@ defmodule FosBjj.JiuJitsu.Orientation do
   use Ash.Resource,
     otp_app: :fos_bjj,
     domain: FosBjj.JiuJitsu,
-    data_layer: Ash.DataLayer.Simple
+    data_layer: AshPostgres.DataLayer
+
+  postgres do
+    table("orientations")
+    repo(FosBjj.Repo)
+  end
 
   actions do
     read :read do
-      primary? true
-      prepare fn query, _context ->
-        data =
-          data()
-          |> Enum.map(fn attrs ->
-            struct(__MODULE__, attrs)
-          end)
-
-        Ash.DataLayer.Simple.set_data(query, data)
-      end
+      primary?(true)
     end
   end
 
   attributes do
     attribute :name, :string do
-      allow_nil? false
-      public? true
-      primary_key? true
+      allow_nil?(false)
+      public?(true)
+      primary_key?(true)
     end
 
     attribute :label, :string do
-      allow_nil? false
-      public? true
+      allow_nil?(false)
+      public?(true)
     end
   end
 
-  # Static data for orientations
-  def data do
-    [
-      %{name: "top", label: "Top"},
-      %{name: "bottom", label: "Bottom"},
-      %{name: "superior", label: "Superior"},
-      %{name: "inferior", label: "Inferior"}
-    ]
+  relationships do
+    many_to_many :positions, FosBjj.JiuJitsu.Position do
+      through(FosBjj.JiuJitsu.PositionOrientation)
+      source_attribute(:name)
+      destination_attribute(:name)
+      source_attribute_on_join_resource(:orientation_name)
+      destination_attribute_on_join_resource(:position_name)
+      public?(true)
+    end
   end
 end

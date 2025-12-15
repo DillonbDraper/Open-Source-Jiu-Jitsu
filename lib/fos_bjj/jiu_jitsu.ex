@@ -12,7 +12,7 @@ defmodule FosBjj.JiuJitsu do
     resource FosBjj.JiuJitsu.Grip
     resource FosBjj.JiuJitsu.Technique
     resource FosBjj.JiuJitsu.TechniquePosition
-    resource FosBjj.JiuJitsu.TechniqueSubPosition
+    resource FosBjj.JiuJitsu.PositionOrientation
     resource FosBjj.JiuJitsu.Video
     resource FosBjj.JiuJitsu.VideoGrip
   end

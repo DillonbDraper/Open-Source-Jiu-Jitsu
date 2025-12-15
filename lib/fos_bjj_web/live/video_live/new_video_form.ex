@@ -1,7 +1,9 @@
 defmodule FosBjjWeb.VideoLive.NewVideoForm do
   use FosBjjWeb, :live_view
+  import FosBjjWeb.Components.Drawer
+  alias FosBjjWeb.TechniqueLive.TechniqueForm
 
-  on_mount {AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}}
+  on_mount({AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}})
 
   @impl true
   def mount(_params, _session, socket) do
@@ -22,7 +24,9 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
      |> assign(:techniques, techniques)
      |> assign(:grips, grips)
      |> assign(:selected_technique_id, nil)
-     |> assign(:selected_grips, [])}
+     |> assign(:selected_grips, [])
+     |> assign(:combobox_version, 0)
+     |> assign(:show_drawer, false)}
   end
 
   @impl true
@@ -39,9 +43,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
       Map.get(params, "grips", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
 
     form =
-      AshPhoenix.Form.validate(socket.assigns.form, params,
-        actor: socket.assigns[:current_user]
-      )
+      AshPhoenix.Form.validate(socket.assigns.form, params, actor: socket.assigns[:current_user])
 
     {:noreply,
      socket
@@ -85,6 +87,36 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   end
 
   @impl true
+  def handle_event("open_drawer", _, socket) do
+    {:noreply, assign(socket, show_drawer: true)}
+  end
+
+  @impl true
+  def handle_event("close_drawer", _, socket) do
+    {:noreply, assign(socket, show_drawer: false)}
+  end
+
+  @impl true
+  def handle_info({TechniqueForm, {:technique_created, technique}}, socket) do
+    # Update the form to select the new technique
+    params =
+      socket.assigns.form.params
+      |> Map.put("technique_id", to_string(technique.id))
+
+    form =
+      AshPhoenix.Form.validate(socket.assigns.form, params, actor: socket.assigns[:current_user])
+
+    {:noreply,
+     socket
+     |> assign(:techniques, [technique | socket.assigns.techniques])
+     |> assign(:selected_technique_id, technique.id)
+     |> assign(:form, form)
+     |> assign(:show_drawer, false)
+     |> update(:combobox_version, &((&1 || 0) + 1))
+     |> put_flash(:info, "Technique created successfully")}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
@@ -98,7 +130,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
 
         <.form_wrapper for={@form} id="video-form" phx-change="validate" phx-submit="save">
           <div class="space-y-6">
-            <%!-- Video URL --%>
             <.url_field
               field={@form[:url]}
               label="Video URL"
@@ -106,7 +137,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
               required
             />
 
-            <%!-- Description --%>
             <.textarea_field
               field={@form[:description]}
               label="Description (Optional)"
@@ -114,7 +144,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
               rows="3"
             />
 
-            <%!-- Attire Radio Buttons --%>
             <div class="space-y-2">
               <label class="text-sm font-semibold">Attire *</label>
               <div class="flex gap-4">
@@ -143,23 +172,36 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
               </div>
             </div>
 
-            <%!-- Technique Select with Autocomplete --%>
-            <.combobox
-              id="technique-select"
-              name="video[technique_id]"
-              label="Technique"
-              value={@selected_technique_id && to_string(@selected_technique_id)}
-              placeholder="Search for a technique..."
-              searchable={true}
-              size="extra_large"
-              required
-            >
-              <:option :for={technique <- @techniques} value={to_string(technique.id)}>
-                <%= technique.name %>
-              </:option>
-            </.combobox>
+            <%!-- Technique Select/Add --%>
+            <div class="grid grid-cols-3 gap-2 items-end">
+              <div class="col-span-2">
+                <.combobox
+                  id={"technique-select-#{@combobox_version || 0}"}
+                  name="video[technique_id]"
+                  label="Technique"
+                  value={@selected_technique_id && to_string(@selected_technique_id)}
+                  placeholder="Search for a technique..."
+                  searchable={true}
+                  size="extra_large"
+                  required
+                >
+                  <:option :for={technique <- @techniques} value={to_string(technique.id)}>
+                    <%= technique.name %>
+                  </:option>
+                </.combobox>
+              </div>
+              <div class="col-span-1">
+                <.button
+                  type="button"
+                  class="w-full"
+                  phx-click="open_drawer"
+                  title="Add New Technique"
+                >
+                  Add New Technique (If Not Found)
+                </.button>
+              </div>
+            </div>
 
-            <%!-- Grips Multi-Select --%>
             <.combobox
               id="grips-select"
               name="video[grips][]"
@@ -175,7 +217,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
               </:option>
             </.combobox>
 
-            <%!-- Submit Buttons --%>
             <div class="flex gap-4">
               <.button type="submit" class="btn btn-primary">
                 Add Video
@@ -187,6 +228,21 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
           </div>
         </.form_wrapper>
       </div>
+
+      <.drawer
+        :if={@show_drawer}
+        id="technique-drawer"
+        show={true}
+        on_hide={JS.push("close_drawer")}
+        position="right"
+        title="Add New Technique"
+      >
+        <.live_component
+          module={TechniqueForm}
+          id="new-technique-form"
+          current_user={@current_user}
+        />
+      </.drawer>
     </Layouts.app>
     """
   end

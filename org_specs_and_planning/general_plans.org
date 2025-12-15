@@ -1,0 +1,13 @@
+* This is a list of features/enhancements necessary for MVP
+- Add thumbnail and method of extracting thumbnail to video list. Probably need to set up youtube API access for this.
+- Paginated (maybe?) card list of videos displayed upon clicking a technique, uses route based on technique id or query from technique list.
+- Enhance technique tree select.  Include searchbox to ignore nav system, attire radio buttons, and better styling (borders?)
+- Create a video/technique playing page.  Determine if we should organize URL guide by video+technique id (from card list) or just video id
+- Actually set up email client/test creating users.
+
+** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
+- Adequate seed database of techniques/videos
+- User notes/favoriting system for videos
+- General styling enhancements.
+- Figure out what happened with form_component and new_technique_form.  I THINK the latter is redundant.
+- Cleaner nav bar/access to coach/admin options

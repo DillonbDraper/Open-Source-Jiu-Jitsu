@@ -1,7 +1,7 @@
 defmodule FosBjjWeb.TechniqueTreeLive do
   use FosBjjWeb, :live_view
 
-  alias FosBjj.JiuJitsu.{Orientation, Position, SubPosition, Technique, TechniqueSubPosition}
+  alias FosBjj.JiuJitsu.{Position, SubPosition, Technique}
   alias FosBjjWeb.CoreComponents
   import FosBjjWeb.Components.ScrollArea
   require Ash.Query
@@ -12,12 +12,7 @@ defmodule FosBjjWeb.TechniqueTreeLive do
       positions =
         Position
         |> Ash.Query.for_read(:read)
-        |> Ash.read!()
-        |> sort_by_label()
-
-      orientations =
-        Orientation
-        |> Ash.Query.for_read(:read)
+        |> Ash.Query.load(:orientations)
         |> Ash.read!()
         |> sort_by_label()
 
@@ -30,7 +25,6 @@ defmodule FosBjjWeb.TechniqueTreeLive do
       {:ok,
        socket
        |> assign(:positions, positions)
-       |> assign(:orientations, orientations)
        |> assign(:sub_positions, sub_positions)
        |> assign(:expanded_ids, MapSet.new())
        |> assign(:techniques_map, %{})}
@@ -38,7 +32,6 @@ defmodule FosBjjWeb.TechniqueTreeLive do
       {:ok,
        socket
        |> assign(:positions, [])
-       |> assign(:orientations, [])
        |> assign(:sub_positions, [])
        |> assign(:expanded_ids, MapSet.new())
        |> assign(:techniques_map, %{})}
@@ -71,7 +64,7 @@ defmodule FosBjjWeb.TechniqueTreeLive do
               click_params={%{"level" => "position", "pos" => position.name}}
             >
               <%= if expanded?(@expanded_ids, pos_id) do %>
-                <%= for orientation <- @orientations do %>
+                <%= for orientation <- sort_by_label(position.orientations) do %>
                    <% ori_id = "#{pos_id}:ori:#{orientation.name}" %>
                    <.tree_node
                       id={ori_id}
@@ -121,12 +114,12 @@ defmodule FosBjjWeb.TechniqueTreeLive do
     """
   end
 
-  attr :id, :string, required: true
-  attr :label, :string, required: true
-  attr :expanded, :boolean, required: true
-  attr :level, :integer, default: 0
-  attr :click_params, :map, required: true
-  slot :inner_block
+  attr(:id, :string, required: true)
+  attr(:label, :string, required: true)
+  attr(:expanded, :boolean, required: true)
+  attr(:level, :integer, default: 0)
+  attr(:click_params, :map, required: true)
+  slot(:inner_block)
 
   def tree_node(assigns) do
     ~H"""
@@ -144,9 +137,9 @@ defmodule FosBjjWeb.TechniqueTreeLive do
         style={"padding-left: #{@level * 0.75 + 0.5}rem"}
       >
         <%= if @expanded do %>
-           <CoreComponents.icon name="hero-minus" class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content" />
+           <CoreComponents.icon name="hero-chevron-down" class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content" />
         <% else %>
-           <CoreComponents.icon name="hero-plus" class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content" />
+           <CoreComponents.icon name="hero-chevron-right" class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content" />
         <% end %>
         <span class="text-sm select-none">{@label}</span>
       </button>
@@ -185,17 +178,10 @@ defmodule FosBjjWeb.TechniqueTreeLive do
     if Map.has_key?(socket.assigns.techniques_map, id) do
       socket
     else
-      # 1. Get IDs from the join table (Postgres)
-      technique_ids =
-        TechniqueSubPosition
-        |> Ash.Query.filter(sub_position_name == ^sub_name)
-        |> Ash.read!()
-        |> Enum.map(& &1.technique_id)
-
-      # 2. Fetch techniques using the IDs and orientation
+      # Fetch techniques directly filtering by sub_position_name and orientation
       techniques =
         Technique
-        |> Ash.Query.filter(id in ^technique_ids)
+        |> Ash.Query.filter(sub_position_name == ^sub_name)
         |> Ash.Query.filter(orientation_name == ^ori_name)
         |> Ash.read!()
         |> sort_by_name()
@@ -205,14 +191,19 @@ defmodule FosBjjWeb.TechniqueTreeLive do
   end
 
   defp construct_id(%{"level" => "position", "pos" => pos}), do: "pos:#{pos}"
-  defp construct_id(%{"level" => "orientation", "pos" => pos, "ori" => ori}), do: "pos:#{pos}:ori:#{ori}"
-  defp construct_id(%{"level" => "sub_position", "pos" => pos, "ori" => ori, "sub" => sub}), do: "pos:#{pos}:ori:#{ori}:sub:#{sub}"
+
+  defp construct_id(%{"level" => "orientation", "pos" => pos, "ori" => ori}),
+    do: "pos:#{pos}:ori:#{ori}"
+
+  defp construct_id(%{"level" => "sub_position", "pos" => pos, "ori" => ori, "sub" => sub}),
+    do: "pos:#{pos}:ori:#{ori}:sub:#{sub}"
+
   defp construct_id(_), do: ""
 
   defp expanded?(set, id), do: MapSet.member?(set, id)
 
-  defp filter_sub_positions(sub_positions, pos_name) do
-    Enum.filter(sub_positions, fn sp -> sp.position_name == pos_name end)
+  defp filter_sub_positions(sub_positions, position_name) do
+    Enum.filter(sub_positions, fn sp -> sp.position_name == position_name end)
   end
 
   defp get_techniques(map, id) do

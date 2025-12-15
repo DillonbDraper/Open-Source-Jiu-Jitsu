@@ -36,7 +36,6 @@ defmodule FosBjjWeb.Router do
       #
       # If an authenticated user must *not* be present:
       # on_mount {FosBjjWeb.LiveUserAuth, :live_no_user}
-      live("/techniques/new", TechniqueLive.NewTechniqueForm, :new_technique_form)
       live("/videos/new", VideoLive.NewVideoForm, :new_video_form)
     end
   end
