@@ -5,91 +5,95 @@ defmodule FosBjj.JiuJitsu.Technique do
     data_layer: AshPostgres.DataLayer
 
   postgres do
-    table "techniques"
-    repo FosBjj.Repo
+    table("techniques")
+    repo(FosBjj.Repo)
   end
 
   actions do
-    defaults [:read, :destroy]
+    defaults([:read, :destroy])
 
     create :create do
-      accept [:name, :orientation_name, :sub_position_name]
+      accept([:name, :orientation_name, :sub_position_name])
 
-      change relate_actor(:created_by)
-      change relate_actor(:updated_by)
+      change(relate_actor(:created_by))
+      change(relate_actor(:updated_by))
     end
 
     update :update do
-      accept [:name, :orientation_name, :sub_position_name]
+      accept([:name, :orientation_name, :sub_position_name])
 
-      change relate_actor(:updated_by)
+      change(relate_actor(:updated_by))
     end
   end
 
   attributes do
-    integer_primary_key :id
+    integer_primary_key(:id)
 
     attribute :name, :string do
-      allow_nil? false
-      public? true
+      allow_nil?(false)
+      public?(true)
     end
 
     attribute :orientation_name, :string do
-      allow_nil? true
-      public? true
+      allow_nil?(true)
+      public?(true)
     end
 
     attribute :sub_position_name, :string do
-      allow_nil? false
-      public? true
+      allow_nil?(false)
+      public?(true)
     end
 
-    create_timestamp :inserted_at
-    update_timestamp :updated_at
+    create_timestamp(:inserted_at)
+    update_timestamp(:updated_at)
   end
 
   relationships do
     # Many-to-many to Position through join table
     many_to_many :positions, FosBjj.JiuJitsu.Position do
-      through FosBjj.JiuJitsu.TechniquePosition
-      source_attribute :id
-      source_attribute_on_join_resource :technique_id
-      destination_attribute :name
-      destination_attribute_on_join_resource :position_name
-      public? true
+      through(FosBjj.JiuJitsu.TechniquePosition)
+      source_attribute(:id)
+      source_attribute_on_join_resource(:technique_id)
+      destination_attribute(:name)
+      destination_attribute_on_join_resource(:position_name)
+      public?(true)
     end
 
     belongs_to :sub_position, FosBjj.JiuJitsu.SubPosition do
-      source_attribute :sub_position_name
-      destination_attribute :name
-      attribute_type :string
-      public? true
+      source_attribute(:sub_position_name)
+      destination_attribute(:name)
+      attribute_type(:string)
+      public?(true)
     end
 
     belongs_to :orientation, FosBjj.JiuJitsu.Orientation do
-      source_attribute :orientation_name
-      destination_attribute :name
-      attribute_type :string
-      public? true
+      source_attribute(:orientation_name)
+      destination_attribute(:name)
+      attribute_type(:string)
+      public?(true)
     end
 
     # One technique can have many videos
-    has_many :videos, FosBjj.JiuJitsu.Video do
-      destination_attribute :technique_id
-      public? true
+    many_to_many :videos, FosBjj.JiuJitsu.Video do
+      through(FosBjj.JiuJitsu.VideoTechnique)
+      source_attribute(:id)
+      source_attribute_on_join_resource(:technique_id)
+      destination_attribute(:id)
+      destination_attribute_on_join_resource(:video_id)
+      public?(true)
     end
 
     # User tracking
     belongs_to :created_by, FosBjj.Accounts.User do
-      attribute_type :integer
-      allow_nil? true
-      public? true
+      attribute_type(:integer)
+      allow_nil?(true)
+      public?(true)
     end
 
     belongs_to :updated_by, FosBjj.Accounts.User do
-      attribute_type :integer
-      allow_nil? true
-      public? true
+      attribute_type(:integer)
+      allow_nil?(true)
+      public?(true)
     end
   end
 end

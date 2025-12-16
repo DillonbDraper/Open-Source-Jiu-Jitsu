@@ -10,21 +10,12 @@ defmodule FosBjjWeb.DatabaseLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    if connected?(socket) do
-      {:ok,
-       socket
-       |> assign(:videos, [])
-       |> assign(:total_videos, 0)
-       |> assign(:current_page, 1)
-       |> assign(:selected_technique_id, nil)}
-    else
-      {:ok,
-       socket
-       |> assign(:videos, [])
-       |> assign(:total_videos, 0)
-       |> assign(:current_page, 1)
-       |> assign(:selected_technique_id, nil)}
-    end
+    {:ok,
+     socket
+     |> assign(:videos, [])
+     |> assign(:total_videos, 0)
+     |> assign(:current_page, 1)
+     |> assign(:selected_technique_id, nil)}
   end
 
   @impl true
@@ -49,7 +40,7 @@ defmodule FosBjjWeb.DatabaseLive do
 
     page_result =
       query
-      |> Ash.Query.load(:technique)
+      |> Ash.Query.load(:techniques)
       |> Ash.read!(page: [limit: 10, offset: offset, count: true])
 
     {:noreply,
@@ -62,7 +53,11 @@ defmodule FosBjjWeb.DatabaseLive do
 
   @impl true
   def handle_event("pagination", %{"action" => "select", "page" => page}, socket) do
-    params = if socket.assigns.selected_technique_id, do: [technique_id: socket.assigns.selected_technique_id], else: []
+    params =
+      if socket.assigns.selected_technique_id,
+        do: [technique_id: socket.assigns.selected_technique_id],
+        else: []
+
     params = params ++ [page: page]
 
     {:noreply, push_patch(socket, to: ~p"/database?#{params}")}
@@ -102,7 +97,7 @@ defmodule FosBjjWeb.DatabaseLive do
                 <.card class="h-full flex flex-col">
                   <.card_media src={video.thumbnail_url} alt="Thumbnail" class="aspect-video object-cover" />
                   <.card_content class="flex-1">
-                    <h3 class="font-bold text-lg mb-2">{video.technique.name}</h3>
+                    <h3 class="font-bold text-lg mb-2">{video.title}</h3>
                     <p class="text-sm text-base-content/70 line-clamp-3">{video.description}</p>
                   </.card_content>
                 </.card>

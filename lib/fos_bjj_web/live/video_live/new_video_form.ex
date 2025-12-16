@@ -23,7 +23,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
      |> assign(:form, form)
      |> assign(:techniques, techniques)
      |> assign(:grips, grips)
-     |> assign(:selected_technique_id, nil)
+     |> assign(:selected_techniques, [])
      |> assign(:selected_grips, [])
      |> assign(:combobox_version, 0)
      |> assign(:show_drawer, false)}
@@ -31,13 +31,8 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
 
   @impl true
   def handle_event("validate", %{"video" => params}, socket) do
-    selected_technique_id =
-      case Map.get(params, "technique_id") do
-        "" -> nil
-        nil -> nil
-        value when is_binary(value) -> String.to_integer(value)
-        value -> value
-      end
+    selected_techniques =
+      Map.get(params, "techniques", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
 
     selected_grips =
       Map.get(params, "grips", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
@@ -48,16 +43,19 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     {:noreply,
      socket
      |> assign(:form, form)
-     |> assign(:selected_technique_id, selected_technique_id)
+     |> assign(:selected_techniques, selected_techniques)
      |> assign(:selected_grips, selected_grips)}
   end
 
   @impl true
   def handle_event("save", %{"video" => params}, socket) do
     selected_grips = socket.assigns.selected_grips
+    selected_techniques = socket.assigns.selected_techniques
     current_user = socket.assigns[:current_user]
 
-    params_with_relationships = Map.put(params, "grips", selected_grips)
+    params_with_relationships =
+      Map.put(params, "grips", selected_grips)
+      |> Map.put("techniques", selected_techniques)
 
     # Use before_submit to manage relationships manually
     before_submit = fn changeset ->
@@ -65,6 +63,9 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
         changeset,
         :grips,
         selected_grips,
+        type: :append_and_remove
+      )
+      |> Ash.Changeset.manage_relationship(:techniques, selected_techniques,
         type: :append_and_remove
       )
     end
@@ -81,9 +82,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
          |> push_navigate(to: ~p"/")}
 
       {:error, form} ->
-        IO.puts("HELLO")
-        IO.inspect(form)
-
         {:noreply,
          socket
          |> put_flash(:error, "Something went wrong")
@@ -103,10 +101,16 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
 
   @impl true
   def handle_info({NewTechniqueForm, {:technique_created, technique}}, socket) do
-    # Update the form to select the new technique
+    current_technique_ids =
+      socket.assigns.form.params
+      |> Map.get("techniques", [])
+      |> List.wrap()
+
+    new_technique_ids = [to_string(technique.id) | current_technique_ids]
+
     params =
       socket.assigns.form.params
-      |> Map.put("technique_id", to_string(technique.id))
+      |> Map.put("techniques", new_technique_ids)
 
     form =
       AshPhoenix.Form.validate(socket.assigns.form, params, actor: socket.assigns[:current_user])
@@ -114,7 +118,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     {:noreply,
      socket
      |> assign(:techniques, [technique | socket.assigns.techniques])
-     |> assign(:selected_technique_id, technique.id)
+     |> assign(:selected_techniques, new_technique_ids)
      |> assign(:form, form)
      |> assign(:show_drawer, false)
      |> update(:combobox_version, &((&1 || 0) + 1))
@@ -142,6 +146,14 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
             placeholder="https://youtube.com/watch?v=..."
             required
           />
+
+          <.text_field
+            field={@form[:title]}
+            label="Video Title"
+            placeholder="Title of video"
+            required
+            />
+
 
           <.textarea_field
             field={@form[:description]}
@@ -183,11 +195,12 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
             <div class="col-span-2">
               <.combobox
                 id={"technique-select-#{@combobox_version || 0}"}
-                name="video[technique_id]"
+                name="video[techniques][]"
                 label="Technique"
-                value={@selected_technique_id && to_string(@selected_technique_id)}
+                value={@selected_techniques}
                 placeholder="Search for a technique..."
                 searchable={true}
+                multiple={true}
                 size="extra_large"
                 required
               >

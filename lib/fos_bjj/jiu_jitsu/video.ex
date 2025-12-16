@@ -13,12 +13,12 @@ defmodule FosBjj.JiuJitsu.Video do
     defaults([:destroy])
 
     read :read do
-      primary? true
-      pagination offset?: true, countable: true
+      primary?(true)
+      pagination(offset?: true, countable: true)
     end
 
     create :create do
-      accept([:video_id, :description, :attire, :technique_id, :thumbnail_url])
+      accept([:video_id, :title, :description, :attire, :thumbnail_url])
       argument(:url, :string)
       change({FosBjj.CustomChanges.ProcessURL, url: :url})
       change(relate_actor(:created_by))
@@ -28,9 +28,9 @@ defmodule FosBjj.JiuJitsu.Video do
     update :update do
       accept([
         :video_id,
+        :title,
         :description,
         :attire,
-        :technique_id,
         :thumbnail_url
       ])
 
@@ -51,6 +51,11 @@ defmodule FosBjj.JiuJitsu.Video do
       public?(true)
     end
 
+    attribute :title, :string do
+      allow_nil?(false)
+      public?(true)
+    end
+
     attribute :description, :string do
       allow_nil?(true)
       public?(true)
@@ -62,20 +67,16 @@ defmodule FosBjj.JiuJitsu.Video do
       public?(true)
     end
 
-    attribute :technique_id, :integer do
-      allow_nil?(false)
-      public?(true)
-    end
-
     timestamps()
   end
 
   relationships do
-    belongs_to :technique, FosBjj.JiuJitsu.Technique do
-      source_attribute(:technique_id)
+    many_to_many :techniques, FosBjj.JiuJitsu.Technique do
+      through(FosBjj.JiuJitsu.VideoTechnique)
+      source_attribute(:id)
+      source_attribute_on_join_resource(:video_id)
       destination_attribute(:id)
-      attribute_type(:integer)
-      allow_nil?(false)
+      destination_attribute_on_join_resource(:technique_id)
       public?(true)
     end
 

@@ -22,6 +22,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
           as: "technique",
           actor: current_user
         )
+        |> to_form()
 
       {:ok,
        socket
@@ -124,7 +125,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         {:noreply, socket}
 
       {:error, form} ->
-        IO.inspect(form)
         {:noreply, assign(socket, form: form)}
     end
   end
