@@ -5,26 +5,26 @@ defmodule FosBjj.JiuJitsu.Grip do
     data_layer: AshPostgres.DataLayer
 
   postgres do
-    table "grips"
-    repo FosBjj.Repo
+    table("grips")
+    repo(FosBjj.Repo)
   end
 
   actions do
     read :read do
-      primary? true
+      primary?(true)
     end
   end
 
   attributes do
     attribute :name, :string do
-      allow_nil? false
-      public? true
-      primary_key? true
+      allow_nil?(false)
+      public?(true)
+      primary_key?(true)
     end
 
     attribute :label, :string do
-      allow_nil? false
-      public? true
+      allow_nil?(false)
+      public?(true)
     end
   end
 end

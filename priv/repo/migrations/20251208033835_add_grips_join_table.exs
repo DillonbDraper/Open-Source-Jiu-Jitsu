@@ -18,7 +18,9 @@ defmodule FosBjj.Repo.Migrations.AddGripsJoinTable do
           name: "technique_grips_technique_id_fkey",
           type: :bigint,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
 
       add(:grip_name, :text, null: false)
 

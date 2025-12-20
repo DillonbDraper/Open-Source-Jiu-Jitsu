@@ -20,7 +20,9 @@ defmodule FosBjj.Repo.Migrations.AddVideosAndMigrateGrips do
           name: "videos_technique_id_fkey",
           type: :bigint,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
 
       add(:inserted_at, :utc_datetime_usec,
         null: false,
@@ -43,7 +45,9 @@ defmodule FosBjj.Repo.Migrations.AddVideosAndMigrateGrips do
           name: "video_grips_video_id_fkey",
           type: :bigint,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
 
       add(:grip_name, :text, null: false)
 

@@ -10,10 +10,13 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
     else
       positions =
         FosBjj.JiuJitsu.Position
-        |> Ash.Query.load(:orientations)
+        |> Ash.Query.load([:orientations, :actions])
         |> Ash.read!()
 
-      sub_positions = Ash.read!(FosBjj.JiuJitsu.SubPosition)
+      sub_positions =
+        FosBjj.JiuJitsu.SubPosition
+        |> Ash.read!()
+
       orientations = Ash.read!(FosBjj.JiuJitsu.Orientation)
       current_user = socket.assigns[:current_user]
 
@@ -33,9 +36,11 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
        |> assign(:selected_position, nil)
        |> assign(:selected_sub_position, nil)
        |> assign(:selected_orientation, nil)
+       |> assign(:selected_action, nil)
        |> assign(:child_fields_disabled, true)
        |> assign(:available_orientations, [])
-       |> assign(:available_sub_positions, [])}
+       |> assign(:available_sub_positions, [])
+       |> assign(:available_actions, [])}
     end
   end
 
@@ -51,6 +56,14 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
     selected_sub_position =
       Map.get(params, "sub_position_name")
+      |> case do
+        "" -> nil
+        nil -> nil
+        value -> value
+      end
+
+    selected_action =
+      Map.get(params, "action_name")
       |> case do
         "" -> nil
         nil -> nil
@@ -76,7 +89,24 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         nil
       end
 
-    updated_params = Map.put(params, "sub_position_name", final_sub_position)
+    # Filter actions to only show those belonging to selected position
+    available_actions =
+      get_available_actions(socket.assigns.positions, selected_position)
+
+    # Remove action if it is no longer valid for the selected position
+    valid_action_names = Enum.map(available_actions, & &1.name)
+
+    final_action =
+      if selected_action in valid_action_names do
+        selected_action
+      else
+        nil
+      end
+
+    updated_params =
+      params
+      |> Map.put("sub_position_name", final_sub_position)
+      |> Map.put("action_name", final_action)
 
     form =
       AshPhoenix.Form.validate(socket.assigns.form, updated_params,
@@ -89,9 +119,11 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
      |> assign(:selected_position, selected_position)
      |> assign(:selected_sub_position, final_sub_position)
      |> assign(:selected_orientation, selected_orientation)
+     |> assign(:selected_action, final_action)
      |> assign(:child_fields_disabled, child_fields_disabled)
      |> assign(:available_orientations, available_orientations)
-     |> assign(:available_sub_positions, available_sub_positions)}
+     |> assign(:available_sub_positions, available_sub_positions)
+     |> assign(:available_actions, available_actions)}
   end
 
   @impl true
@@ -157,15 +189,36 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
     end
   end
 
+  defp get_available_actions(all_positions, selected_position) do
+    if is_nil(selected_position) or selected_position == "" do
+      []
+    else
+      position = Enum.find(all_positions, fn p -> p.name == selected_position end)
+
+      if position do
+        position.actions
+      else
+        []
+      end
+    end
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
+    <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
     <div>
       <div class="mb-6">
         <h1 class="text-3xl font-bold">Add New Technique</h1>
       </div>
 
-      <.form_wrapper for={@form} id="technique-form" phx-change="validate" phx-submit="save" phx-target={@myself}>
+      <.form_wrapper
+        for={@form}
+        id="technique-form"
+        phx-change="validate"
+        phx-submit="save"
+        phx-target={@myself}
+      >
         <div class="space-y-6">
           <%!-- Technique Name --%>
           <.text_field
@@ -185,7 +238,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             size="extra_large"
           >
             <:option :for={position <- @positions} value={position.name}>
-              <%= position.label %>
+              {position.label}
             </:option>
           </.combobox>
 
@@ -195,17 +248,42 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             name="technique[sub_position_name]"
             label="Sub-Position"
             value={@selected_sub_position}
-            placeholder={if is_nil(@selected_position), do: "Select a position first", else: "Select a sub-position"}
+            placeholder={
+              if is_nil(@selected_position),
+                do: "Select a position first",
+                else: "Select a sub-position"
+            }
             disabled={is_nil(@selected_position)}
             size="extra_large"
           >
             <:option :for={sub_position <- @available_sub_positions} value={sub_position.name}>
-              <%= sub_position.label %>
+              {sub_position.label}
             </:option>
           </.combobox>
 
           <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
             Select a position to enable Subpositions
+          </p>
+
+          <%!-- Action Select --%>
+          <.combobox
+            id={"action-select-#{@selected_position || "none"}"}
+            name="technique[action_name]"
+            label="Action"
+            value={@selected_action}
+            placeholder={
+              if is_nil(@selected_position), do: "Select a position first", else: "Select an action"
+            }
+            disabled={is_nil(@selected_position)}
+            size="extra_large"
+          >
+            <:option :for={action <- @available_actions} value={action.name}>
+              {action.label}
+            </:option>
+          </.combobox>
+
+          <p :if={is_nil(@selected_position)} class="text-sm text-gray-500 mt-1">
+            Select a position to enable Actions
           </p>
 
           <%!-- Orientation Select --%>
@@ -216,9 +294,9 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
           >
             <option value="">Select orientation</option>
             <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
-              <%= @orientations
+              {@orientations
               |> Enum.find(&(&1.name == orientation_name))
-              |> then(& &1.label) %>
+              |> then(& &1.label)}
             </:option>
           </.native_select>
 
@@ -233,8 +311,9 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             </.button>
           </div>
         </div>
-      </.form_wrapper>
-    </div>
+        </.form_wrapper>
+      </div>
+    </Layouts.app>
     """
   end
 end

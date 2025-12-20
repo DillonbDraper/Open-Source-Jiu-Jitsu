@@ -1,11 +1,11 @@
-defmodule FosBjj.JiuJitsu.Position do
+defmodule FosBjj.JiuJitsu.Action do
   use Ash.Resource,
     otp_app: :fos_bjj,
     domain: FosBjj.JiuJitsu,
     data_layer: AshPostgres.DataLayer
 
   postgres do
-    table("positions")
+    table("actions")
     repo(FosBjj.Repo)
   end
 
@@ -29,27 +29,18 @@ defmodule FosBjj.JiuJitsu.Position do
   end
 
   relationships do
-    has_many :sub_positions, FosBjj.JiuJitsu.SubPosition do
+    has_many :techniques, FosBjj.JiuJitsu.Technique do
       source_attribute(:name)
-      destination_attribute(:position_name)
+      destination_attribute(:action_name)
       public?(true)
     end
 
-    many_to_many :orientations, FosBjj.JiuJitsu.Orientation do
-      through(FosBjj.JiuJitsu.PositionOrientation)
-      source_attribute(:name)
-      destination_attribute(:name)
-      source_attribute_on_join_resource(:position_name)
-      destination_attribute_on_join_resource(:orientation_name)
-      public?(true)
-    end
-
-    many_to_many :actions, FosBjj.JiuJitsu.Action do
+    many_to_many :positions, FosBjj.JiuJitsu.Position do
       through(FosBjj.JiuJitsu.ActionPosition)
       source_attribute(:name)
       destination_attribute(:name)
-      source_attribute_on_join_resource(:position_name)
-      destination_attribute_on_join_resource(:action_name)
+      source_attribute_on_join_resource(:action_name)
+      destination_attribute_on_join_resource(:position_name)
       public?(true)
     end
   end

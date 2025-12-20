@@ -13,14 +13,14 @@ defmodule FosBjj.JiuJitsu.Technique do
     defaults([:read, :destroy])
 
     create :create do
-      accept([:name, :orientation_name, :sub_position_name])
+      accept([:name, :orientation_name, :sub_position_name, :action_name])
 
       change(relate_actor(:created_by))
       change(relate_actor(:updated_by))
     end
 
     update :update do
-      accept([:name, :orientation_name, :sub_position_name])
+      accept([:name, :orientation_name, :sub_position_name, :action_name])
 
       change(relate_actor(:updated_by))
     end
@@ -41,6 +41,11 @@ defmodule FosBjj.JiuJitsu.Technique do
 
     attribute :sub_position_name, :string do
       allow_nil?(false)
+      public?(true)
+    end
+
+    attribute :action_name, :string do
+      allow_nil?(true)
       public?(true)
     end
 
@@ -68,6 +73,13 @@ defmodule FosBjj.JiuJitsu.Technique do
 
     belongs_to :orientation, FosBjj.JiuJitsu.Orientation do
       source_attribute(:orientation_name)
+      destination_attribute(:name)
+      attribute_type(:string)
+      public?(true)
+    end
+
+    belongs_to :action, FosBjj.JiuJitsu.Action do
+      source_attribute(:action_name)
       destination_attribute(:name)
       attribute_type(:string)
       public?(true)

@@ -33,7 +33,9 @@ defmodule FosBjj.Repo.Migrations.TechniquesAndJoinTables do
           name: "technique_sub_positions_technique_id_fkey",
           type: :bigint,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
 
       add(:sub_position_name, :text, null: false)
 
@@ -58,7 +60,9 @@ defmodule FosBjj.Repo.Migrations.TechniquesAndJoinTables do
           name: "technique_positions_technique_id_fkey",
           type: :bigint,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
 
       add(:position_name, :text, null: false)
 

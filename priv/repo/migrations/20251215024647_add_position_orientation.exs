@@ -16,7 +16,10 @@ defmodule FosBjj.Repo.Migrations.AddPositionOrientation do
           name: "position_orientations_position_name_fkey",
           type: :text,
           prefix: "public"
-        ), primary_key: true, null: false)
+        ),
+        primary_key: true,
+        null: false
+      )
 
       add(
         :orientation_name,
@@ -25,7 +28,10 @@ defmodule FosBjj.Repo.Migrations.AddPositionOrientation do
           name: "position_orientations_orientation_name_fkey",
           type: :text,
           prefix: "public"
-        ), primary_key: true, null: false)
+        ),
+        primary_key: true,
+        null: false
+      )
     end
   end
 

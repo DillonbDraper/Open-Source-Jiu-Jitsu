@@ -138,7 +138,8 @@ defmodule FosBjjWeb.Components.Combobox do
   end
 
   attr :rest, :global,
-    include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
+    include:
+      ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
                 multiple pattern placeholder readonly required rows size step phx-change phx-submit phx-click),
     doc:
       "Global attributes can define defaults which are merged with attributes provided by the caller"

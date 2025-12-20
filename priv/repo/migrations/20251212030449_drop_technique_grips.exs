@@ -11,12 +11,13 @@ defmodule FosBjj.Repo.Migrations.DropTechniqueGrips do
       add :id, :bigserial, null: false, primary_key: true
 
       add :technique_id,
-        references(:techniques,
-          column: :id,
-          name: "technique_grips_technique_id_fkey",
-          type: :bigint,
-          prefix: "public"
-        ), null: false
+          references(:techniques,
+            column: :id,
+            name: "technique_grips_technique_id_fkey",
+            type: :bigint,
+            prefix: "public"
+          ),
+          null: false
 
       add :grip_name, :text, null: false
 

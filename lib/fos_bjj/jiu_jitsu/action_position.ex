@@ -1,11 +1,11 @@
-defmodule FosBjj.JiuJitsu.TechniquePosition do
+defmodule FosBjj.JiuJitsu.ActionPosition do
   use Ash.Resource,
     otp_app: :fos_bjj,
     domain: FosBjj.JiuJitsu,
     data_layer: AshPostgres.DataLayer
 
   postgres do
-    table("technique_positions")
+    table("action_positions")
     repo(FosBjj.Repo)
   end
 
@@ -16,7 +16,7 @@ defmodule FosBjj.JiuJitsu.TechniquePosition do
   attributes do
     integer_primary_key(:id)
 
-    attribute :technique_id, :integer do
+    attribute :action_name, :string do
       allow_nil?(false)
       public?(true)
     end
@@ -31,10 +31,10 @@ defmodule FosBjj.JiuJitsu.TechniquePosition do
   end
 
   relationships do
-    belongs_to :technique, FosBjj.JiuJitsu.Technique do
-      source_attribute(:technique_id)
-      destination_attribute(:id)
-      attribute_type(:integer)
+    belongs_to :action, FosBjj.JiuJitsu.Action do
+      source_attribute(:action_name)
+      destination_attribute(:name)
+      attribute_type(:string)
       primary_key?(true)
       allow_nil?(false)
       public?(true)

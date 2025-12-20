@@ -152,8 +152,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
             label="Video Title"
             placeholder="Title of video"
             required
-            />
-
+          />
 
           <.textarea_field
             field={@form[:description]}
@@ -205,7 +204,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
                 required
               >
                 <:option :for={technique <- @techniques} value={to_string(technique.id)}>
-                  <%= technique.name %>
+                  {technique.name}
                 </:option>
               </.combobox>
             </div>
@@ -232,7 +231,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
             size="extra_large"
           >
             <:option :for={grip <- @grips} value={grip.name}>
-              <%= grip.label %>
+              {grip.label}
             </:option>
           </.combobox>
 

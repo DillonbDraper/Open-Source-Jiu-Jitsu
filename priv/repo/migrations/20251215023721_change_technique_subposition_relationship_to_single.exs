@@ -16,7 +16,9 @@ defmodule FosBjj.Repo.Migrations.ChangeTechniqueSubpositionRelationshipToSingle 
           name: "techniques_sub_position_name_fkey",
           type: :text,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
     end
   end
 

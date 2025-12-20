@@ -10,7 +10,7 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias FosBjj.JiuJitsu.{Grip, Position, SubPosition, Orientation, PositionOrientation}
+alias FosBjj.JiuJitsu.{Grip, Position, SubPosition, Orientation, PositionOrientation, Action, ActionPosition}
 
 # Grips
 grips = [
@@ -63,15 +63,22 @@ end
 # Position Orientations
 position_orientations = [
   # Standing
-  {"standing", "offense"}, {"standing", "defense"},
+  {"standing", "offense"},
+  {"standing", "defense"},
   # Guard, Mount, Side Control, Knee on Belly -> Top, Bottom
-  {"guard", "top"}, {"guard", "bottom"},
-  {"mount", "top"}, {"mount", "bottom"},
-  {"side_control", "top"}, {"side_control", "bottom"},
-  {"knee_on_belly", "top"}, {"knee_on_belly", "bottom"},
+  {"guard", "top"},
+  {"guard", "bottom"},
+  {"mount", "top"},
+  {"mount", "bottom"},
+  {"side_control", "top"},
+  {"side_control", "bottom"},
+  {"knee_on_belly", "top"},
+  {"knee_on_belly", "bottom"},
   # Back, Leg Entanglement -> Superior, Inferior
-  {"back", "superior"}, {"back", "inferior"},
-  {"leg_entanglement", "superior"}, {"leg_entanglement", "inferior"}
+  {"back", "superior"},
+  {"back", "inferior"},
+  {"leg_entanglement", "superior"},
+  {"leg_entanglement", "inferior"}
 ]
 
 for {pos, ori} <- position_orientations do
@@ -110,4 +117,68 @@ sub_positions = [
 
 for sub_position <- sub_positions do
   Ash.Seed.seed!(SubPosition, sub_position)
+end
+
+# Actions
+actions = [
+  %{name: "transitions", label: "Transitions"},
+  %{name: "sweeps", label: "Sweeps"},
+  %{name: "takedowns", label: "Takedowns"},
+  %{name: "submissions", label: "Submissions"},
+  %{name: "escapes", label: "Escapes"},
+  %{name: "entries", label: "Entries"},
+  %{name: "passes", label: "Passes"},
+  %{name: "reversals", label: "Reversals"}
+]
+
+for action <- actions do
+  Ash.Seed.seed!(Action, action)
+end
+
+# Action Positions - associating actions with positions
+action_positions = [
+  # Standing
+  {"standing", "takedowns"},
+  {"standing", "entries"},
+  {"standing", "transitions"},
+
+  # Guard
+  {"guard", "sweeps"},
+  {"guard", "submissions"},
+  {"guard", "transitions"},
+  {"guard", "entries"},
+  {"guard", "passes"},
+  {"guard", "escapes"},
+  {"guard", "takedowns"},
+
+  # Mount
+  {"mount", "submissions"},
+  {"mount", "transitions"},
+  {"mount", "escapes"},
+
+  # Side Control
+  {"side_control", "submissions"},
+  {"side_control", "transitions"},
+  {"side_control", "escapes"},
+
+  # Back
+  {"back", "submissions"},
+  {"back", "transitions"},
+  {"back", "escapes"},
+  {"back", "entries"},
+
+  # Knee-on-Belly
+  {"knee_on_belly", "submissions"},
+  {"knee_on_belly", "transitions"},
+  {"knee_on_belly", "escapes"},
+
+  # Leg Entanglement
+  {"leg_entanglement", "submissions"},
+  {"leg_entanglement", "transitions"},
+  {"leg_entanglement", "escapes"},
+  {"leg_entanglement", "entries"}
+]
+
+for {pos, action} <- action_positions do
+  Ash.Seed.seed!(ActionPosition, %{position_name: pos, action_name: action})
 end

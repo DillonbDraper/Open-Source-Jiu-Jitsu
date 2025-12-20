@@ -42,7 +42,7 @@ defmodule FosBjj.JiuJitsu.SubPosition do
 
     has_many :techniques, FosBjj.JiuJitsu.Technique do
       source_attribute(:name)
-      destination_attribute(:id)
+      destination_attribute(:sub_position_name)
       public?(true)
     end
   end

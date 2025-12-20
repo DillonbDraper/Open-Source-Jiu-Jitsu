@@ -18,7 +18,9 @@ defmodule FosBjj.Repo.Migrations.FixTypoInLastMigration do
           name: "video_techniques_video_id_fkey",
           type: :bigint,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
 
       add(
         :technique_id,
@@ -27,7 +29,9 @@ defmodule FosBjj.Repo.Migrations.FixTypoInLastMigration do
           name: "video_techniques_technique_id_fkey",
           type: :bigint,
           prefix: "public"
-        ), null: false)
+        ),
+        null: false
+      )
 
       add(:inserted_at, :utc_datetime_usec,
         null: false,

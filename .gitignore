@@ -7,3 +7,4 @@ _build
 config/runtime.exs
 .vscode
 .cursor
+deps/
