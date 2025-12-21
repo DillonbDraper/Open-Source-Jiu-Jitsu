@@ -104,30 +104,36 @@ defmodule FosBjjWeb.DatabaseLive do
           <% else %>
             <div class="flex flex-col gap-4 p-4">
               <%= for video <- @videos do %>
-                <.card class="h-full flex flex-col">
-                  <.card_media
-                    src={video.thumbnail_url}
-                    alt="Thumbnail"
-                    class="aspect-video object-cover"
-                  />
-                  <.card_content class="flex-1 p-6">
-                    <.h3 font_weight="font-bold" class="mb-2">{video.title}</.h3>
-                    <.p size="extra_small" class="text-base-content/70 line-clamp-3 mb-3">{video.description}</.p>
-                    <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-base-200">
-                      <%= for technique <- video.techniques do %>
-                        <.button
-                          phx-click="select_technique"
-                          phx-value-technique-id={technique.id}
-                          size="extra_small"
-                          color="primary"
-                          rounded="full"
-                          variant="default"
-                        >
-                          {technique.name}
-                        </.button>
-                      <% end %>
-                    </div>
-                  </.card_content>
+                <.card class="h-full flex flex-col cursor-pointer hover:shadow-xl transition-shadow group">
+                  <.link navigate={~p"/videos/#{video.id}"} class="contents">
+                    <.card_media
+                      src={video.thumbnail_url}
+                      alt="Thumbnail"
+                      class="aspect-video object-cover group-hover:opacity-90 transition-opacity"
+                    />
+                    <.card_content class="flex-1 p-6">
+                      <.h3 font_weight="font-bold" class="mb-2 group-hover:text-primary transition-colors">
+                        {video.title}
+                      </.h3>
+                      <.p size="extra_small" class="text-base-content/70 line-clamp-3 mb-3">
+                        {video.description}
+                      </.p>
+                      <div class="flex flex-wrap gap-2 mt-auto pt-3 border-t border-base-200">
+                        <%= for technique <- video.techniques do %>
+                          <.button
+                            phx-click="select_technique"
+                            phx-value-technique-id={technique.id}
+                            size="extra_small"
+                            color="primary"
+                            rounded="full"
+                            variant="default"
+                          >
+                            {technique.name}
+                          </.button>
+                        <% end %>
+                      </div>
+                    </.card_content>
+                  </.link>
                 </.card>
               <% end %>
             </div>
