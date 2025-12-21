@@ -206,10 +206,9 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
     <div>
       <div class="mb-6">
-        <h1 class="text-3xl font-bold">Add New Technique</h1>
+        <h2 class="text-2xl font-bold">Add New Technique</h2>
       </div>
 
       <.form_wrapper
@@ -311,9 +310,8 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             </.button>
           </div>
         </div>
-        </.form_wrapper>
-      </div>
-    </Layouts.app>
+      </.form_wrapper>
+    </div>
     """
   end
 end

@@ -7,12 +7,14 @@ defmodule FosBjjWeb.VideoShowLive do
   import FosBjjWeb.Components.Button
   require Ash.Query
 
+  on_mount {FosBjjWeb.LiveUserAuth, :live_user_optional}
+
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     video =
       Video
       |> Ash.Query.filter(id == ^id)
-      |> Ash.Query.load(:techniques)
+      |> Ash.Query.load([:techniques, :grips])
       |> Ash.read_one!()
 
     case video do
@@ -93,25 +95,43 @@ defmodule FosBjjWeb.VideoShowLive do
                 </span>
               </div>
 
-              <%= if @video.techniques && @video.techniques != [] do %>
-                <div class="border-t border-base-200 pt-4">
-                  <h3 class="text-sm font-medium text-base-content/70 mb-2">Related Techniques</h3>
-                  <div class="flex flex-wrap gap-2">
-                    <%= for technique <- @video.techniques do %>
-                      <.button
-                        phx-click="select_technique"
-                        phx-value-technique-id={technique.id}
-                        size="extra_small"
-                        color="primary"
-                        rounded="full"
-                        variant="default"
-                      >
-                        {technique.name}
-                      </.button>
-                    <% end %>
+              <div class="border-t border-base-200 pt-4 space-y-3">
+                <%= if @video.techniques && @video.techniques != [] do %>
+                  <div class="flex items-start gap-2">
+                    <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                      Techniques
+                    </span>
+                    <div class="flex flex-wrap gap-2">
+                      <%= for technique <- @video.techniques do %>
+                        <.button
+                          phx-click="select_technique"
+                          phx-value-technique-id={technique.id}
+                          size="extra_small"
+                          color="primary"
+                          rounded="full"
+                          variant="default"
+                        >
+                          {technique.name}
+                        </.button>
+                      <% end %>
+                    </div>
                   </div>
-                </div>
-              <% end %>
+                <% end %>
+                <%= if @video.grips && @video.grips != [] do %>
+                  <div class="flex items-start gap-2">
+                    <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                      Grips
+                    </span>
+                    <div class="flex flex-wrap gap-1.5">
+                      <%= for grip <- @video.grips do %>
+                        <span class="px-2 py-0.5 text-xs bg-secondary/20 text-secondary rounded-full border border-secondary/30">
+                          {grip.label}
+                        </span>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
             </.card_content>
           </.card>
         </div>
