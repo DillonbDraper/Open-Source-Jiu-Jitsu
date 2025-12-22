@@ -2,7 +2,6 @@ defmodule FosBjjWeb.DatabaseLive do
   use FosBjjWeb, :live_view
 
   alias FosBjj.JiuJitsu.Video
-  alias FosBjjWeb.CoreComponents
   import FosBjjWeb.Components.ScrollArea
   import FosBjjWeb.Components.Card
   import FosBjjWeb.Components.Pagination
@@ -45,7 +44,7 @@ defmodule FosBjjWeb.DatabaseLive do
 
     page_result =
       query
-      |> Ash.Query.load([:techniques, :grips])
+      |> Ash.Query.load(techniques: [:video_count], grips: [])
       |> Ash.read!(page: [limit: 10, offset: offset, count: true])
 
     {:noreply,
@@ -77,13 +76,12 @@ defmodule FosBjjWeb.DatabaseLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-      <div class="flex flex-row h-[calc(100vh-8rem)] gap-4">
-        <!-- Left Side: Video List (50-60%) -->
-        <div class="w-3/5 min-w-[50%] h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+    <Layouts.app flash={@flash} current_user={assigns[:current_user]} full_width={true}>
+      <div class="flex flex-row justify-evenly gap-8 h-[calc(100vh-8rem)]">
+        <!-- Left Side: Video List -->
+        <div class="w-3/5 h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
           <div class="p-4 border-b border-base-200 bg-base-200/50">
             <div class="flex items-center gap-2">
-              <CoreComponents.icon name="hero-film" class="w-6 h-6" />
               <.h2 class="flex items-center gap-2" font_weight="font-bold">
                 <%= if @selected_technique_id do %>
                   Videos
@@ -100,42 +98,41 @@ defmodule FosBjjWeb.DatabaseLive do
           <.scroll_area id="video-scroll" class="flex-1 w-full" height="h-full">
             <%= if @videos == [] do %>
               <div class="flex flex-col items-center justify-center h-full p-8 text-base-content/50">
-                <CoreComponents.icon name="hero-film" class="w-16 h-16 mb-4 opacity-20" />
                 <.p size="large">No videos found</.p>
               </div>
             <% else %>
-              <div class="flex flex-col gap-4 p-4">
+              <div class="flex flex-col gap-3 p-4">
                 <%= for video <- @videos do %>
                   <.card class="h-full flex flex-col">
                     <div class="contents">
                       <.link
-                        navigate={~p"/videos/#{video.id}"}
+                      navigate={~p"/videos/#{video.id}"}
                         class="cursor-pointer hover:shadow-xl transition-shadow group"
                       >
                         <.card_media
                           src={video.thumbnail_url}
                           alt="Thumbnail"
-                          class="aspect-video object-cover group-hover:opacity-90 transition-opacity"
+                          class="object-contain group-hover:opacity-90 transition-opacity"
                         />
-                        <.card_content class="flex-1 p-6">
+                        <.card_content class="flex-1 p-3">
                           <.h3
                             font_weight="font-bold"
-                            class="mb-2 group-hover:text-primary transition-colors"
+                            class="mb-1 group-hover:text-primary transition-colors text-base"
                           >
                             {video.title}
                           </.h3>
                         </.card_content>
                       </.link>
-                      <.p size="extra_small" class="text-base-content/70 line-clamp-3 mb-3 ml-2">
+                      <.p size="extra_small" class="text-base-content/70 line-clamp-2 mb-2 ml-3">
                         {video.description}
                       </.p>
-                      <div class="mt-auto ml-2 pt-3 border-t border-base-200 space-y-3">
+                      <div class="mt-auto ml-3 mb-3 pt-2 border-t border-base-200 space-y-2">
                         <%= if video.techniques && video.techniques != [] do %>
                           <div class="flex items-start gap-2">
                             <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
                               Techniques
                             </span>
-                            <div class="flex flex-wrap gap-2">
+                            <div class="flex flex-wrap gap-1.5">
                               <%= for technique <- video.techniques do %>
                                 <.button
                                   phx-click="select_technique"
@@ -146,13 +143,16 @@ defmodule FosBjjWeb.DatabaseLive do
                                   variant="default"
                                 >
                                   {technique.name}
+                                  <span class="text-xs opacity-70 ml-1">
+                                    ({technique.video_count})
+                                  </span>
                                 </.button>
                               <% end %>
                             </div>
                           </div>
                         <% end %>
                         <%= if video.grips && video.grips != [] do %>
-                          <div class="flex items-start gap-2 mb-2">
+                          <div class="flex items-start gap-2">
                             <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
                               Grips
                             </span>
@@ -184,8 +184,8 @@ defmodule FosBjjWeb.DatabaseLive do
           <% end %>
         </div>
 
-    <!-- Right Side: Technique Tree (40-50%) -->
-        <div class="w-2/5 flex-1 h-full">
+    <!-- Right Side: Technique Tree -->
+        <div class="w-2/5 h-full">
           <.live_component
             module={FosBjjWeb.TechniqueTreeComponent}
             id="technique-tree"

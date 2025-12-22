@@ -1,11 +1,10 @@
 * This is a list of features/enhancements necessary for MVP
 - Enhance card list to not be ugly as hell
   - Address black bars from thumbnails is possible - probably not possible
-  - Show tagged grips under selection
-- Set up more grips
 - Enhance technique tree select.  Include searchbox to ignore nav system, attire radio buttons, and better styling (borders?)
-- Create a video/technique playing page.  Determine if we should organize URL guide by video+technique id (from card list) or just video id
 - Actually set up email client/test creating users.
+- System for counts in each place within the tech tree.  Research efficiency of live queries vs job-based aggregation.
+- Header above Card List/Video explaining current content.
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
 - Adequate seed database of techniques/videos

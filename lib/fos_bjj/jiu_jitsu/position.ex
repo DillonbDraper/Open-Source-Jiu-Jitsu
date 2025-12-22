@@ -28,6 +28,10 @@ defmodule FosBjj.JiuJitsu.Position do
     end
   end
 
+  aggregates do
+    count :video_count, [:sub_positions, :techniques, :videos]
+  end
+
   relationships do
     has_many :sub_positions, FosBjj.JiuJitsu.SubPosition do
       source_attribute(:name)

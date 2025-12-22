@@ -53,8 +53,12 @@ defmodule FosBjj.JiuJitsu.Technique do
     update_timestamp(:updated_at)
   end
 
+  aggregates do
+    count(:video_count, :videos)
+  end
+
   relationships do
-    # Many-to-many to Position through join table
+    # Unsure if this is necessary, maybe just a belongs_to makes more sense
     many_to_many :positions, FosBjj.JiuJitsu.Position do
       through(FosBjj.JiuJitsu.TechniquePosition)
       source_attribute(:id)
@@ -85,7 +89,7 @@ defmodule FosBjj.JiuJitsu.Technique do
       public?(true)
     end
 
-    # One technique can have many videos
+    # One technique can have many videos and vice-versa
     many_to_many :videos, FosBjj.JiuJitsu.Video do
       through(FosBjj.JiuJitsu.VideoTechnique)
       source_attribute(:id)

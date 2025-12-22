@@ -91,12 +91,12 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
 
   @impl true
   def handle_event("open_drawer", _, socket) do
-    {:noreply, assign(socket, show_drawer: true)}
+    {:noreply, assign(socket, :show_drawer, true)}
   end
 
   @impl true
   def handle_event("close_drawer", _, socket) do
-    {:noreply, assign(socket, show_drawer: false)}
+    {:noreply, assign(socket, :show_drawer, false)}
   end
 
   @impl true
@@ -213,7 +213,10 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
                 <.button
                   type="button"
                   class="w-full"
-                  phx-click="open_drawer"
+                  phx-click={
+                    JS.push("open_drawer")
+                    |> show_drawer("technique-drawer", "right")
+                  }
                   title="Add New Technique"
                 >
                   Add New Technique (If Not Found)
@@ -251,7 +254,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
       <.drawer
         id="technique-drawer"
         show={@show_drawer}
-        on_hide={JS.push("close_drawer")}
+        on_hide={JS.push("close_drawer") |> hide_drawer("technique-drawer", "right")}
         position="right"
         title="Add New Technique"
       >

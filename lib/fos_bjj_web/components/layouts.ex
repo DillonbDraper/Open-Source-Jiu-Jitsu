@@ -32,6 +32,10 @@ defmodule FosBjjWeb.Layouts do
     default: nil,
     doc: "the currently authenticated user, if any"
 
+  attr :full_width, :boolean,
+    default: false,
+    doc: "whether to use full width layout instead of max-w-2xl constraint"
+
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -81,7 +85,10 @@ defmodule FosBjjWeb.Layouts do
     </.navbar>
 
     <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+      <div class={[
+        "mx-auto space-y-4",
+        if(@full_width, do: "max-w-full", else: "max-w-2xl")
+      ]}>
         {render_slot(@inner_block)}
       </div>
     </main>

@@ -80,7 +80,6 @@ defmodule FosBjj.JiuJitsu.Video do
       public?(true)
     end
 
-    # Many-to-many to Grip through join table
     many_to_many :grips, FosBjj.JiuJitsu.Grip do
       through(FosBjj.JiuJitsu.VideoGrip)
       source_attribute(:id)
@@ -90,7 +89,6 @@ defmodule FosBjj.JiuJitsu.Video do
       public?(true)
     end
 
-    # User tracking
     belongs_to :created_by, FosBjj.Accounts.User do
       attribute_type(:integer)
       allow_nil?(true)

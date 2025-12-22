@@ -21,13 +21,14 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       positions =
         Position
         |> Ash.Query.for_read(:read)
-        |> Ash.Query.load([:orientations, :actions])
+        |> Ash.Query.load([:orientations, :actions, :video_count])
         |> Ash.read!()
         |> sort_by_label()
 
       sub_positions =
         SubPosition
         |> Ash.Query.for_read(:read)
+        |> Ash.Query.load(:video_count)
         |> Ash.read!()
         |> sort_by_label()
 
@@ -36,7 +37,8 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
        |> assign(:positions, positions)
        |> assign(:sub_positions, sub_positions)
        |> assign_new(:expanded_ids, fn -> MapSet.new() end)
-       |> assign_new(:techniques_map, fn -> %{} end)}
+       |> assign_new(:techniques_map, fn -> %{} end)
+       |> assign_new(:counts_map, fn -> %{} end)}
     end
   end
 
@@ -60,6 +62,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
             <.tree_node
               id={pos_id}
               label={position.label}
+              count={position.video_count}
               expanded={expanded?(@expanded_ids, pos_id)}
               level={0}
               click_params={%{"level" => "position", "pos" => position.name}}
@@ -71,6 +74,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                   <.tree_node
                     id={ori_id}
                     label={orientation.label}
+                    count={get_count(@counts_map, ori_id)}
                     expanded={expanded?(@expanded_ids, ori_id)}
                     level={1}
                     click_params={
@@ -84,6 +88,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                         <.tree_node
                           id={sub_id}
                           label={sub_pos.label}
+                          count={sub_pos.video_count}
                           expanded={expanded?(@expanded_ids, sub_id)}
                           level={2}
                           click_params={
@@ -102,6 +107,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                               <.tree_node
                                 id={action_id}
                                 label={action.label}
+                                count={get_count(@counts_map, action_id)}
                                 expanded={expanded?(@expanded_ids, action_id)}
                                 level={3}
                                 click_params={
@@ -132,7 +138,12 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                                               "bg-primary/10 text-primary"
                                           ]}
                                         >
-                                          {technique.name}
+                                          <span class="flex-1">{technique.name}</span>
+                                          <%= if technique.video_count > 0 do %>
+                                            <span class="text-xs opacity-60 ml-1">
+                                              ({technique.video_count})
+                                            </span>
+                                          <% end %>
                                         </.link>
                                       <% end %>
                                       <%= if Enum.empty?(techniques) do %>
@@ -162,6 +173,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
 
   attr(:id, :string, required: true)
   attr(:label, :string, required: true)
+  attr(:count, :integer, default: nil)
   attr(:expanded, :boolean, required: true)
   attr(:level, :integer, default: 0)
   attr(:click_params, :map, required: true)
@@ -196,7 +208,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
             class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content"
           />
         <% end %>
-        <span class="text-sm select-none">{@label}</span>
+        <span class="text-sm select-none">
+          {@label}
+          <span class="text-xs opacity-60 ml-1">({@count})</span>
+        </span>
       </button>
       <%= if @expanded do %>
         <div class="flex flex-col animate-in fade-in slide-in-from-top-1 duration-200">
@@ -217,12 +232,46 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     else
       socket = assign(socket, :expanded_ids, MapSet.put(expanded_set, id))
 
-      # If expanding an action, fetch techniques
+      # Compute counts or fetch data based on level
       socket =
-        if params["level"] == "action" do
-          maybe_fetch_techniques(socket, id, params["ori"], params["sub"], params["action"])
-        else
-          socket
+        case params["level"] do
+          "position" ->
+            # Pre-compute counts for all child orientations
+            position = find_position(socket.assigns.positions, params["pos"])
+            compute_orientation_counts(socket, position, params["pos"])
+
+          "orientation" ->
+            # Compute count for this orientation
+            count = count_videos_for_branch(params["pos"], params["ori"], nil, nil)
+            put_count(socket, id, count)
+
+          "sub_position" ->
+            # Pre-compute counts for all child actions
+            position = find_position(socket.assigns.positions, params["pos"])
+
+            compute_sub_action_counts(
+              socket,
+              position,
+              params["pos"],
+              params["ori"],
+              params["sub"]
+            )
+
+          "action" ->
+            count =
+              count_videos_for_branch(
+                params["pos"],
+                params["ori"],
+                params["sub"],
+                params["action"]
+              )
+
+            socket
+            |> put_count(id, count)
+            |> maybe_fetch_techniques(id, params["ori"], params["sub"], params["action"])
+
+          _ ->
+            socket
         end
 
       {:noreply, socket}
@@ -238,11 +287,79 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         |> Ash.Query.filter(sub_position_name == ^sub_name)
         |> Ash.Query.filter(orientation_name == ^ori_name)
         |> Ash.Query.filter(action_name == ^action_name)
+        |> Ash.Query.load(:video_count)
         |> Ash.read!()
         |> sort_by_name()
 
       assign(socket, :techniques_map, Map.put(socket.assigns.techniques_map, id, techniques))
     end
+  end
+
+  defp count_videos_for_branch(position_name, orientation_name, sub_position_name, action_name) do
+    import Ecto.Query
+
+    query =
+      from vt in "video_techniques",
+        join: t in "techniques",
+        on: vt.technique_id == t.id,
+        join: sp in "sub_positions",
+        on: sp.name == t.sub_position_name,
+        where: sp.position_name == ^position_name,
+        select: count(vt.video_id, :distinct)
+
+    query =
+      if orientation_name,
+        do: where(query, [vt, t], t.orientation_name == ^orientation_name),
+        else: query
+
+    query =
+      if sub_position_name,
+        do: where(query, [vt, t], t.sub_position_name == ^sub_position_name),
+        else: query
+
+    query =
+      if action_name,
+        do: where(query, [vt, t], t.action_name == ^action_name),
+        else: query
+
+    FosBjj.Repo.one(query) || 0
+  end
+
+  defp put_count(socket, id, count) do
+    counts_map = socket.assigns.counts_map
+    assign(socket, :counts_map, Map.put(counts_map, id, count))
+  end
+
+  defp compute_orientation_counts(socket, position, position_name) do
+    # Compute counts for all orientations under this position
+    Enum.reduce(position.orientations, socket, fn orientation, acc_socket ->
+      ori_id = "pos:#{position_name}:ori:#{orientation.name}"
+      count = count_videos_for_branch(position_name, orientation.name, nil, nil)
+      put_count(acc_socket, ori_id, count)
+    end)
+  end
+
+  defp compute_sub_action_counts(
+         socket,
+         position,
+         position_name,
+         orientation_name,
+         sub_position_name
+       ) do
+    # Compute counts for all actions under this sub_position
+    Enum.reduce(position.actions, socket, fn action, acc_socket ->
+      action_id =
+        "pos:#{position_name}:ori:#{orientation_name}:sub:#{sub_position_name}:action:#{action.name}"
+
+      count =
+        count_videos_for_branch(position_name, orientation_name, sub_position_name, action.name)
+
+      put_count(acc_socket, action_id, count)
+    end)
+  end
+
+  defp find_position(positions, position_name) do
+    Enum.find(positions, fn p -> p.name == position_name end)
   end
 
   defp construct_id(%{"level" => "position", "pos" => pos}), do: "pos:#{pos}"
@@ -270,6 +387,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     do: Enum.filter(sub_positions, fn sp -> sp.position_name == position_name end)
 
   defp get_techniques(map, id), do: Map.get(map, id, [])
+  defp get_count(map, id), do: Map.get(map, id)
   defp sort_by_label(list), do: Enum.sort_by(list, & &1.label)
   defp sort_by_name(list), do: Enum.sort_by(list, & &1.name)
 end
