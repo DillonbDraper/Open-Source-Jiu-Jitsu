@@ -44,8 +44,13 @@ defmodule FosBjjWeb.Router do
     pipe_through(:browser)
 
     get("/", PageController, :home)
-    live("/database", DatabaseLive)
-    live("/videos/:id", VideoShowLive)
+
+    # Both routes use the same parent LiveView to maintain technique tree state
+    ash_authentication_live_session :videos_dashboard_routes do
+      live("/database", VideosDashboardLive)
+      live("/videos/:id", VideosDashboardLive)
+    end
+
     get("/mission", PageController, :mission)
 
     auth_routes(AuthController, FosBjj.Accounts.User, path: "/auth")

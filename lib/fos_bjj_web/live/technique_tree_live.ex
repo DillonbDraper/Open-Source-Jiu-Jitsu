@@ -7,45 +7,55 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   require Ash.Query
 
   @impl true
-  def update(assigns, socket) do
+  def mount(socket) do
     socket =
       socket
-      |> assign(assigns)
-      |> assign_new(:target_route, fn -> "/database" end)
-      |> assign_new(:selected_technique_id, fn -> nil end)
+      |> assign(:expanded_ids, MapSet.new())
+      |> assign(:techniques_map, %{})
+      |> assign(:counts_map, %{})
 
-    # Initialize data if not present (self-contained data fetching)
-    if socket.assigns[:positions] do
-      {:ok, socket}
-    else
-      positions =
-        Position
-        |> Ash.Query.for_read(:read)
-        |> Ash.Query.load([:orientations, :actions, :video_count])
-        |> Ash.read!()
-        |> sort_by_label()
+    {:ok, socket}
+  end
 
-      sub_positions =
-        SubPosition
-        |> Ash.Query.for_read(:read)
-        |> Ash.Query.load(:video_count)
-        |> Ash.read!()
-        |> sort_by_label()
+  @impl true
+  def update(assigns, socket) do
+    # Only update specific assigns from parent, preserve internal state
+    socket =
+      socket
+      |> assign(:id, assigns.id)
+      |> assign(:selected_technique_id, assigns[:selected_technique_id])
 
-      {:ok,
-       socket
-       |> assign(:positions, positions)
-       |> assign(:sub_positions, sub_positions)
-       |> assign_new(:expanded_ids, fn -> MapSet.new() end)
-       |> assign_new(:techniques_map, fn -> %{} end)
-       |> assign_new(:counts_map, fn -> %{} end)}
-    end
+    # Load positions data only if not already loaded
+    socket =
+      if Map.has_key?(socket.assigns, :positions) do
+        socket
+      else
+        positions =
+          Position
+          |> Ash.Query.for_read(:read)
+          |> Ash.Query.load([:orientations, :actions, :video_count])
+          |> Ash.read!()
+          |> sort_by_label()
+
+        sub_positions =
+          SubPosition
+          |> Ash.Query.for_read(:read)
+          |> Ash.Query.load(:video_count)
+          |> Ash.read!()
+          |> sort_by_label()
+
+        socket
+        |> assign(:positions, positions)
+        |> assign(:sub_positions, sub_positions)
+      end
+
+    {:ok, socket}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+    <div class="max-h-[calc(50vh-4rem)] flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
       <div class="p-4 border-b border-base-200 bg-base-200/50">
         <h2 class="text-xl font-bold flex items-center gap-2">
           <CoreComponents.icon name="hero-book-open" class="w-6 h-6" /> Techniques
@@ -131,7 +141,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                                     <% else %>
                                       <%= for technique <- techniques do %>
                                         <.link
-                                          patch={"#{@target_route}?technique_id=#{technique.id}"}
+                                          patch={"/database?technique_id=#{technique.id}"}
                                           class={[
                                             "btn btn-ghost btn-xs btn-block justify-start font-normal h-auto py-1.5 px-2 text-left whitespace-normal leading-tight",
                                             @selected_technique_id == "#{technique.id}" &&

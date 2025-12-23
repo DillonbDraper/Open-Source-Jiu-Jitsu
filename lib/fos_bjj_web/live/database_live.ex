@@ -78,8 +78,8 @@ defmodule FosBjjWeb.DatabaseLive do
     ~H"""
     <Layouts.app flash={@flash} current_user={assigns[:current_user]} full_width={true}>
       <div class="flex flex-row justify-evenly gap-8 h-[calc(100vh-8rem)]">
-        <!-- Left Side: Video List -->
-        <div class="w-3/5 h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+          <!-- Left Side: Video List -->
+          <div class="w-3/5 h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
           <div class="p-4 border-b border-base-200 bg-base-200/50">
             <div class="flex items-center gap-2">
               <.h2 class="flex items-center gap-2" font_weight="font-bold">
@@ -104,29 +104,34 @@ defmodule FosBjjWeb.DatabaseLive do
               <div class="flex flex-col gap-3 p-4">
                 <%= for video <- @videos do %>
                   <.card class="h-full flex flex-col">
-                    <div class="contents">
-                      <.link
-                      navigate={~p"/videos/#{video.id}"}
-                        class="cursor-pointer hover:shadow-xl transition-shadow group"
-                      >
-                        <.card_media
-                          src={video.thumbnail_url}
-                          alt="Thumbnail"
-                          class="object-contain group-hover:opacity-90 transition-opacity"
-                        />
-                        <.card_content class="flex-1 p-3">
-                          <.h3
-                            font_weight="font-bold"
-                            class="mb-1 group-hover:text-primary transition-colors text-base"
-                          >
-                            {video.title}
-                          </.h3>
-                        </.card_content>
+                    <div class="p-3">
+                      <.link navigate={~p"/videos/#{video.id}"} class="group">
+                        <.h2
+                          font_weight="font-bold"
+                          class="mb-3 group-hover:text-primary transition-colors"
+                        >
+                          {video.title}
+                        </.h2>
                       </.link>
-                      <.p size="extra_small" class="text-base-content/70 line-clamp-2 mb-2 ml-3">
-                        {video.description}
-                      </.p>
-                      <div class="mt-auto ml-3 mb-3 pt-2 border-t border-base-200 space-y-2">
+
+                      <div class="flex gap-4 mb-3">
+                        <.link
+                          navigate={~p"/videos/#{video.id}"}
+                          class="flex-shrink-0 w-1/2 cursor-pointer hover:opacity-90 transition-opacity"
+                        >
+                          <.card_media
+                            src={video.thumbnail_url}
+                            alt="Thumbnail"
+                            class="object-contain rounded"
+                          />
+                        </.link>
+
+                        <.p size="small" class="text-base-content/70 flex-1">
+                          {video.description}
+                        </.p>
+                      </div>
+
+                      <div class="pt-2 border-t border-base-200 space-y-2">
                         <%= if video.techniques && video.techniques != [] do %>
                           <div class="flex items-start gap-2">
                             <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
@@ -184,7 +189,7 @@ defmodule FosBjjWeb.DatabaseLive do
           <% end %>
         </div>
 
-    <!-- Right Side: Technique Tree -->
+        <!-- Right Side: Technique Tree -->
         <div class="w-2/5 h-full">
           <.live_component
             module={FosBjjWeb.TechniqueTreeComponent}

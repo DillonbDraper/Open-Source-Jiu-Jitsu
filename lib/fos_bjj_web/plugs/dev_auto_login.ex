@@ -34,8 +34,12 @@ defmodule FosBjjWeb.Plugs.DevAutoLogin do
     if auto_login_enabled?() and not user_logged_in?(conn) do
       case get_or_create_dev_user() do
         {:ok, user} ->
+          # Generate a token for the user
+          {:ok, token, _claims} = AshAuthentication.Jwt.token_for_user(user)
+          user_with_token = Map.put(user, :token, token)
+
           conn
-          |> store_in_session(user)
+          |> store_in_session(user_with_token)
           |> Plug.Conn.assign(:current_user, user)
 
         {:error, reason} ->

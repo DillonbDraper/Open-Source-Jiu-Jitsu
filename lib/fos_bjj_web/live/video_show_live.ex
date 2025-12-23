@@ -52,19 +52,18 @@ defmodule FosBjjWeb.VideoShowLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
+    <Layouts.app full_width flash={@flash} current_user={assigns[:current_user]}>
       <div class="flex flex-row h-[calc(100vh-8rem)] gap-4">
         <!-- Left Side: Video Player & Info (50-60%) -->
-        <div class="w-3/5 min-w-[50%] h-full flex flex-col gap-4">
+        <div class="w-3/6 min-w-[50%] max-w-4xl h-full flex flex-col gap-4">
           <!-- Back button -->
           <div class="flex items-center gap-2">
             <.link navigate={~p"/database"} class="btn btn-ghost btn-sm gap-2">
-              <CoreComponents.icon name="hero-arrow-left" class="w-4 h-4" />
-              Back to Database
+              <CoreComponents.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
             </.link>
           </div>
 
-          <!-- Video Player Card -->
+    <!-- Video Player Card -->
           <.card class="flex-1 flex flex-col overflow-hidden">
             <div class="relative w-full" style="padding-bottom: 56.25%;">
               <iframe
@@ -83,17 +82,6 @@ defmodule FosBjjWeb.VideoShowLive do
               <%= if @video.description do %>
                 <p class="text-base-content/80 mb-4 whitespace-pre-wrap">{@video.description}</p>
               <% end %>
-
-              <div class="flex items-center gap-2 mb-4">
-                <span class="text-sm font-medium text-base-content/70">Attire:</span>
-                <span class={[
-                  "badge",
-                  @video.attire == :gi && "badge-primary",
-                  @video.attire == :no_gi && "badge-secondary"
-                ]}>
-                  {String.upcase(to_string(@video.attire))}
-                </span>
-              </div>
 
               <div class="border-t border-base-200 pt-4 space-y-3">
                 <%= if @video.techniques && @video.techniques != [] do %>
@@ -136,8 +124,10 @@ defmodule FosBjjWeb.VideoShowLive do
           </.card>
         </div>
 
-        <!-- Right Side: Technique Tree (40-50%) -->
-        <div class="w-2/5 flex-1 h-full">
+        <div class="w-1/6 flex-1"></div>
+
+    <!-- Right Side: Technique Tree (40-50%) -->
+        <div class="w-2/6 flex-1 max-w-md h-full">
           <.live_component
             module={FosBjjWeb.TechniqueTreeComponent}
             id="technique-tree"
