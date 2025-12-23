@@ -39,7 +39,8 @@ defmodule FosBjj.Repo.Migrations.BjjActions do
             name: "action_sub_positions_action_name_fkey",
             type: :text,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :sub_position_name,
           references(:sub_positions,
@@ -47,7 +48,8 @@ defmodule FosBjj.Repo.Migrations.BjjActions do
             name: "action_sub_positions_sub_position_name_fkey",
             type: :text,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :inserted_at, :utc_datetime_usec,
         null: false,

@@ -5,6 +5,8 @@ defmodule FosBjjWeb.VideoShowLive do
   alias FosBjjWeb.CoreComponents
   import FosBjjWeb.Components.Card
   import FosBjjWeb.Components.Button
+  import FosBjjWeb.Components.Tooltip
+  import FosBjjWeb.Components.Icon
   require Ash.Query
 
   on_mount {FosBjjWeb.LiveUserAuth, :live_user_optional}
@@ -63,7 +65,7 @@ defmodule FosBjjWeb.VideoShowLive do
             </.link>
           </div>
 
-    <!-- Video Player Card -->
+          <!-- Video Player Card -->
           <.card class="flex-1 flex flex-col overflow-hidden">
             <div class="relative w-full" style="padding-bottom: 56.25%;">
               <iframe
@@ -74,6 +76,27 @@ defmodule FosBjjWeb.VideoShowLive do
                 allowfullscreen
               >
               </iframe>
+              <%!-- Gi/No-Gi Indicator --%>
+              <div class="absolute bottom-2 right-2 z-10 bg-base-100/80 rounded-full p-1.5 backdrop-blur-sm">
+                <.tooltip position="left" inline={true}>
+                  <:trigger>
+                    <span
+                      class={[
+                        "inline-flex transition-all",
+                        if(@video.attire == :gi,
+                          do: "text-green-600 opacity-100",
+                          else: "text-gray-400 opacity-30"
+                        )
+                      ]}
+                    >
+                      <.icon name="custom-gi" class="w-7 h-7" />
+                    </span>
+                  </:trigger>
+                  <:content>
+                    {if @video.attire == :gi, do: "Gi", else: "No-Gi"}
+                  </:content>
+                </.tooltip>
+              </div>
             </div>
 
             <.card_content class="flex-1 p-6 overflow-y-auto">

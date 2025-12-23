@@ -34,7 +34,7 @@ defmodule FosBjj.JiuJitsu.SubPosition do
   end
 
   aggregates do
-    count :video_count, [:techniques, :videos]
+    count(:video_count, [:techniques, :videos])
   end
 
   relationships do

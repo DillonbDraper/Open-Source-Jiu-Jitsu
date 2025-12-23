@@ -20,7 +20,7 @@ defmodule FosBjjWeb.LiveUserAuth do
 
   def on_mount(:live_user_required, _params, session, socket) do
     socket = AshAuthentication.Phoenix.LiveSession.assign_new_resources(socket, session)
-    
+
     if socket.assigns[:current_user] do
       {:cont, socket}
     else

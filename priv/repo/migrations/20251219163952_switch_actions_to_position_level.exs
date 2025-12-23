@@ -17,7 +17,8 @@ defmodule FosBjj.Repo.Migrations.SwitchActionsToPositionLevel do
             name: "action_positions_action_name_fkey",
             type: :text,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :position_name,
           references(:positions,
@@ -25,7 +26,8 @@ defmodule FosBjj.Repo.Migrations.SwitchActionsToPositionLevel do
             name: "action_positions_position_name_fkey",
             type: :text,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :inserted_at, :utc_datetime_usec,
         null: false,
