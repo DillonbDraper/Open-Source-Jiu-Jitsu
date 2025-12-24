@@ -45,6 +45,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
         module={FosBjjWeb.TechniquePathComponent}
         id="technique-path"
         technique_id={@selected_technique_id}
+        title_search={@title_search}
       />
 
       <div class="grid grid-cols-5 gap-8 h-[calc(100vh-12rem)] w-full mt-4">

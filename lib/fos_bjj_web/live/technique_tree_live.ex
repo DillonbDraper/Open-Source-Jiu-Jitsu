@@ -73,13 +73,12 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:id, assigns.id)
       |> assign(:selected_technique_id, new_technique_id)
 
-      socket =
-        if technique_selected? and not is_nil(new_technique_id) do
-          assign(socket, :title_search, "")
-        else
-          socket
-        end
-
+    socket =
+      if technique_selected? and not is_nil(new_technique_id) do
+        assign(socket, :title_search, "")
+      else
+        socket
+      end
 
     # Load positions data only if not already loaded
     socket =
@@ -117,30 +116,37 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
           <.icon name="hero-book-open" class="w-6 h-6" /> Techniques
         </h2>
       </div>
-      <.form for={@form} phx-change="attire_change" phx-target={@myself}>
-        <.group_radio
-          id="selected_attire"
-          name="attire"
-          variation="horizontal"
-          space="medium"
-        >
-          <:radio value="gi" checked={@selected_attire == "gi"}>Gi</:radio>
-          <:radio value="no_gi" checked={@selected_attire == "no_gi"}>No Gi</:radio>
-          <:radio value="both" checked={@selected_attire == "both"}>Both</:radio>
-        </.group_radio>
-      </.form>
-      <.form for={@form} phx-submit="title_search" phx-target={@myself}>
-        <.search_field
-          name="title"
-          value={@title_search}
-          id="title_search"
-          space="medium"
-          search_button
-        >
-        </.search_field>
-      </.form>
+      <div class="px-2 py-4 flex-shrink-0">
+        <.form for={@form} phx-change="attire_change" phx-target={@myself}>
+          <.group_radio
+            id="selected_attire"
+            name="attire"
+            variation="horizontal"
+            space="medium"
+            class="flex gap-2"
+          >
+            <:radio value="gi" checked={@selected_attire == "gi"}>Gi</:radio>
+            <:radio value="no_gi" checked={@selected_attire == "no_gi"}>No Gi</:radio>
+            <:radio value="both" checked={@selected_attire == "both"}>Both</:radio>
+          </.group_radio>
+        </.form>
+      </div>
+      <div class="px-2 pb-4 flex-shrink-0">
+        <.form for={@form} phx-submit="title_search" phx-target={@myself}>
+          <.search_field
+            name="title"
+            value={@title_search}
+            label="Search By Title"
+            floating="outer"
+            id="title_search"
+            space="medium"
+            search_button
+          >
+          </.search_field>
+        </.form>
+      </div>
       <.scroll_area id="technique-tree-scroll" height="h-full" class="flex-1 w-full !h-auto">
-        <div class="flex flex-col gap-1 p-2">
+        <div>
           <div :if={@positions == []} class="p-4 text-center text-base-content/60">
             <span class="loading loading-spinner loading-sm"></span> Loading...
           </div>
@@ -171,7 +177,6 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                     myself={@myself}
                   >
                     <%= if expanded?(@expanded_ids, ori_id) do %>
-                      drag
                       <%= for sub_pos <- filter_sub_positions(@sub_positions, position.name) do %>
                         <% sub_id = "#{ori_id}:sub:#{sub_pos.name}" %>
                         <.tree_node

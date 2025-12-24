@@ -11,15 +11,25 @@ defmodule FosBjjWeb.TechniquePathComponent do
   end
 
   @impl true
-  def update(%{technique_id: nil} = assigns, socket) do
+  def update(%{technique_id: nil, title_search: nil} = assigns, socket) do
     {:ok,
      socket
      |> assign(assigns)
      |> assign(:path_segments, [])}
   end
 
-  def update(%{technique_id: technique_id} = assigns, socket) do
+  # TODO Fix path component never hitting title condition
+  def update(%{technique_id: technique_id} = assigns, socket) when not is_nil(technique_id) do
     path_segments = load_technique_path(technique_id)
+
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign(:path_segments, path_segments)}
+  end
+
+  def update(%{title_search: title} = assigns, socket) do
+    path_segments = [%{label: "Search By Title: #{title}"}]
 
     {:ok,
      socket

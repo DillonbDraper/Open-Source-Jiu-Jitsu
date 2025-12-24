@@ -13,7 +13,7 @@ defmodule FosBjjWeb.DatabaseComponent do
 
   @impl true
   def update(assigns, socket) do
-    # Check if technique_id changed BEFORE assigning new values
+    # Check for changes changed BEFORE assigning new values
     old_technique_id = socket.assigns[:selected_technique_id]
     new_technique_id = assigns.selected_technique_id
     technique_changed? = old_technique_id != new_technique_id
@@ -110,7 +110,7 @@ defmodule FosBjjWeb.DatabaseComponent do
       <div class="p-4 border-b border-base-200 bg-base-200/50">
         <div class="flex items-center gap-2">
           <.h2 class="flex items-center gap-2" font_weight="font-bold">
-            <%= if is_nil(@selected_technique_id) do %>
+            <%= if is_nil(@selected_technique_id) and is_nil(@title_search) do %>
               Recent Videos
             <% end %>
           </.h2>
