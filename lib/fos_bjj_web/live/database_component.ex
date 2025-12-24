@@ -16,14 +16,25 @@ defmodule FosBjjWeb.DatabaseComponent do
     # Check if technique_id changed BEFORE assigning new values
     old_technique_id = socket.assigns[:selected_technique_id]
     new_technique_id = assigns.selected_technique_id
-    technique_changed = old_technique_id != new_technique_id
-
+    technique_changed? = old_technique_id != new_technique_id
+    old_attire = socket.assigns[:selected_attire]
+    new_attire = assigns.selected_attire
+    old_title = socket.assigns[:title_search]
+    new_title = assigns.title_search
+    title_searched? = old_title != new_title
+    attire_changed? = old_attire != new_attire
     socket = assign(socket, assigns)
 
-    # Load videos if technique_id changed or it's the first load
     socket =
-      if socket.assigns[:videos] == nil or technique_changed do
-        load_videos(socket, new_technique_id, 1)
+      if socket.assigns[:videos] == nil or technique_changed? or attire_changed? or
+           title_searched? do
+        params = %{
+          technique_id: new_technique_id,
+          attire: new_attire,
+          title_search: new_title
+        }
+
+        load_videos(socket, params, 1)
       else
         socket
       end
@@ -43,20 +54,14 @@ defmodule FosBjjWeb.DatabaseComponent do
     {:noreply, push_patch(socket, to: ~p"/database?technique_id=#{technique_id}")}
   end
 
-  defp load_videos(socket, technique_id, page) do
+  defp load_videos(socket, params, page) do
     offset = (page - 1) * 10
 
-    query =
-      if technique_id do
-        technique_id_int =
-          if is_binary(technique_id), do: String.to_integer(technique_id), else: technique_id
+    technique_id = params[:technique_id]
+    attire = params[:attire]
+    title = params[:title_search]
 
-        Video
-        |> Ash.Query.filter(techniques.id == ^technique_id_int)
-      else
-        Video
-        |> Ash.Query.sort(inserted_at: :desc)
-      end
+    query = build_videos_query(technique_id, attire, title)
 
     page_result =
       query
@@ -67,6 +72,35 @@ defmodule FosBjjWeb.DatabaseComponent do
     |> assign(:videos, page_result.results)
     |> assign(:total_videos, page_result.count)
     |> assign(:current_page, page)
+  end
+
+  defp build_videos_query(technique_id, attire, title) do
+    attire_query_param =
+      if is_nil(attire) or attire == "both" do
+        ["gi", "no_gi"]
+      else
+        String.to_atom(attire) |> List.wrap()
+      end
+
+    query =
+      case title do
+        nil ->
+          if technique_id do
+            technique_id_int =
+              if is_binary(technique_id), do: String.to_integer(technique_id), else: technique_id
+
+            Video
+            |> Ash.Query.filter(techniques.id == ^technique_id_int)
+          else
+            Video
+            |> Ash.Query.sort(inserted_at: :desc)
+          end
+
+        title_string ->
+          Video |> Ash.Query.filter(ilike(title, "%#{^title_string}%"))
+      end
+
+    query |> Ash.Query.filter(attire in ^attire_query_param)
   end
 
   @impl true
@@ -99,7 +133,7 @@ defmodule FosBjjWeb.DatabaseComponent do
                   >
                     <%!-- Title at top --%>
                     <div class="px-3 pt-3 pb-2 border-b border-base-200">
-                      <.h2 font_weight="font-bold" class="group-hover:text-primary transition-colors">
+                      <.h2 font_weight="font-bold">
                         {video.title}
                       </.h2>
                     </div>
@@ -112,25 +146,6 @@ defmodule FosBjjWeb.DatabaseComponent do
                           alt="Thumbnail"
                           class="object-contain group-hover:opacity-90 transition-opacity rounded"
                         />
-                        <%!-- Gi/No-Gi Indicator --%>
-                        <div class="absolute top-2 right-2 z-10">
-                          <.tooltip position="left" inline={true}>
-                            <:trigger>
-                              <span class={[
-                                "inline-flex transition-all",
-                                if(video.attire == :gi,
-                                  do: "text-green-600 opacity-100",
-                                  else: "text-gray-400 opacity-30"
-                                )
-                              ]}>
-                                <.icon name="custom-gi" class="w-6 h-6" />
-                              </span>
-                            </:trigger>
-                            <:content>
-                              {if video.attire == :gi, do: "Gi", else: "No-Gi"}
-                            </:content>
-                          </.tooltip>
-                        </div>
                       </div>
 
                       <div class="flex-1 flex items-start">
@@ -166,20 +181,43 @@ defmodule FosBjjWeb.DatabaseComponent do
                         </div>
                       </div>
                     <% end %>
-                    <%= if video.grips && video.grips != [] do %>
-                      <div class="flex items-start gap-2">
-                        <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                          Grips
-                        </span>
-                        <div class="flex flex-wrap gap-1.5">
-                          <%= for grip <- video.grips do %>
-                            <span class="px-2 py-0.5 text-xs bg-secondary/20 text-secondary rounded-full border border-secondary/30">
-                              {grip.label}
+
+                    <div class="flex items-end justify-between gap-2">
+                      <div class="flex-1">
+                        <%= if video.grips && video.grips != [] do %>
+                          <div class="flex items-start gap-2">
+                            <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                              Grips
                             </span>
-                          <% end %>
-                        </div>
+                            <div class="flex flex-wrap gap-1.5">
+                              <%= for grip <- video.grips do %>
+                                <span class="px-2 py-0.5 text-xs bg-secondary/20 text-secondary rounded-full border border-secondary/30">
+                                  {grip.label}
+                                </span>
+                              <% end %>
+                            </div>
+                          </div>
+                        <% end %>
                       </div>
-                    <% end %>
+
+                      <%!-- Gi/No-Gi Indicator --%>
+                      <.tooltip position="left" inline={true}>
+                        <:trigger>
+                          <span class={[
+                            "inline-flex transition-all",
+                            if(video.attire == :gi,
+                              do: "text-green-600 opacity-100",
+                              else: "text-gray-400 opacity-100"
+                            )
+                          ]}>
+                            <.icon name="custom-gi" class="w-6 h-6" />
+                          </span>
+                        </:trigger>
+                        <:content>
+                          {if video.attire == :gi, do: "Gi", else: "No-Gi"}
+                        </:content>
+                      </.tooltip>
+                    </div>
                   </div>
                 </div>
               </.card>

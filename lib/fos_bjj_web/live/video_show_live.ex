@@ -2,7 +2,6 @@ defmodule FosBjjWeb.VideoShowLive do
   use FosBjjWeb, :live_view
 
   alias FosBjj.JiuJitsu.Video
-  alias FosBjjWeb.CoreComponents
   import FosBjjWeb.Components.Card
   import FosBjjWeb.Components.Button
   import FosBjjWeb.Components.Tooltip
@@ -61,11 +60,11 @@ defmodule FosBjjWeb.VideoShowLive do
           <!-- Back button -->
           <div class="flex items-center gap-2">
             <.link navigate={~p"/database"} class="btn btn-ghost btn-sm gap-2">
-              <CoreComponents.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
+              <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
             </.link>
           </div>
 
-          <!-- Video Player Card -->
+    <!-- Video Player Card -->
           <.card class="flex-1 flex flex-col overflow-hidden">
             <div class="relative w-full" style="padding-bottom: 56.25%;">
               <iframe
@@ -76,27 +75,6 @@ defmodule FosBjjWeb.VideoShowLive do
                 allowfullscreen
               >
               </iframe>
-              <%!-- Gi/No-Gi Indicator --%>
-              <div class="absolute bottom-2 right-2 z-10 bg-base-100/80 rounded-full p-1.5 backdrop-blur-sm">
-                <.tooltip position="left" inline={true}>
-                  <:trigger>
-                    <span
-                      class={[
-                        "inline-flex transition-all",
-                        if(@video.attire == :gi,
-                          do: "text-green-600 opacity-100",
-                          else: "text-gray-400 opacity-30"
-                        )
-                      ]}
-                    >
-                      <.icon name="custom-gi" class="w-7 h-7" />
-                    </span>
-                  </:trigger>
-                  <:content>
-                    {if @video.attire == :gi, do: "Gi", else: "No-Gi"}
-                  </:content>
-                </.tooltip>
-              </div>
             </div>
 
             <.card_content class="flex-1 p-6 overflow-y-auto">
@@ -128,20 +106,43 @@ defmodule FosBjjWeb.VideoShowLive do
                     </div>
                   </div>
                 <% end %>
-                <%= if @video.grips && @video.grips != [] do %>
-                  <div class="flex items-start gap-2">
-                    <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                      Grips
-                    </span>
-                    <div class="flex flex-wrap gap-1.5">
-                      <%= for grip <- @video.grips do %>
-                        <span class="px-2 py-0.5 text-xs bg-secondary/20 text-secondary rounded-full border border-secondary/30">
-                          {grip.label}
+
+                <div class="flex items-end justify-between gap-2">
+                  <div class="flex-1">
+                    <%= if @video.grips && @video.grips != [] do %>
+                      <div class="flex items-start gap-2">
+                        <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                          Grips
                         </span>
-                      <% end %>
-                    </div>
+                        <div class="flex flex-wrap gap-1.5">
+                          <%= for grip <- @video.grips do %>
+                            <span class="px-2 py-0.5 text-xs bg-secondary/20 text-secondary rounded-full border border-secondary/30">
+                              {grip.label}
+                            </span>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
                   </div>
-                <% end %>
+
+                  <%!-- Gi/No-Gi Indicator --%>
+                  <.tooltip position="left" inline={true}>
+                    <:trigger>
+                      <span class={[
+                        "inline-flex transition-all",
+                        if(@video.attire == :gi,
+                          do: "text-green-600 opacity-100",
+                          else: "text-gray-400 opacity-100"
+                        )
+                      ]}>
+                        <.icon name="custom-gi" class="w-7 h-7" />
+                      </span>
+                    </:trigger>
+                    <:content>
+                      {if @video.attire == :gi, do: "Gi", else: "No-Gi"}
+                    </:content>
+                  </.tooltip>
+                </div>
               </div>
             </.card_content>
           </.card>

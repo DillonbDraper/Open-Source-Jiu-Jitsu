@@ -2,7 +2,7 @@ defmodule FosBjjWeb.VideoShowComponent do
   use FosBjjWeb, :live_component
 
   alias FosBjj.JiuJitsu.Video
-  alias FosBjjWeb.CoreComponents
+  import FosBjjWeb.Components.Icon
   import FosBjjWeb.Components.Button
   require Ash.Query
 
@@ -57,10 +57,10 @@ defmodule FosBjjWeb.VideoShowComponent do
         <!-- Back button header -->
         <div class="p-4 border-b border-base-200 bg-base-200/50">
           <.link patch={~p"/database"} class="btn btn-ghost btn-sm gap-2">
-            <CoreComponents.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
+            <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
           </.link>
         </div>
-        
+
     <!-- Video Player -->
         <div class="relative w-full" style="padding-bottom: 56.25%;">
           <iframe
@@ -72,7 +72,7 @@ defmodule FosBjjWeb.VideoShowComponent do
           >
           </iframe>
         </div>
-        
+
     <!-- Video Info (matching database card structure) -->
         <div class="flex-1 overflow-y-auto">
           <div class="p-3">

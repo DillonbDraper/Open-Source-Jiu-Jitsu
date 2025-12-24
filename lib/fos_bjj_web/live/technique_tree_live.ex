@@ -2,8 +2,11 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   use FosBjjWeb, :live_component
 
   alias FosBjj.JiuJitsu.{Position, SubPosition, Technique}
-  alias FosBjjWeb.CoreComponents
+  import Ecto.Query
+  import FosBjjWeb.Components.Icon
   import FosBjjWeb.Components.ScrollArea
+  import FosBjjWeb.Components.RadioField
+  import FosBjjWeb.Components.SearchField
   require Ash.Query
 
   @impl true
@@ -13,17 +16,70 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:expanded_ids, MapSet.new())
       |> assign(:techniques_map, %{})
       |> assign(:counts_map, %{})
+      |> assign(:selected_attire, "both")
+      |> assign(:title_search, "")
+      |> assign(:form, to_form(%{}))
 
     {:ok, socket}
   end
 
+  # TODO: Cleanup
+  def handle_event("attire_change", %{"attire" => attire}, socket) do
+    # Build query params, preserving technique_id or title search if present
+    params =
+      if socket.assigns.selected_technique_id do
+        "technique_id=#{socket.assigns.selected_technique_id}&attire=#{attire}"
+      else
+        "attire=#{attire}"
+      end
+
+    params =
+      if socket.assigns.title_search do
+        "title=#{socket.assigns.title_search}&attire=#{attire}"
+      else
+        params
+      end
+
+    socket =
+      socket
+      |> assign(:selected_attire, attire)
+      |> push_patch(to: "/database?#{params}")
+
+    {:noreply, socket}
+  end
+
+  def handle_event("title_search", %{"title" => title_search}, socket) do
+    socket =
+      socket
+      |> assign(:title_search, title_search)
+      |> push_patch(to: "/database?title=#{title_search}")
+
+    {:noreply, socket}
+  end
+
   @impl true
   def update(assigns, socket) do
+    # Detect if technique was selected
+    old_technique_id = socket.assigns[:selected_technique_id]
+    new_technique_id = assigns[:selected_technique_id]
+
+    technique_selected? =
+      is_nil(old_technique_id) or
+        old_technique_id != new_technique_id
+
     # Only update specific assigns from parent, preserve internal state
     socket =
       socket
       |> assign(:id, assigns.id)
-      |> assign(:selected_technique_id, assigns[:selected_technique_id])
+      |> assign(:selected_technique_id, new_technique_id)
+
+      socket =
+        if technique_selected? and not is_nil(new_technique_id) do
+          assign(socket, :title_search, "")
+        else
+          socket
+        end
+
 
     # Load positions data only if not already loaded
     socket =
@@ -55,13 +111,35 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-h-[calc(50vh-4rem)] flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
-      <div class="p-4 border-b border-base-200 bg-base-200/50">
+    <div class="h-[calc(50vh-4rem)] flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+      <div class="p-4 border-b border-base-200 bg-base-200/50 flex-shrink-0">
         <h2 class="text-xl font-bold flex items-center gap-2">
-          <CoreComponents.icon name="hero-book-open" class="w-6 h-6" /> Techniques
+          <.icon name="hero-book-open" class="w-6 h-6" /> Techniques
         </h2>
       </div>
-      <.scroll_area id="technique-tree-scroll" height="h-full" class="flex-1 w-full">
+      <.form for={@form} phx-change="attire_change" phx-target={@myself}>
+        <.group_radio
+          id="selected_attire"
+          name="attire"
+          variation="horizontal"
+          space="medium"
+        >
+          <:radio value="gi" checked={@selected_attire == "gi"}>Gi</:radio>
+          <:radio value="no_gi" checked={@selected_attire == "no_gi"}>No Gi</:radio>
+          <:radio value="both" checked={@selected_attire == "both"}>Both</:radio>
+        </.group_radio>
+      </.form>
+      <.form for={@form} phx-submit="title_search" phx-target={@myself}>
+        <.search_field
+          name="title"
+          value={@title_search}
+          id="title_search"
+          space="medium"
+          search_button
+        >
+        </.search_field>
+      </.form>
+      <.scroll_area id="technique-tree-scroll" height="h-full" class="flex-1 w-full !h-auto">
         <div class="flex flex-col gap-1 p-2">
           <div :if={@positions == []} class="p-4 text-center text-base-content/60">
             <span class="loading loading-spinner loading-sm"></span> Loading...
@@ -93,6 +171,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                     myself={@myself}
                   >
                     <%= if expanded?(@expanded_ids, ori_id) do %>
+                      drag
                       <%= for sub_pos <- filter_sub_positions(@sub_positions, position.name) do %>
                         <% sub_id = "#{ori_id}:sub:#{sub_pos.name}" %>
                         <.tree_node
@@ -208,12 +287,12 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         style={"padding-left: #{@level * 0.75 + 0.5}rem"}
       >
         <%= if @expanded do %>
-          <CoreComponents.icon
+          <.icon
             name="hero-chevron-down"
             class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content"
           />
         <% else %>
-          <CoreComponents.icon
+          <.icon
             name="hero-chevron-right"
             class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content"
           />
@@ -306,8 +385,6 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   end
 
   defp count_videos_for_branch(position_name, orientation_name, sub_position_name, action_name) do
-    import Ecto.Query
-
     query =
       from vt in "video_techniques",
         join: t in "techniques",

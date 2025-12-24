@@ -9,7 +9,9 @@ defmodule FosBjjWeb.VideosDashboardLive do
      socket
      |> assign(:view_mode, :database)
      |> assign(:video_id, nil)
-     |> assign(:selected_technique_id, nil)}
+     |> assign(:selected_technique_id, nil)
+     |> assign(:selected_attire, "both")
+     |> assign(:title_search, "")}
   end
 
   @impl true
@@ -22,12 +24,16 @@ defmodule FosBjjWeb.VideosDashboardLive do
       end
 
     technique_id = params["technique_id"]
+    attire = params["attire"]
+    title = params["title"]
 
     {:noreply,
      socket
      |> assign(:view_mode, view_mode)
      |> assign(:video_id, video_id)
-     |> assign(:selected_technique_id, technique_id)}
+     |> assign(:selected_technique_id, technique_id)
+     |> assign(:selected_attire, attire)
+     |> assign(:title_search, title)}
   end
 
   @impl true
@@ -49,6 +55,8 @@ defmodule FosBjjWeb.VideosDashboardLive do
               module={FosBjjWeb.DatabaseComponent}
               id="database-component"
               selected_technique_id={@selected_technique_id}
+              selected_attire={@selected_attire}
+              title_search={@title_search}
             />
           <% else %>
             <.live_component
@@ -59,7 +67,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
             />
           <% end %>
         </div>
-        
+
     <!-- Right: Technique Tree (40% = 2 cols, always mounted) -->
         <div class="col-span-2 min-w-0">
           <.live_component
