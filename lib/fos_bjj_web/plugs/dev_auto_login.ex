@@ -20,8 +20,6 @@ defmodule FosBjjWeb.Plugs.DevAutoLogin do
   @behaviour Plug
 
   require Logger
-
-  import AshAuthentication.Plug.Helpers
   require Ash.Query
 
   @dev_email "dev@localhost"
@@ -34,13 +32,18 @@ defmodule FosBjjWeb.Plugs.DevAutoLogin do
     if auto_login_enabled?() and not user_logged_in?(conn) do
       case get_or_create_dev_user() do
         {:ok, user} ->
-          # Generate a token for the user
-          {:ok, token, _claims} = AshAuthentication.Jwt.token_for_user(user)
-          user_with_token = Map.put(user, :token, token)
+          # Generate JWT token for the user
+          case AshAuthentication.Jwt.token_for_user(user) do
+            {:ok, token, _claims} ->
+              # Store token and user info in session manually
+              conn
+              |> Plug.Conn.put_session(:user_token, token)
+              |> Plug.Conn.assign(:current_user, user)
 
-          conn
-          |> store_in_session(user_with_token)
-          |> Plug.Conn.assign(:current_user, user)
+            {:error, token_error} ->
+              Logger.warning("DevAutoLogin: Failed to generate token: #{inspect(token_error)}")
+              conn
+          end
 
         {:error, reason} ->
           Logger.warning("DevAutoLogin: Failed to get/create dev user: #{inspect(reason)}")
@@ -62,6 +65,7 @@ defmodule FosBjjWeb.Plugs.DevAutoLogin do
   defp get_or_create_dev_user do
     case FosBjj.Accounts.User
          |> Ash.Query.filter(email == ^@dev_email)
+         |> Ash.Query.load(:role)
          |> Ash.read_one(authorize?: false) do
       {:ok, nil} ->
         create_dev_user()
@@ -75,18 +79,31 @@ defmodule FosBjjWeb.Plugs.DevAutoLogin do
   end
 
   defp create_dev_user do
-    FosBjj.Accounts.User
-    |> Ash.Changeset.for_create(
-      :register_with_password,
-      %{
-        email: @dev_email,
-        password: "devpassword123",
-        password_confirmation: "devpassword123"
-      },
-      authorize?: false
-    )
-    |> Ash.Changeset.force_change_attribute(:confirmed_at, DateTime.utc_now())
-    |> Ash.Changeset.force_change_attribute(:role_name, "admin")
-    |> Ash.create(authorize?: false)
+    case FosBjj.Accounts.User
+         |> Ash.Changeset.for_create(
+           :register_with_password,
+           %{
+             email: @dev_email,
+             password: "devpassword123",
+             password_confirmation: "devpassword123"
+           },
+           authorize?: false
+         )
+         |> Ash.Changeset.force_change_attribute(:confirmed_at, DateTime.utc_now())
+         |> Ash.Changeset.force_change_attribute(:role_name, "admin")
+         |> Ash.create(authorize?: false) do
+      {:ok, user} ->
+        # Reload with role to ensure consistent data structure
+        {:ok, reloaded_user} =
+          FosBjj.Accounts.User
+          |> Ash.Query.filter(id == ^user.id)
+          |> Ash.Query.load(:role)
+          |> Ash.read_one(authorize?: false)
+
+        {:ok, reloaded_user}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 end

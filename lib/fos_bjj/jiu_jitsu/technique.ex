@@ -35,7 +35,7 @@ defmodule FosBjj.JiuJitsu.Technique do
     end
 
     attribute :orientation_name, :string do
-      allow_nil?(true)
+      allow_nil?(false)
       public?(true)
     end
 
@@ -45,7 +45,7 @@ defmodule FosBjj.JiuJitsu.Technique do
     end
 
     attribute :action_name, :string do
-      allow_nil?(true)
+      allow_nil?(false)
       public?(true)
     end
 
@@ -72,6 +72,7 @@ defmodule FosBjj.JiuJitsu.Technique do
       source_attribute(:sub_position_name)
       destination_attribute(:name)
       attribute_type(:string)
+      allow_nil?(true)
       public?(true)
     end
 

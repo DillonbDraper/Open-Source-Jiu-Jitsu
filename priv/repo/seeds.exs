@@ -10,6 +10,61 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
+require Ash.Query
+
+# ==========================================
+# STEP 1: Create Dev User First
+# ==========================================
+# This must happen before other seed data because many tables
+# have created_by_id foreign key constraints
+
+IO.puts("\n=== Creating dev user ===")
+
+dev_email = "dev@localhost"
+
+dev_user =
+  case FosBjj.Accounts.User
+       |> Ash.Query.filter(email == ^dev_email)
+       |> Ash.read_one(authorize?: false) do
+    {:ok, nil} ->
+      # Create dev user
+      case FosBjj.Accounts.User
+           |> Ash.Changeset.for_create(
+             :register_with_password,
+             %{
+               email: dev_email,
+               password: "devpassword123",
+               password_confirmation: "devpassword123"
+             },
+             authorize?: false
+           )
+           |> Ash.Changeset.force_change_attribute(:confirmed_at, DateTime.utc_now())
+           |> Ash.Changeset.force_change_attribute(:role_name, "admin")
+           |> Ash.create(authorize?: false) do
+        {:ok, user} ->
+          IO.puts("✓ Dev user created: #{user.email}")
+          user
+
+        {:error, reason} ->
+          IO.puts("✗ Failed to create dev user: #{inspect(reason)}")
+          raise "Cannot proceed without dev user"
+      end
+
+    {:ok, user} ->
+      IO.puts("✓ Dev user already exists: #{user.email}")
+      user
+
+    {:error, reason} ->
+      IO.puts("✗ Failed to query for dev user: #{inspect(reason)}")
+      raise "Cannot proceed without dev user"
+  end
+
+# ==========================================
+# STEP 2: Seed Lookup Tables
+# ==========================================
+
+IO.puts("\n=== Seeding lookup tables ===")
+
 alias FosBjj.JiuJitsu.{
   Grip,
   Position,
@@ -39,7 +94,7 @@ grips = [
 ]
 
 for grip <- grips do
-  Ash.Seed.seed!(Grip, grip)
+  Ash.Seed.seed!(Grip, grip, actor: dev_user)
 end
 
 # Positions
@@ -49,12 +104,11 @@ positions = [
   %{name: "mount", label: "Mount"},
   %{name: "side_control", label: "Side Control"},
   %{name: "back", label: "Back"},
-  %{name: "knee_on_belly", label: "Knee-on-Belly"},
   %{name: "leg_entanglement", label: "Leg Entanglement"}
 ]
 
 for position <- positions do
-  Ash.Seed.seed!(Position, position)
+  Ash.Seed.seed!(Position, position, actor: dev_user)
 end
 
 # Orientations
@@ -68,7 +122,7 @@ orientations = [
 ]
 
 for orientation <- orientations do
-  Ash.Seed.seed!(Orientation, orientation)
+  Ash.Seed.seed!(Orientation, orientation, actor: dev_user)
 end
 
 # Position Orientations
@@ -76,15 +130,13 @@ position_orientations = [
   # Standing
   {"standing", "offense"},
   {"standing", "defense"},
-  # Guard, Mount, Side Control, Knee on Belly -> Top, Bottom
+  # Guard, Mount, Side Control -> Top, Bottom
   {"guard", "top"},
   {"guard", "bottom"},
   {"mount", "top"},
   {"mount", "bottom"},
   {"side_control", "top"},
   {"side_control", "bottom"},
-  {"knee_on_belly", "top"},
-  {"knee_on_belly", "bottom"},
   # Back, Leg Entanglement -> Superior, Inferior
   {"back", "superior"},
   {"back", "inferior"},
@@ -93,7 +145,7 @@ position_orientations = [
 ]
 
 for {pos, ori} <- position_orientations do
-  Ash.Seed.seed!(PositionOrientation, %{position_name: pos, orientation_name: ori})
+  Ash.Seed.seed!(PositionOrientation, %{position_name: pos, orientation_name: ori}, actor: dev_user)
 end
 
 # SubPositions
@@ -120,14 +172,14 @@ sub_positions = [
   %{name: "north_south", label: "North-South", position_name: "side_control"},
   %{name: "reverse_kesa_gatame", label: "Reverse Kesa Gatame", position_name: "side_control"},
   %{name: "kesa-gatame", label: "Kesa Gatame", position_name: "side_control"},
-
+  %{name: "knee_on_belly", label: "Knee-On-Belly", position_name: "side_control"},
   # Back subpositions
   %{name: "back_mount", label: "Back Mount (Hooks/Body Triangle)", position_name: "back"},
   %{name: "back_crucifix", label: "Crucifix (Back)", position_name: "back"}
 ]
 
 for sub_position <- sub_positions do
-  Ash.Seed.seed!(SubPosition, sub_position)
+  Ash.Seed.seed!(SubPosition, sub_position, actor: dev_user)
 end
 
 # Actions
@@ -143,7 +195,7 @@ actions = [
 ]
 
 for action <- actions do
-  Ash.Seed.seed!(Action, action)
+  Ash.Seed.seed!(Action, action, actor: dev_user)
 end
 
 # Action Positions - associating actions with positions
@@ -178,11 +230,6 @@ action_positions = [
   {"back", "escapes"},
   {"back", "entries"},
 
-  # Knee-on-Belly
-  {"knee_on_belly", "submissions"},
-  {"knee_on_belly", "transitions"},
-  {"knee_on_belly", "escapes"},
-
   # Leg Entanglement
   {"leg_entanglement", "submissions"},
   {"leg_entanglement", "transitions"},
@@ -191,5 +238,16 @@ action_positions = [
 ]
 
 for {pos, action} <- action_positions do
-  Ash.Seed.seed!(ActionPosition, %{position_name: pos, action_name: action})
+  Ash.Seed.seed!(ActionPosition, %{position_name: pos, action_name: action}, actor: dev_user)
 end
+
+# ==========================================
+# STEP 3: Load Additional Data from SQL
+# ==========================================
+# Load techniques, videos, and other user-generated content from SQL files
+
+if File.exists?("priv/repo/sql_data") and File.dir?("priv/repo/sql_data") do
+  FosBjj.Repo.SqlLoader.load_all()
+end
+
+IO.puts("\n✓ Database seeding complete!\n")
