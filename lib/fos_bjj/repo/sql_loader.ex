@@ -40,7 +40,7 @@ defmodule FosBjj.Repo.SqlLoader do
       "technique_positions.sql",
       "technique_sub_positions.sql",
       "video_grips.sql",
-      "video_techniques.sql",
+      "video_techniques.sql"
     ]
 
     results =
@@ -48,10 +48,15 @@ defmodule FosBjj.Repo.SqlLoader do
         execute_sql_file(filename)
       end)
 
-    success_count = Enum.count(results, & &1 == :ok)
+    success_count = Enum.count(results, &(&1 == :ok))
     total_count = Enum.count(results)
 
-    IO.puts("\n✓ Loaded #{success_count}/#{total_count} SQL files successfully\n")
+    IO.puts("\n✓ Loaded #{success_count}/#{total_count} SQL files successfully")
+    
+    # Reset sequences after loading data with explicit IDs
+    reset_sequences()
+    
+    IO.puts("")
   end
 
   @doc """
@@ -83,14 +88,62 @@ defmodule FosBjj.Repo.SqlLoader do
       IO.puts("✓")
       :ok
     else
-        IO.puts("  Skipping #{filename} (not found)")
-        :skip
+      IO.puts("  Skipping #{filename} (not found)")
+      :skip
     end
   rescue
     e ->
       IO.puts("✗ ERROR")
       IO.puts("  Failed to execute #{filename}: #{Exception.message(e)}")
       reraise e, __STACKTRACE__
+  end
+
+  @doc """
+  Resets PostgreSQL sequences for all tables that have serial/bigserial primary keys.
+
+  This is necessary after loading data with explicit IDs because PostgreSQL
+  sequences don't automatically advance when you insert with explicit IDs.
+  
+  Without this, the next INSERT would try to use an ID that already exists,
+  causing a duplicate key error.
+  """
+  def reset_sequences do
+    IO.puts("\n=== Resetting sequences ===")
+    
+    tables = [
+      "techniques",
+      "videos",
+      "technique_positions",
+      "technique_sub_positions",
+      "video_grips",
+      "video_techniques"
+    ]
+    
+    Enum.each(tables, fn table ->
+      sequence_name = "#{table}_id_seq"
+      
+      try do
+        # Get the max ID from the table
+        case SQL.query(Repo, "SELECT MAX(id) FROM #{table}") do
+          {:ok, %{rows: [[nil]]}} ->
+            # Table is empty, no need to reset
+            :ok
+            
+          {:ok, %{rows: [[max_id]]}} when is_integer(max_id) ->
+            # Set the sequence to max_id so next value will be max_id + 1
+            SQL.query!(Repo, "SELECT setval('#{sequence_name}', $1, true)", [max_id])
+            IO.puts("  ✓ Reset #{table} sequence to #{max_id + 1}")
+            
+          {:error, _} ->
+            # Table might not exist or have an id column, skip silently
+            :ok
+        end
+      rescue
+        _ ->
+          # Sequence might not exist or query failed, skip silently
+          :ok
+      end
+    end)
   end
 
   @doc """
@@ -181,11 +234,13 @@ defmodule FosBjj.Repo.SqlLoader do
   end
 
   defp format_sql_value(nil), do: "NULL"
+
   defp format_sql_value(value) when is_binary(value) do
     # Escape single quotes
     escaped = String.replace(value, "'", "''")
     "'#{escaped}'"
   end
+
   defp format_sql_value(value) when is_boolean(value), do: to_string(value)
   defp format_sql_value(value) when is_number(value), do: to_string(value)
   defp format_sql_value(%DateTime{} = dt), do: "'#{DateTime.to_iso8601(dt)}'"

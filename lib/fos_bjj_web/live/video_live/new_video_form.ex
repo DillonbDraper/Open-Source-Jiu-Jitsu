@@ -263,6 +263,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
           module={NewTechniqueForm}
           id="new-technique-form"
           current_user={@current_user}
+          show_drawer={@show_drawer}
         />
       </.drawer>
     </Layouts.app>

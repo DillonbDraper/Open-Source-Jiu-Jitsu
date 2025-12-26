@@ -1,5 +1,6 @@
 defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
   use FosBjjWeb, :live_component
+  import FosBjjWeb.Components.Drawer
 
   @impl true
   def update(assigns, socket) do
@@ -154,6 +155,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
          ) do
       {:ok, technique} ->
         send(self(), {__MODULE__, {:technique_created, technique}})
+        hide_drawer("technique-drawer", "right")
         {:noreply, socket}
 
       {:error, form} ->

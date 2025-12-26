@@ -11,7 +11,8 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:video_id, nil)
      |> assign(:selected_technique_id, nil)
      |> assign(:selected_attire, "both")
-     |> assign(:title_search, "")}
+     |> assign(:title_search, "")
+     |> assign(:total_videos, 0)}
   end
 
   @impl true
@@ -24,8 +25,14 @@ defmodule FosBjjWeb.VideosDashboardLive do
       end
 
     technique_id = params["technique_id"]
-    attire = params["attire"]
-    title = params["title"]
+    attire = params["attire"] || socket.assigns[:selected_attire] || "both"
+    title = params["title"] || socket.assigns[:title_search] || ""
+    page =
+      case params["page"] do
+        nil -> 1
+        page_str when is_binary(page_str) -> String.to_integer(page_str)
+        page_int when is_integer(page_int) -> page_int
+      end
 
     {:noreply,
      socket
@@ -33,7 +40,52 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:video_id, video_id)
      |> assign(:selected_technique_id, technique_id)
      |> assign(:selected_attire, attire)
-     |> assign(:title_search, title)}
+     |> assign(:title_search, title)
+     |> assign(:current_page, page)}
+  end
+
+  @impl true
+  def handle_event("pagination", params, socket) do
+    # Calculate the target page based on the action
+    current_page = socket.assigns.current_page || 1
+    total_pages = if socket.assigns[:total_videos], do: ceil(socket.assigns.total_videos / 10), else: 1
+
+    page = case params["action"] do
+      "select" -> params["page"]
+      "next" -> min(current_page + 1, total_pages)
+      "previous" -> max(current_page - 1, 1)
+      "first" -> 1
+      "last" -> total_pages
+      _ -> params["page"] || current_page
+    end
+
+    # Build URL params preserving current filters
+    url_params = []
+    url_params = if socket.assigns.selected_technique_id, do: [technique_id: socket.assigns.selected_technique_id] ++ url_params, else: url_params
+    url_params = if socket.assigns.selected_attire && socket.assigns.selected_attire != "both", do: [attire: socket.assigns.selected_attire] ++ url_params, else: url_params
+    url_params = if socket.assigns.title_search && socket.assigns.title_search != "", do: [title: socket.assigns.title_search] ++ url_params, else: url_params
+    url_params = [page: page] ++ url_params
+
+    {:noreply, push_patch(socket, to: ~p"/database?#{url_params}")}
+  end
+
+  @impl true
+  def handle_info({:update_total_videos, total}, socket) do
+    {:noreply, assign(socket, :total_videos, total)}
+  end
+
+  @impl true
+  def handle_info({:pagination, params}, socket) do
+    page = params["page"]
+
+    # Build URL params preserving current filters
+    url_params = []
+    url_params = if socket.assigns.selected_technique_id, do: [technique_id: socket.assigns.selected_technique_id] ++ url_params, else: url_params
+    url_params = if socket.assigns.selected_attire && socket.assigns.selected_attire != "both", do: [attire: socket.assigns.selected_attire] ++ url_params, else: url_params
+    url_params = if socket.assigns.title_search && socket.assigns.title_search != "", do: [title: socket.assigns.title_search] ++ url_params, else: url_params
+    url_params = [page: page] ++ url_params
+
+    {:noreply, push_patch(socket, to: ~p"/database?#{url_params}")}
   end
 
   @impl true
@@ -58,6 +110,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
               selected_technique_id={@selected_technique_id}
               selected_attire={@selected_attire}
               title_search={@title_search}
+              current_page={@current_page || 1}
             />
           <% else %>
             <.live_component

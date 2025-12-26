@@ -23,18 +23,22 @@ defmodule FosBjjWeb.DatabaseComponent do
     new_title = assigns.title_search
     title_searched? = old_title != new_title
     attire_changed? = old_attire != new_attire
+    old_page = socket.assigns[:current_page]
+    new_page = assigns.current_page
+    page_changed? = old_page != new_page
+
     socket = assign(socket, assigns)
 
     socket =
       if socket.assigns[:videos] == nil or technique_changed? or attire_changed? or
-           title_searched? do
+           title_searched? or page_changed? do
         params = %{
           technique_id: new_technique_id,
           attire: new_attire,
           title_search: new_title
         }
 
-        load_videos(socket, params, 1)
+        load_videos(socket, params, new_page)
       else
         socket
       end
@@ -43,19 +47,22 @@ defmodule FosBjjWeb.DatabaseComponent do
   end
 
   @impl true
-  def handle_event("pagination", %{"action" => "select", "page" => page}, socket) do
-    socket = load_videos(socket, socket.assigns.selected_technique_id, String.to_integer(page))
+  def handle_event("pagination", params, socket) do
+    IO.inspect(params, label: "PAGINATION EVENT IN COMPONENT")
+    # Forward the event to the parent LiveView
+    send(self(), {:pagination, params})
     {:noreply, socket}
   end
 
-  def handle_event("pagination", _params, socket), do: {:noreply, socket}
-
+  @impl true
   def handle_event("select_technique", %{"technique-id" => technique_id}, socket) do
     {:noreply, push_patch(socket, to: ~p"/database?technique_id=#{technique_id}")}
   end
 
   defp load_videos(socket, params, page) do
-    offset = (page - 1) * 10
+    # Ensure page is an integer
+    page_int = if is_binary(page), do: String.to_integer(page), else: page
+    offset = (page_int - 1) * 10
 
     technique_id = params[:technique_id]
     attire = params[:attire]
@@ -68,10 +75,12 @@ defmodule FosBjjWeb.DatabaseComponent do
       |> Ash.Query.load(techniques: [:video_count], grips: [])
       |> Ash.read!(page: [limit: 10, offset: offset, count: true])
 
+    # Send total_videos to parent so it can calculate total pages for navigation
+    send(self(), {:update_total_videos, page_result.count})
+
     socket
     |> assign(:videos, page_result.results)
     |> assign(:total_videos, page_result.count)
-    |> assign(:current_page, page)
   end
 
   defp build_videos_query(technique_id, attire, title) do
@@ -228,7 +237,11 @@ defmodule FosBjjWeb.DatabaseComponent do
 
       <%= if @total_videos > 10 do %>
         <div class="p-4 border-t border-base-200 bg-base-100 flex justify-center">
-          <.pagination total={ceil(@total_videos / 10)} active={@current_page} siblings={1} />
+          <.pagination
+            total={ceil(@total_videos / 10)}
+            active={@current_page}
+            siblings={1}
+          />
         </div>
       <% end %>
     </div>
