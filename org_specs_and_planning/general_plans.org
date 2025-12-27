@@ -1,9 +1,6 @@
 * This is a list of features/enhancements necessary for MVP
 - Actually set up email client/test creating users.
-- Resolve bug with technique count by subposition not filtering by orientation in technique tree
-- Resolve bug with technique path thinking there is a title search even with no URL contents
-- Resolve redirect "bug" on video save (determine where we want to redirect)
-- Resolve bug with grip being required on technique form when it shouldn't be
+- Resolve redirect "bug" on video save (Implement plug-navigation-history library (maybe))
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
 - Adequate seed database of techniques/videos

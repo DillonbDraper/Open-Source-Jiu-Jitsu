@@ -95,13 +95,11 @@ defmodule FosBjj.JiuJitsu.Video do
 
     belongs_to :created_by, FosBjj.Accounts.User do
       attribute_type(:integer)
-      allow_nil?(true)
       public?(true)
     end
 
     belongs_to :updated_by, FosBjj.Accounts.User do
       attribute_type(:integer)
-      allow_nil?(true)
       public?(true)
     end
   end

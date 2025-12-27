@@ -18,7 +18,6 @@ defmodule FosBjjWeb.TechniquePathComponent do
      |> assign(:path_segments, [])}
   end
 
-  # TODO Fix path component never hitting title condition
   def update(%{technique_id: technique_id} = assigns, socket) when not is_nil(technique_id) do
     path_segments = load_technique_path(technique_id)
 
@@ -63,7 +62,8 @@ defmodule FosBjjWeb.TechniquePathComponent do
     # Add Position (get from sub_position.position)
     segments =
       if technique.sub_position && !match?(%Ash.NotLoaded{}, technique.sub_position) &&
-           technique.sub_position.position && !match?(%Ash.NotLoaded{}, technique.sub_position.position) do
+           technique.sub_position.position &&
+           !match?(%Ash.NotLoaded{}, technique.sub_position.position) do
         [%{label: technique.sub_position.position.label, type: :position} | segments]
       else
         segments
@@ -105,7 +105,7 @@ defmodule FosBjjWeb.TechniquePathComponent do
     <div class="w-full">
       <%= if @path_segments != [] do %>
         <.breadcrumb
-          size="medium"
+          size="extra_large"
           color=""
           separator_icon="hero-chevron-right"
           class="bg-base-200/30 rounded-lg border border-base-300 px-4 py-3"
@@ -114,6 +114,14 @@ defmodule FosBjjWeb.TechniquePathComponent do
             {segment.label}
           </:item>
         </.breadcrumb>
+      <% else %>
+        <div class="4 border-b border-base-200 bg-base-200/50">
+          <div class="flex items-center gap-2">
+            <.h2 class="flex items-center gap-2">
+              Recent Videos
+            </.h2>
+          </div>
+        </div>
       <% end %>
     </div>
     """

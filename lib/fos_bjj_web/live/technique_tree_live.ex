@@ -18,7 +18,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:counts_map, %{})
       |> assign(:actions_map, %{})
       |> assign(:selected_attire, "both")
-      |> assign(:title_search, "")
+      |> assign(:title_search, nil)
       |> assign(:form, to_form(%{}))
 
     {:ok, socket}
@@ -73,10 +73,11 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       socket
       |> assign(:id, assigns.id)
       |> assign(:selected_technique_id, new_technique_id)
+      |> assign(:title_search, assigns[:title_search])
 
     socket =
       if technique_selected? and not is_nil(new_technique_id) do
-        assign(socket, :title_search, "")
+        assign(socket, :title_search, nil)
       else
         socket
       end
@@ -96,7 +97,6 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         sub_positions =
           SubPosition
           |> Ash.Query.for_read(:read)
-          |> Ash.Query.load(:video_count)
           |> Ash.read!()
           |> sort_by_label()
 
@@ -183,7 +183,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                         <.tree_node
                           id={sub_id}
                           label={sub_pos.label}
-                          count={sub_pos.video_count}
+                          count={get_count(@counts_map, sub_id)}
                           expanded={expanded?(@expanded_ids, sub_id)}
                           level={2}
                           click_params={
@@ -335,7 +335,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
           "orientation" ->
             # Compute count for this orientation
             count = count_videos_for_branch(params["pos"], params["ori"], nil, nil)
-            put_count(socket, id, count)
+
+            socket
+            |> put_count(id, count)
+            |> compute_sub_position_counts(params["pos"], params["ori"])
 
           "sub_position" ->
             # Load actions filtered by position+orientation and compute their counts
@@ -439,6 +442,16 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       ori_id = "pos:#{position_name}:ori:#{orientation.name}"
       count = count_videos_for_branch(position_name, orientation.name, nil, nil)
       put_count(acc_socket, ori_id, count)
+    end)
+  end
+
+  defp compute_sub_position_counts(socket, position_name, orientation_name) do
+    sub_positions = filter_sub_positions(socket.assigns.sub_positions, position_name)
+
+    Enum.reduce(sub_positions, socket, fn sub_pos, acc_socket ->
+      sub_id = "pos:#{position_name}:ori:#{orientation_name}:sub:#{sub_pos.name}"
+      count = count_videos_for_branch(position_name, orientation_name, sub_pos.name, nil)
+      put_count(acc_socket, sub_id, count)
     end)
   end
 

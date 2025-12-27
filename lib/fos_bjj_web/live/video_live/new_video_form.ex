@@ -31,14 +31,23 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
 
   @impl true
   def handle_event("validate", %{"video" => params}, socket) do
+    # Clean up empty strings from multi-select comboboxes before validation
     selected_techniques =
       Map.get(params, "techniques", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
 
     selected_grips =
       Map.get(params, "grips", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
 
+    # Update params with cleaned values before validation
+    cleaned_params =
+      params
+      |> Map.put("techniques", selected_techniques)
+      |> Map.put("grips", selected_grips)
+
     form =
-      AshPhoenix.Form.validate(socket.assigns.form, params, actor: socket.assigns[:current_user])
+      AshPhoenix.Form.validate(socket.assigns.form, cleaned_params,
+        actor: socket.assigns[:current_user]
+      )
 
     {:noreply,
      socket
@@ -53,11 +62,11 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     selected_techniques = socket.assigns.selected_techniques
     current_user = socket.assigns[:current_user]
 
-    params_with_relationships =
-      Map.put(params, "grips", selected_grips)
+    cleaned_params =
+      params
+      |> Map.put("grips", selected_grips)
       |> Map.put("techniques", selected_techniques)
 
-    # Use before_submit to manage relationships manually
     before_submit = fn changeset ->
       Ash.Changeset.manage_relationship(
         changeset,
@@ -71,7 +80,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     end
 
     case AshPhoenix.Form.submit(socket.assigns.form,
-           params: params_with_relationships,
+           params: cleaned_params,
            before_submit: before_submit,
            actor: current_user
          ) do
@@ -268,7 +277,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
         />
       </.drawer>
 
-      <%!-- Colocated hook for executing JS commands --%>
+      <%!-- Colocated hook for executing JS o close drawer w/animation --%>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".JsExec">
         export default {
           mounted() {

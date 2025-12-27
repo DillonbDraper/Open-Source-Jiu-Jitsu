@@ -115,15 +115,7 @@ defmodule FosBjjWeb.DatabaseComponent do
   def render(assigns) do
     ~H"""
     <div class="w-full h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
-      <div class="p-4 border-b border-base-200 bg-base-200/50">
-        <div class="flex items-center gap-2">
-          <.h2 class="flex items-center gap-2" font_weight="font-bold">
-            <%= if is_nil(@selected_technique_id) and is_nil(@title_search) do %>
-              Recent Videos
-            <% end %>
-          </.h2>
-        </div>
-      </div>
+
 
       <.scroll_area id="video-scroll" class="flex-1 w-full" height="h-full">
         <%= if @videos == [] do %>
