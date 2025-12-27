@@ -23,6 +23,7 @@ import { LiveSocket } from "phoenix_live_view";
 import { hooks as colocatedHooks } from "phoenix-colocated/fos_bjj";
 import topbar from "../vendor/topbar";
 import MishkaComponents from "../vendor/mishka_components.js";
+
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");

@@ -226,7 +226,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             required
           />
 
-          <%!-- Position Select (UI helper only, not persisted) --%>
+          <%!-- Position Select (Not actually part of technique resource) --%>
           <.combobox
             id="position-select"
             name="technique[position]"
@@ -273,12 +273,12 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             disabled={@child_fields_disabled}
             name="technique[orientation_name]"
             value={@selected_orientation}
-            id={"orientation-#{@selected_orientation || "none"}"}
+            size="extra_large"
+            placeholder="Select an orientation"
+            id={"orientation-#{@selected_position || "none"}"}
           >
             <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
-              {@orientations
-              |> Enum.find(&(&1.name == orientation_name))
-              |> then(& &1.label)}
+              {orientation_name}
             </:option>
           </.combobox>
 

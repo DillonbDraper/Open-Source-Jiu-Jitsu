@@ -130,7 +130,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-      <div class="max-w-2xl mx-auto">
+      <div class="max-w-2xl mx-auto" id="video-form-container" phx-hook=".JsExec">
         <.flash kind={:info} title="Success" flash={@flash} />
         <.flash kind={:error} title="Error" flash={@flash} />
         <div class="flex justify-between items-center mb-6">
@@ -267,6 +267,19 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
           show_drawer={@show_drawer}
         />
       </.drawer>
+
+      <%!-- Colocated hook for executing JS commands --%>
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".JsExec">
+        export default {
+          mounted() {
+            this.handleEvent("js-exec", ({ to, attr }) => {
+              document.querySelectorAll(to).forEach((el) => {
+                this.liveSocket.execJS(el, el.getAttribute(attr));
+              });
+            });
+          }
+        }
+      </script>
     </Layouts.app>
     """
   end
