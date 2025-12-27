@@ -48,7 +48,6 @@ defmodule FosBjjWeb.DatabaseComponent do
 
   @impl true
   def handle_event("pagination", params, socket) do
-    IO.inspect(params, label: "PAGINATION EVENT IN COMPONENT")
     # Forward the event to the parent LiveView
     send(self(), {:pagination, params})
     {:noreply, socket}

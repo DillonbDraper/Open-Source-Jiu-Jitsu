@@ -37,5 +37,11 @@ defmodule FosBjj.JiuJitsu.Orientation do
       destination_attribute_on_join_resource(:position_name)
       public?(true)
     end
+
+    has_many :action_position_orientations, FosBjj.JiuJitsu.ActionPositionOrientation do
+      source_attribute(:name)
+      destination_attribute(:orientation_name)
+      public?(true)
+    end
   end
 end

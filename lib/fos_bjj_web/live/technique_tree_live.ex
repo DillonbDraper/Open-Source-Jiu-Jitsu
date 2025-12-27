@@ -16,6 +16,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:expanded_ids, MapSet.new())
       |> assign(:techniques_map, %{})
       |> assign(:counts_map, %{})
+      |> assign(:actions_map, %{})
       |> assign(:selected_attire, "both")
       |> assign(:title_search, "")
       |> assign(:form, to_form(%{}))
@@ -88,7 +89,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         positions =
           Position
           |> Ash.Query.for_read(:read)
-          |> Ash.Query.load([:orientations, :actions, :video_count])
+          |> Ash.Query.load([:orientations, :video_count])
           |> Ash.read!()
           |> sort_by_label()
 
@@ -196,7 +197,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                           myself={@myself}
                         >
                           <%= if expanded?(@expanded_ids, sub_id) do %>
-                            <%= for action <- sort_by_label(position.actions) do %>
+                            <%= for action <- get_actions(@actions_map, sub_id) do %>
                               <% action_id = "#{sub_id}:action:#{action.name}" %>
                               <.tree_node
                                 id={action_id}
@@ -227,17 +228,14 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                                         <.link
                                           patch={"/database?technique_id=#{technique.id}"}
                                           class={[
-                                            "btn btn-ghost btn-xs btn-block justify-start font-normal h-auto py-1.5 px-2 text-left whitespace-normal leading-tight",
+                                            "btn btn-ghost btn-s btn-block justify-start font-normal h-auto py-1.5 px-2 text-left whitespace-normal leading-tight",
                                             @selected_technique_id == "#{technique.id}" &&
                                               "bg-primary/10 text-primary"
                                           ]}
                                         >
-                                          <span class="flex-1">{technique.name}</span>
-                                          <%= if technique.video_count > 0 do %>
-                                            <span class="text-xs opacity-60 ml-1">
-                                              ({technique.video_count})
-                                            </span>
-                                          <% end %>
+                                          <span class="flex-1">
+                                            {technique.name} ({technique.video_count})
+                                          </span>
                                         </.link>
                                       <% end %>
                                       <%= if Enum.empty?(techniques) do %>
@@ -340,16 +338,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
             put_count(socket, id, count)
 
           "sub_position" ->
-            # Pre-compute counts for all child actions
-            position = find_position(socket.assigns.positions, params["pos"])
-
-            compute_sub_action_counts(
-              socket,
-              position,
-              params["pos"],
-              params["ori"],
-              params["sub"]
-            )
+            # Load actions filtered by position+orientation and compute their counts
+            socket
+            |> maybe_load_actions(id, params["pos"], params["ori"])
+            |> compute_action_counts(id, params["pos"], params["ori"], params["sub"])
 
           "action" ->
             count =
@@ -369,6 +361,26 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         end
 
       {:noreply, socket}
+    end
+  end
+
+  defp maybe_load_actions(socket, sub_id, position_name, orientation_name) do
+    if Map.has_key?(socket.assigns.actions_map, sub_id) do
+      socket
+    else
+      # Query actions that are associated with this position+orientation
+      actions =
+        from(apo in "action_position_orientations",
+          join: a in "actions",
+          on: a.name == apo.action_name,
+          where: apo.position_name == ^position_name,
+          where: apo.orientation_name == ^orientation_name,
+          select: %{name: a.name, label: a.label},
+          order_by: a.label
+        )
+        |> FosBjj.Repo.all()
+
+      assign(socket, :actions_map, Map.put(socket.assigns.actions_map, sub_id, actions))
     end
   end
 
@@ -423,7 +435,6 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   end
 
   defp compute_orientation_counts(socket, position, position_name) do
-    # Compute counts for all orientations under this position
     Enum.reduce(position.orientations, socket, fn orientation, acc_socket ->
       ori_id = "pos:#{position_name}:ori:#{orientation.name}"
       count = count_videos_for_branch(position_name, orientation.name, nil, nil)
@@ -431,17 +442,11 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     end)
   end
 
-  defp compute_sub_action_counts(
-         socket,
-         position,
-         position_name,
-         orientation_name,
-         sub_position_name
-       ) do
-    # Compute counts for all actions under this sub_position
-    Enum.reduce(position.actions, socket, fn action, acc_socket ->
-      action_id =
-        "pos:#{position_name}:ori:#{orientation_name}:sub:#{sub_position_name}:action:#{action.name}"
+  defp compute_action_counts(socket, sub_id, position_name, orientation_name, sub_position_name) do
+    actions = Map.get(socket.assigns.actions_map, sub_id, [])
+
+    Enum.reduce(actions, socket, fn action, acc_socket ->
+      action_id = "#{sub_id}:action:#{action.name}"
 
       count =
         count_videos_for_branch(position_name, orientation_name, sub_position_name, action.name)
@@ -479,6 +484,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     do: Enum.filter(sub_positions, fn sp -> sp.position_name == position_name end)
 
   defp get_techniques(map, id), do: Map.get(map, id, [])
+  defp get_actions(map, id), do: Map.get(map, id, [])
   defp get_count(map, id), do: Map.get(map, id)
   defp sort_by_label(list), do: Enum.sort_by(list, & &1.label)
   defp sort_by_name(list), do: Enum.sort_by(list, & &1.name)

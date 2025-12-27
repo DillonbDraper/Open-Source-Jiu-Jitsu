@@ -1,9 +1,6 @@
 * This is a list of features/enhancements necessary for MVP
 - Actually set up email client/test creating users.
-- Change organization structure around orientation/subposition; subposition should be higher, and have orientation associated to it.
-- Subpositions for standing - probably organize like Judo throws.  Upper/lower body, maybe ashiwaza/sutemi waza
-- Fix pagination
-- Fix drawer closing on technique form submit
+- Fix drawer closing on technique form submit -shockingly hard
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
 - Adequate seed database of techniques/videos

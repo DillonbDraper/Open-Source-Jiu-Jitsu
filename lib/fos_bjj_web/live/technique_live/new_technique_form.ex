@@ -11,7 +11,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
     else
       positions =
         FosBjj.JiuJitsu.Position
-        |> Ash.Query.load([:orientations, :actions])
+        |> Ash.Query.load(:orientations)
         |> Ash.read!()
 
       sub_positions =
@@ -35,8 +35,8 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
        |> assign(:sub_positions, sub_positions)
        |> assign(:orientations, orientations)
        |> assign(:selected_position, nil)
-       |> assign(:selected_sub_position, nil)
        |> assign(:selected_orientation, nil)
+       |> assign(:selected_sub_position, nil)
        |> assign(:selected_action, nil)
        |> assign(:child_fields_disabled, true)
        |> assign(:available_orientations, [])
@@ -47,6 +47,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
   @impl true
   def handle_event("validate", %{"technique" => params}, socket) do
+    # Position is only used for UI filtering, not persisted
     selected_position =
       Map.get(params, "position")
       |> case do
@@ -71,7 +72,13 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         value -> value
       end
 
-    selected_orientation = Map.get(params, "orientation_name")
+    selected_orientation =
+      Map.get(params, "orientation_name")
+      |> case do
+        "" -> nil
+        nil -> nil
+        value -> value
+      end
 
     {child_fields_disabled, available_orientations} =
       get_orientation_options(selected_position, socket.assigns.positions)
@@ -90,11 +97,10 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         nil
       end
 
-    # Filter actions to only show those belonging to selected position
+    # Filter actions based on position + orientation
     available_actions =
-      get_available_actions(socket.assigns.positions, selected_position)
+      get_available_actions(selected_position, selected_orientation)
 
-    # Remove action if it is no longer valid for the selected position
     valid_action_names = Enum.map(available_actions, & &1.name)
 
     final_action =
@@ -104,10 +110,13 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         nil
       end
 
+    # Only pass fields that exist on the Technique resource
     updated_params =
       params
       |> Map.put("sub_position_name", final_sub_position)
       |> Map.put("action_name", final_action)
+      # Remove position as it's not on the resource
+      |> Map.delete("position")
 
     form =
       AshPhoenix.Form.validate(socket.assigns.form, updated_params,
@@ -129,28 +138,10 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
   @impl true
   def handle_event("save", %{"technique" => params}, socket) do
-    selected_position = socket.assigns.selected_position
     current_user = socket.assigns[:current_user]
 
-    # Wrap single position in a list for the relationship
-    selected_positions = if selected_position, do: [selected_position], else: []
-
-    # Merge relationship data into params
-    params_with_relationships =
-      params
-      |> Map.put("positions", selected_positions)
-
-    # Use before_submit to manage relationships manually
-    before_submit = fn changeset ->
-      changeset
-      |> Ash.Changeset.manage_relationship(:positions, selected_positions,
-        type: :append_and_remove
-      )
-    end
-
     case AshPhoenix.Form.submit(socket.assigns.form,
-           params: params_with_relationships,
-           before_submit: before_submit,
+           params: params,
            actor: current_user
          ) do
       {:ok, technique} ->
@@ -191,17 +182,23 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
     end
   end
 
-  defp get_available_actions(all_positions, selected_position) do
-    if is_nil(selected_position) or selected_position == "" do
+  defp get_available_actions(selected_position, selected_orientation) do
+    # Actions require both position AND orientation to be selected
+    if is_nil(selected_position) or selected_position == "" or
+         is_nil(selected_orientation) or selected_orientation == "" do
       []
     else
-      position = Enum.find(all_positions, fn p -> p.name == selected_position end)
+      import Ecto.Query
 
-      if position do
-        position.actions
-      else
-        []
-      end
+      from(apo in "action_position_orientations",
+        join: a in "actions",
+        on: a.name == apo.action_name,
+        where: apo.position_name == ^selected_position,
+        where: apo.orientation_name == ^selected_orientation,
+        select: %{name: a.name, label: a.label},
+        order_by: a.label
+      )
+      |> FosBjj.Repo.all()
     end
   end
 
@@ -229,7 +226,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             required
           />
 
-          <%!-- Position Single Select --%>
+          <%!-- Position Select (UI helper only, not persisted) --%>
           <.combobox
             id="position-select"
             name="technique[position]"
@@ -242,6 +239,10 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
               {position.label}
             </:option>
           </.combobox>
+
+          <p :if={is_nil(@selected_position)} class="text-sm text-gray-500 mt-1">
+            Select a position to filter sub-positions
+          </p>
 
           <%!-- Sub-Position Single Select --%>
           <.combobox
@@ -263,19 +264,44 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
           </.combobox>
 
           <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
-            Select a position to enable Subpositions
+            Select a position to enable sub-positions
+          </p>
+
+          <%!-- Orientation Select --%>
+          <.combobox
+            label="Orientation"
+            disabled={@child_fields_disabled}
+            name="technique[orientation_name]"
+            value={@selected_orientation}
+            id={"orientation-#{@selected_orientation || "none"}"}
+          >
+            <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
+              {@orientations
+              |> Enum.find(&(&1.name == orientation_name))
+              |> then(& &1.label)}
+            </:option>
+          </.combobox>
+
+          <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
+            Select a position to enable orientation
           </p>
 
           <%!-- Action Select --%>
           <.combobox
-            id={"action-select-#{@selected_position || "none"}"}
+            id={
+              "action-select-#{@selected_position || "none"}-#{@selected_orientation || "none"}"
+            }
             name="technique[action_name]"
             label="Action"
             value={@selected_action}
             placeholder={
-              if is_nil(@selected_position), do: "Select a position first", else: "Select an action"
+              cond do
+                is_nil(@selected_position) -> "Select a position first"
+                is_nil(@selected_orientation) -> "Select an orientation first"
+                true -> "Select an action"
+              end
             }
-            disabled={is_nil(@selected_position)}
+            disabled={is_nil(@selected_position) or is_nil(@selected_orientation)}
             size="extra_large"
           >
             <:option :for={action <- @available_actions} value={action.name}>
@@ -283,26 +309,11 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             </:option>
           </.combobox>
 
-          <p :if={is_nil(@selected_position)} class="text-sm text-gray-500 mt-1">
-            Select a position to enable Actions
-          </p>
-
-          <%!-- Orientation Select --%>
-          <.native_select
-            field={@form[:orientation_name]}
-            label="Orientation"
-            disabled={@child_fields_disabled}
+          <p
+            :if={is_nil(@selected_position) or is_nil(@selected_orientation)}
+            class="text-sm text-gray-500 mt-1"
           >
-            <option value="">Select orientation</option>
-            <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
-              {@orientations
-              |> Enum.find(&(&1.name == orientation_name))
-              |> then(& &1.label)}
-            </:option>
-          </.native_select>
-
-          <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
-            Select a position to enable Orientation
+            Select a position and orientation to enable actions
           </p>
 
           <%!-- Submit Buttons --%>

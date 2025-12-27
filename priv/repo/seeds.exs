@@ -72,7 +72,7 @@ alias FosBjj.JiuJitsu.{
   Orientation,
   PositionOrientation,
   Action,
-  ActionPosition
+  ActionPositionOrientation
 }
 
 # Grips
@@ -90,7 +90,9 @@ grips = [
   %{name: "under_hook", label: "Under Hook"},
   %{name: "one_on_one", label: "1 On 1"},
   %{name: "collar_elbow", label: "Collar & Elbow"},
-  %{name: "cross_collar", label: "Cross Collar"}
+  %{name: "cross_collar", label: "Cross Collar"},
+  %{name: "ankle_grip", label: "Ankle Grip"},
+  %{name: "ankle_lock_grip", label: "Ankle Lock Grip"}
 ]
 
 for grip <- grips do
@@ -104,7 +106,8 @@ positions = [
   %{name: "mount", label: "Mount"},
   %{name: "side_control", label: "Side Control"},
   %{name: "back", label: "Back"},
-  %{name: "leg_entanglement", label: "Leg Entanglement"}
+  %{name: "leg_entanglement", label: "Leg Entanglement"},
+  %{name: "turtle", label: "Turtle"}
 ]
 
 for position <- positions do
@@ -130,13 +133,15 @@ position_orientations = [
   # Standing
   {"standing", "offense"},
   {"standing", "defense"},
-  # Guard, Mount, Side Control -> Top, Bottom
+  # Guard, Mount, Side Control, Turtle -> Top, Bottom
   {"guard", "top"},
   {"guard", "bottom"},
   {"mount", "top"},
   {"mount", "bottom"},
   {"side_control", "top"},
   {"side_control", "bottom"},
+  {"turtle", "top"},
+  {"turtle", "bottom"},
   # Back, Leg Entanglement -> Superior, Inferior
   {"back", "superior"},
   {"back", "inferior"},
@@ -150,6 +155,12 @@ end
 
 # SubPositions
 sub_positions = [
+  # Standing "subpositions"
+  %{name: "upper_body", label: "Upper Body", position_name: "standing"},
+  %{name: "leg_grab", label: "Leg Grab", position_name: "standing"},
+  %{name: "ashi_waza", label: "Ashi Waza", position_name: "standing"},
+  %{name: "sacrifice_sutemi_waza", label: "Sacrifice (Sutemi Waza)", position_name: "standing"},
+
   # Guard subpositions
   %{name: "closed_guard", label: "Closed Guard", position_name: "guard"},
   %{name: "open_guard", label: "Open Guard", position_name: "guard"},
@@ -157,10 +168,11 @@ sub_positions = [
   %{name: "butterfly_guard", label: "Butterfly Guard", position_name: "guard"},
   %{name: "de_la_riva_guard", label: "De La Riva Guard", position_name: "guard"},
   %{name: "reverse_de_la_riva_guard", label: "Reverse De La Riva Guard", position_name: "guard"},
+  %{name: "single_leg_x_guard", label: "Single Leg X Guard", position_name: "guard"},
+  %{name: "x_guard", label: "X Guard", position_name: "guard"},
   %{name: "spider_guard", label: "Spider Guard", position_name: "guard"},
   %{name: "lapel_guard", label: "Lapel Guard(s)", position_name: "guard"},
   %{name: "lasso_guard", label: "K Guard", position_name: "guard"},
-  %{name: "berimbolo", label: "Berimbolo", position_name: "guard"},
 
   # Mount subpositions
   %{name: "high_mount", label: "High Mount", position_name: "mount"},
@@ -175,7 +187,16 @@ sub_positions = [
   %{name: "knee_on_belly", label: "Knee-On-Belly", position_name: "side_control"},
   # Back subpositions
   %{name: "back_mount", label: "Back Mount (Hooks/Body Triangle)", position_name: "back"},
-  %{name: "back_crucifix", label: "Crucifix (Back)", position_name: "back"}
+  %{name: "back_crucifix", label: "Crucifix (Back)", position_name: "back"},
+
+  # Leg Entanglement
+  %{name: "ashi_garami", label: "Ashi Garami", position_name: "leg_entanglement"},
+  %{name: "fifty_fifty", label: "50/50", position_name: "leg_entanglement"},
+  %{name: "cross_ashi_garami", label: "Cross Ashi Garami", position_name: "leg_entanglement"},
+  %{name: "berimbolo", label: "Berimbolo", position_name: "leg_entanglement"},
+  %{name: "inside_ashi_garami", label: "Inside Ashi Garami (Saddle)", position_name: "leg_entanglement"},
+  %{name: "double_outside_ashi_garami", label: "Double Outside Ashi", position_name: "leg_entanglement"},
+
 ]
 
 for sub_position <- sub_positions do
@@ -198,47 +219,57 @@ for action <- actions do
   Ash.Seed.seed!(Action, action, actor: dev_user)
 end
 
-# Action Positions - associating actions with positions
-action_positions = [
+# Action Position Orientations - associating actions with positions and orientations
+action_orientation_positions = [
   # Standing
-  {"standing", "takedowns"},
-  {"standing", "entries"},
-  {"standing", "transitions"},
+  {"standing", "offense", "takedowns"},
+  {"standing", "offense", "entries"},
+  {"standing", "offense", "transitions"},
+  {"standing", "defense", "takedowns"},
+  {"standing", "defense", "transitions"},
 
   # Guard
-  {"guard", "sweeps"},
-  {"guard", "submissions"},
-  {"guard", "transitions"},
-  {"guard", "entries"},
-  {"guard", "passes"},
-  {"guard", "escapes"},
-  {"guard", "takedowns"},
+  {"guard", "bottom", "sweeps"},
+  {"guard", "bottom", "submissions"},
+  {"guard", "bottom", "transitions"},
+  {"guard", "bottom", "entries"},
+  {"guard", "bottom", "escapes"},
+  {"guard", "bottom", "takedowns"},
+
+  {"guard", "top", "submissions"},
+  {"guard", "top", "transitions"},
+  {"guard", "top", "passes"},
 
   # Mount
-  {"mount", "submissions"},
-  {"mount", "transitions"},
-  {"mount", "escapes"},
+  {"mount", "bottom", "escapes"},
+  {"mount", "top", "submissions"},
+  {"mount", "top", "transitions"},
 
   # Side Control
-  {"side_control", "submissions"},
-  {"side_control", "transitions"},
-  {"side_control", "escapes"},
+  {"side_control", "bottom", "submissions"},
+  {"side_control", "bottom", "reversals"},
+  {"side_control", "bottom", "escapes"},
+  {"side_control", "top", "submissions"},
+  {"side_control", "top", "transitions"},
 
   # Back
-  {"back", "submissions"},
-  {"back", "transitions"},
-  {"back", "escapes"},
-  {"back", "entries"},
+  {"back", "inferior", "submissions"},
+  {"back", "bottom", "escapes"},
+  {"back", "superior", "submissions"},
+  {"back", "superior", "transitions"},
 
   # Leg Entanglement
-  {"leg_entanglement", "submissions"},
-  {"leg_entanglement", "transitions"},
-  {"leg_entanglement", "escapes"},
-  {"leg_entanglement", "entries"}
+  {"leg_entanglement", "superior", "submissions"},
+  {"leg_entanglement", "superior", "transitions"},
+  {"leg_entanglement", "superior", "entries"},
+  {"leg_entanglement", "inferior", "transitions"},
+  {"leg_entanglement", "inferior", "escapes"},
 ]
 
-for {pos, action} <- action_positions do
-  Ash.Seed.seed!(ActionPosition, %{position_name: pos, action_name: action}, actor: dev_user)
+# NOTE: This data structure needs to be updated to map position+orientation to actions
+# instead of positions to actions (e.g., {"guard", "bottom", "sweeps"})
+for {pos, ori, action} <- action_orientation_positions do
+  Ash.Seed.seed!(ActionPositionOrientation, %{position_name: pos, orientation_name: ori, action_name: action}, actor: dev_user)
 end
 
 # ==========================================
@@ -246,8 +277,8 @@ end
 # ==========================================
 # Load techniques, videos, and other user-generated content from SQL files
 
-if File.exists?("priv/repo/sql_data") and File.dir?("priv/repo/sql_data") do
-  FosBjj.Repo.SqlLoader.load_all()
-end
+# if File.exists?("priv/repo/sql_data") and File.dir?("priv/repo/sql_data") do
+#   FosBjj.Repo.SqlLoader.load_all()
+# end
 
-IO.puts("\n✓ Database seeding complete!\n")
+# IO.puts("\n✓ Database seeding complete!\n")

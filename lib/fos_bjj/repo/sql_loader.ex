@@ -37,7 +37,6 @@ defmodule FosBjj.Repo.SqlLoader do
       "videos.sql",
 
       # Many-to-many join tables
-      "technique_positions.sql",
       "technique_sub_positions.sql",
       "video_grips.sql",
       "video_techniques.sql"
@@ -52,10 +51,10 @@ defmodule FosBjj.Repo.SqlLoader do
     total_count = Enum.count(results)
 
     IO.puts("\n✓ Loaded #{success_count}/#{total_count} SQL files successfully")
-    
+
     # Reset sequences after loading data with explicit IDs
     reset_sequences()
-    
+
     IO.puts("")
   end
 
@@ -103,37 +102,36 @@ defmodule FosBjj.Repo.SqlLoader do
 
   This is necessary after loading data with explicit IDs because PostgreSQL
   sequences don't automatically advance when you insert with explicit IDs.
-  
+
   Without this, the next INSERT would try to use an ID that already exists,
   causing a duplicate key error.
   """
   def reset_sequences do
     IO.puts("\n=== Resetting sequences ===")
-    
+
     tables = [
       "techniques",
       "videos",
-      "technique_positions",
       "technique_sub_positions",
       "video_grips",
       "video_techniques"
     ]
-    
+
     Enum.each(tables, fn table ->
       sequence_name = "#{table}_id_seq"
-      
+
       try do
         # Get the max ID from the table
         case SQL.query(Repo, "SELECT MAX(id) FROM #{table}") do
           {:ok, %{rows: [[nil]]}} ->
             # Table is empty, no need to reset
             :ok
-            
+
           {:ok, %{rows: [[max_id]]}} when is_integer(max_id) ->
             # Set the sequence to max_id so next value will be max_id + 1
             SQL.query!(Repo, "SELECT setval('#{sequence_name}', $1, true)", [max_id])
             IO.puts("  ✓ Reset #{table} sequence to #{max_id + 1}")
-            
+
           {:error, _} ->
             # Table might not exist or have an id column, skip silently
             :ok
@@ -161,7 +159,6 @@ defmodule FosBjj.Repo.SqlLoader do
     tables = [
       "techniques",
       "videos",
-      "technique_positions",
       "technique_sub_positions",
       "video_grips",
       "video_techniques"

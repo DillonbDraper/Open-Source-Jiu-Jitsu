@@ -48,12 +48,9 @@ defmodule FosBjj.JiuJitsu.Position do
       public?(true)
     end
 
-    many_to_many :actions, FosBjj.JiuJitsu.Action do
-      through(FosBjj.JiuJitsu.ActionPosition)
+    has_many :action_position_orientations, FosBjj.JiuJitsu.ActionPositionOrientation do
       source_attribute(:name)
-      destination_attribute(:name)
-      source_attribute_on_join_resource(:position_name)
-      destination_attribute_on_join_resource(:action_name)
+      destination_attribute(:position_name)
       public?(true)
     end
   end

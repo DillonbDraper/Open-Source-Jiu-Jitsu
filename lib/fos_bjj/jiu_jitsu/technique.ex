@@ -58,16 +58,6 @@ defmodule FosBjj.JiuJitsu.Technique do
   end
 
   relationships do
-    # Unsure if this is necessary, maybe just a belongs_to makes more sense
-    many_to_many :positions, FosBjj.JiuJitsu.Position do
-      through(FosBjj.JiuJitsu.TechniquePosition)
-      source_attribute(:id)
-      source_attribute_on_join_resource(:technique_id)
-      destination_attribute(:name)
-      destination_attribute_on_join_resource(:position_name)
-      public?(true)
-    end
-
     belongs_to :sub_position, FosBjj.JiuJitsu.SubPosition do
       source_attribute(:sub_position_name)
       destination_attribute(:name)

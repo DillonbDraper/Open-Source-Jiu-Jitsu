@@ -23,15 +23,14 @@ defmodule FosBjjWeb.VideoShowComponent do
 
   @impl true
   def handle_event("select_technique", %{"technique-id" => technique_id}, socket) do
-    {:noreply,
-     push_patch(socket, to: ~p"/videos/#{socket.assigns.video.id}?technique_id=#{technique_id}")}
+    {:noreply, push_patch(socket, to: ~p"/database?technique_id=#{technique_id}")}
   end
 
   defp load_video(socket, video_id) do
     video =
       Video
       |> Ash.Query.filter(id == ^video_id)
-      |> Ash.Query.load([:techniques, :grips])
+      |> Ash.Query.load(techniques: [:video_count], grips: [])
       |> Ash.read_one!()
 
     case video do
@@ -102,7 +101,7 @@ defmodule FosBjjWeb.VideoShowComponent do
                       rounded="full"
                       variant="default"
                     >
-                      {technique.name}
+                      {technique.name} ({technique.video_count})
                     </.button>
                   <% end %>
                 </div>

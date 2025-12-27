@@ -44,7 +44,7 @@ defmodule FosBjjWeb.TechniquePathComponent do
   defp load_technique_path(technique_id) do
     case Technique
          |> Ash.Query.filter(id == ^technique_id)
-         |> Ash.Query.load([:positions, :orientation, :sub_position, :action, :video_count])
+         |> Ash.Query.load([{:sub_position, :position}, :orientation, :action, :video_count])
          |> Ash.read_one() do
       {:ok, nil} ->
         []
@@ -60,28 +60,37 @@ defmodule FosBjjWeb.TechniquePathComponent do
   defp build_path_segments(technique) do
     segments = []
 
-    # Add Position (get first position from many_to_many)
+    # Add Position (get from sub_position.position)
     segments =
-      if is_list(technique.positions) && technique.positions != [] do
-        position = List.first(technique.positions)
-        [%{label: position.label, type: :position} | segments]
+      if technique.sub_position && !match?(%Ash.NotLoaded{}, technique.sub_position) &&
+           technique.sub_position.position && !match?(%Ash.NotLoaded{}, technique.sub_position.position) do
+        [%{label: technique.sub_position.position.label, type: :position} | segments]
+      else
+        segments
       end
 
     # Add Orientation (optional)
     segments =
       if technique.orientation && !match?(%Ash.NotLoaded{}, technique.orientation) do
         [%{label: technique.orientation.label, type: :orientation} | segments]
+      else
+        segments
       end
 
-    # Add SubPosition (through sub_position relationship)
+    # Add SubPosition
     segments =
       if technique.sub_position && !match?(%Ash.NotLoaded{}, technique.sub_position) do
         [%{label: technique.sub_position.label, type: :sub_position} | segments]
+      else
+        segments
       end
 
+    # Add Action
     segments =
       if technique.action && !match?(%Ash.NotLoaded{}, technique.action) do
         [%{label: technique.action.label, type: :action} | segments]
+      else
+        segments
       end
 
     segments =

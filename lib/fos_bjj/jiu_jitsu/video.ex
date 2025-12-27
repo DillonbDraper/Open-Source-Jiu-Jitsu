@@ -70,6 +70,10 @@ defmodule FosBjj.JiuJitsu.Video do
     timestamps()
   end
 
+  identities do
+    identity(:unique_video_id, [:video_id])
+  end
+
   relationships do
     many_to_many :techniques, FosBjj.JiuJitsu.Technique do
       through(FosBjj.JiuJitsu.VideoTechnique)

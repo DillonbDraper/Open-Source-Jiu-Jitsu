@@ -122,7 +122,8 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
      |> assign(:form, form)
      |> assign(:show_drawer, false)
      |> update(:combobox_version, &((&1 || 0) + 1))
-     |> put_flash(:info, "Technique created successfully")}
+     |> put_flash(:info, "Technique created successfully")
+     |> push_event("js-exec", %{to: "#technique-drawer", attr: "phx-remove"})}
   end
 
   @impl true
