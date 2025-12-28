@@ -26,6 +26,8 @@ defmodule FosBjj.JiuJitsu.Video do
     end
 
     update :update do
+      require_atomic?(false)
+
       accept([
         :video_id,
         :title,
@@ -34,6 +36,8 @@ defmodule FosBjj.JiuJitsu.Video do
         :thumbnail_url
       ])
 
+      argument(:url, :string)
+      change({FosBjj.CustomChanges.ProcessURL, url: :url})
       change(relate_actor(:updated_by))
     end
   end

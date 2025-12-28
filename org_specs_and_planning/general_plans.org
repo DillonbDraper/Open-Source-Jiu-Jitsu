@@ -1,6 +1,10 @@
 * This is a list of features/enhancements necessary for MVP
 - Actually set up email client/test creating users.
+  - Actually works fine with built-in, but need to impelment real service for prod and fix styling.
+    - Styling now, real service as part of deploy process.
 - Resolve redirect "bug" on video save (Implement plug-navigation-history library (maybe))
+- Add admin UI page
+- Add modal update form for videos/techniques -> How do I access techniques in the UI?
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
 - Adequate seed database of techniques/videos

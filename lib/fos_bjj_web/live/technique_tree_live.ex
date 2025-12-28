@@ -25,6 +25,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   end
 
   # TODO: Cleanup
+  @impl true
   def handle_event("attire_change", %{"attire" => attire}, socket) do
     # Build query params, preserving technique_id or title search if present
     params =
@@ -56,6 +57,58 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> push_patch(to: "/database?title=#{title_search}")
 
     {:noreply, socket}
+  end
+
+  def handle_event("toggle", params, socket) do
+    id = construct_id(params)
+    expanded_set = socket.assigns.expanded_ids
+
+    if MapSet.member?(expanded_set, id) do
+      {:noreply, assign(socket, :expanded_ids, MapSet.delete(expanded_set, id))}
+    else
+      socket = assign(socket, :expanded_ids, MapSet.put(expanded_set, id))
+
+      # Compute counts or fetch data based on level
+      socket =
+        case params["level"] do
+          "position" ->
+            # Pre-compute counts for all child orientations
+            position = find_position(socket.assigns.positions, params["pos"])
+            compute_orientation_counts(socket, position, params["pos"])
+
+          "orientation" ->
+            # Compute count for this orientation
+            count = count_videos_for_branch(params["pos"], params["ori"], nil, nil)
+
+            socket
+            |> put_count(id, count)
+            |> compute_sub_position_counts(params["pos"], params["ori"])
+
+          "sub_position" ->
+            # Load actions filtered by position+orientation and compute their counts
+            socket
+            |> maybe_load_actions(id, params["pos"], params["ori"])
+            |> compute_action_counts(id, params["pos"], params["ori"], params["sub"])
+
+          "action" ->
+            count =
+              count_videos_for_branch(
+                params["pos"],
+                params["ori"],
+                params["sub"],
+                params["action"]
+              )
+
+            socket
+            |> put_count(id, count)
+            |> maybe_fetch_techniques(id, params["ori"], params["sub"], params["action"])
+
+          _ ->
+            socket
+        end
+
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -312,59 +365,6 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       <% end %>
     </div>
     """
-  end
-
-  @impl true
-  def handle_event("toggle", params, socket) do
-    id = construct_id(params)
-    expanded_set = socket.assigns.expanded_ids
-
-    if MapSet.member?(expanded_set, id) do
-      {:noreply, assign(socket, :expanded_ids, MapSet.delete(expanded_set, id))}
-    else
-      socket = assign(socket, :expanded_ids, MapSet.put(expanded_set, id))
-
-      # Compute counts or fetch data based on level
-      socket =
-        case params["level"] do
-          "position" ->
-            # Pre-compute counts for all child orientations
-            position = find_position(socket.assigns.positions, params["pos"])
-            compute_orientation_counts(socket, position, params["pos"])
-
-          "orientation" ->
-            # Compute count for this orientation
-            count = count_videos_for_branch(params["pos"], params["ori"], nil, nil)
-
-            socket
-            |> put_count(id, count)
-            |> compute_sub_position_counts(params["pos"], params["ori"])
-
-          "sub_position" ->
-            # Load actions filtered by position+orientation and compute their counts
-            socket
-            |> maybe_load_actions(id, params["pos"], params["ori"])
-            |> compute_action_counts(id, params["pos"], params["ori"], params["sub"])
-
-          "action" ->
-            count =
-              count_videos_for_branch(
-                params["pos"],
-                params["ori"],
-                params["sub"],
-                params["action"]
-              )
-
-            socket
-            |> put_count(id, count)
-            |> maybe_fetch_techniques(id, params["ori"], params["sub"], params["action"])
-
-          _ ->
-            socket
-        end
-
-      {:noreply, socket}
-    end
   end
 
   defp maybe_load_actions(socket, sub_id, position_name, orientation_name) do

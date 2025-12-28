@@ -17,7 +17,8 @@ defmodule FosBjj.Repo.Migrations.SwapActionAssocs do
             name: "action_position_orientations_action_name_fkey",
             type: :text,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :position_name,
           references(:positions,
@@ -25,7 +26,8 @@ defmodule FosBjj.Repo.Migrations.SwapActionAssocs do
             name: "action_position_orientations_position_name_fkey",
             type: :text,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :orientation_name,
           references(:orientations,
@@ -33,7 +35,8 @@ defmodule FosBjj.Repo.Migrations.SwapActionAssocs do
             name: "action_position_orientations_orientation_name_fkey",
             type: :text,
             prefix: "public"
-          ), null: false
+          ),
+          null: false
 
       add :inserted_at, :utc_datetime_usec,
         null: false,

@@ -1,5 +1,9 @@
 defmodule FosBjjWeb.VideosDashboardLive do
   use FosBjjWeb, :live_view
+  import FosBjjWeb.Components.Modal
+  alias FosBjjWeb.VideoLive.VideoFormComponent
+  alias FosBjjWeb.TechniqueLive.NewTechniqueForm
+  alias Phoenix.LiveView.JS
 
   on_mount {FosBjjWeb.LiveUserAuth, :live_user_optional}
 
@@ -12,7 +16,9 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:selected_technique_id, nil)
      |> assign(:selected_attire, "both")
      |> assign(:title_search, nil)
-     |> assign(:total_videos, 0)}
+     |> assign(:total_videos, 0)
+     |> assign(:show_edit_modal, false)
+     |> assign(:editing_video, nil)}
   end
 
   @impl true
@@ -69,6 +75,14 @@ defmodule FosBjjWeb.VideosDashboardLive do
   end
 
   @impl true
+  def handle_event("close_edit_modal", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_edit_modal, false)
+     |> assign(:editing_video, nil)}
+  end
+
+  @impl true
   def handle_info({:update_total_videos, total}, socket) do
     {:noreply, assign(socket, :total_videos, total)}
   end
@@ -80,6 +94,46 @@ defmodule FosBjjWeb.VideosDashboardLive do
     url_params = build_url_params(socket, page)
 
     {:noreply, push_patch(socket, to: ~p"/database?#{url_params}")}
+  end
+
+  @impl true
+  def handle_info({:edit_video, video_id}, socket) do
+    video = Ash.get!(FosBjj.JiuJitsu.Video, video_id)
+
+    {:noreply,
+     socket
+     |> assign(:show_edit_modal, true)
+     |> assign(:editing_video, video)}
+  end
+
+  @impl true
+  def handle_info({:video_saved, _video}, socket) do
+    # Trigger a refresh of the DatabaseComponent by sending it an update
+    send_update(FosBjjWeb.DatabaseComponent,
+      id: "database-component",
+      refresh: true
+    )
+
+    {:noreply,
+     socket
+     |> assign(:show_edit_modal, false)
+     |> assign(:editing_video, nil)
+     |> put_flash(:info, "Video updated successfully")}
+  end
+
+  @impl true
+  def handle_info({NewTechniqueForm, {:technique_created, technique}}, socket) do
+    # Forward the message to the component by sending an update
+    send_update(VideoFormComponent,
+      id: "edit-video-form",
+      action: :technique_created,
+      technique: technique
+    )
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "Technique created successfully")
+     |> push_event("js-exec", %{to: "#technique-drawer-edit-video-form", attr: "phx-remove"})}
   end
 
   defp build_url_params(socket, page) do
@@ -127,6 +181,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
               selected_attire={@selected_attire}
               title_search={@title_search}
               current_page={@current_page || 1}
+              current_user={assigns[:current_user]}
             />
           <% else %>
             <.live_component
@@ -138,7 +193,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
           <% end %>
         </div>
 
-    <!-- Right: Technique Tree (40% = 2 cols, always mounted) -->
+        <!-- Right: Technique Tree (40% = 2 cols, always mounted) -->
         <div class="col-span-2 min-w-0">
           <.live_component
             module={FosBjjWeb.TechniqueTreeComponent}
@@ -148,6 +203,37 @@ defmodule FosBjjWeb.VideosDashboardLive do
           />
         </div>
       </div>
+
+      <%!-- Edit Video Modal --%>
+      <.modal
+        :if={@show_edit_modal && @editing_video}
+        id="edit-video-modal"
+        title="Edit Video"
+        show={@show_edit_modal}
+        size="triple_large"
+        on_cancel={JS.push("close_edit_modal")}
+      >
+        <.live_component
+          module={VideoFormComponent}
+          id="edit-video-form"
+          current_user={@current_user}
+          video={@editing_video}
+          on_cancel={JS.exec("data-cancel", to: "#edit-video-modal")}
+        />
+      </.modal>
+
+      <%!-- Colocated hook for executing JS to close modal w/animation --%>
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".JsExec">
+        export default {
+          mounted() {
+            this.handleEvent("js-exec", ({ to, attr }) => {
+              document.querySelectorAll(to).forEach((el) => {
+                this.liveSocket.execJS(el, el.getAttribute(attr));
+              });
+            });
+          }
+        }
+      </script>
     </Layouts.app>
     """
   end

@@ -64,4 +64,3 @@ defmodule FosBjj.JiuJitsu.ActionPositionOrientation do
     end
   end
 end
-

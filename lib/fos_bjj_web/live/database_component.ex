@@ -26,12 +26,13 @@ defmodule FosBjjWeb.DatabaseComponent do
     old_page = socket.assigns[:current_page]
     new_page = assigns.current_page
     page_changed? = old_page != new_page
+    refresh_requested? = assigns[:refresh] == true
 
     socket = assign(socket, assigns)
 
     socket =
       if socket.assigns[:videos] == nil or technique_changed? or attire_changed? or
-           title_searched? or page_changed? do
+           title_searched? or page_changed? or refresh_requested? do
         params = %{
           technique_id: new_technique_id,
           attire: new_attire,
@@ -56,6 +57,12 @@ defmodule FosBjjWeb.DatabaseComponent do
   @impl true
   def handle_event("select_technique", %{"technique-id" => technique_id}, socket) do
     {:noreply, push_patch(socket, to: ~p"/database?technique_id=#{technique_id}")}
+  end
+
+  @impl true
+  def handle_event("edit_video", %{"video-id" => video_id}, socket) do
+    send(self(), {:edit_video, video_id})
+    {:noreply, socket}
   end
 
   defp load_videos(socket, params, page) do
@@ -115,8 +122,6 @@ defmodule FosBjjWeb.DatabaseComponent do
   def render(assigns) do
     ~H"""
     <div class="w-full h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
-
-
       <.scroll_area id="video-scroll" class="flex-1 w-full" height="h-full">
         <%= if @videos == [] do %>
           <div class="flex flex-col items-center justify-center h-full p-8 text-base-content/50">
@@ -127,15 +132,34 @@ defmodule FosBjjWeb.DatabaseComponent do
             <%= for video <- @videos do %>
               <.card class="h-full flex flex-col relative">
                 <div class="contents">
+                  <%= if assigns[:current_user] && FosBjj.Accounts.User.admin?(@current_user) do %>
+                    <div class="absolute top-3 right-3 z-10">
+                      <button
+                        phx-click="edit_video"
+                        phx-target={@myself}
+                        phx-value-video-id={video.id}
+                        class="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                        title="Edit video"
+                      >
+                        <.icon name="hero-pencil-solid" class="w-4 h-4" />
+                      </button>
+                    </div>
+                  <% end %>
+
                   <.link
                     patch={~p"/videos/#{video.id}"}
-                    class="cursor-pointer hover:shadow-xl transition-shadow group"
+                    class="block cursor-pointer hover:shadow-xl transition-shadow group min-w-0"
                   >
                     <%!-- Title at top --%>
-                    <div class="px-3 pt-3 pb-2 border-b border-base-200">
-                      <.h2 font_weight="font-bold">
-                        {video.title}
-                      </.h2>
+                    <div class="pl-3 pr-3 pt-3 pb-2 border-b border-base-200 relative flex justify-between">
+                      <div class="flex-1 min-w-0">
+                        <.h2 font_weight="font-bold" class="break-words whitespace-normal">
+                          {video.title}
+                        </.h2>
+                      </div>
+                      <%= if assigns[:current_user] && FosBjj.Accounts.User.admin?(@current_user) do %>
+                        <div class="w-8 shrink-0"></div>
+                      <% end %>
                     </div>
 
                     <%!-- Horizontal layout: thumbnail on left, description on right --%>

@@ -150,7 +150,9 @@ position_orientations = [
 ]
 
 for {pos, ori} <- position_orientations do
-  Ash.Seed.seed!(PositionOrientation, %{position_name: pos, orientation_name: ori}, actor: dev_user)
+  Ash.Seed.seed!(PositionOrientation, %{position_name: pos, orientation_name: ori},
+    actor: dev_user
+  )
 end
 
 # SubPositions
@@ -194,9 +196,16 @@ sub_positions = [
   %{name: "fifty_fifty", label: "50/50", position_name: "leg_entanglement"},
   %{name: "cross_ashi_garami", label: "Cross Ashi Garami", position_name: "leg_entanglement"},
   %{name: "berimbolo", label: "Berimbolo", position_name: "leg_entanglement"},
-  %{name: "inside_ashi_garami", label: "Inside Ashi Garami (Saddle)", position_name: "leg_entanglement"},
-  %{name: "double_outside_ashi_garami", label: "Double Outside Ashi", position_name: "leg_entanglement"},
-
+  %{
+    name: "inside_ashi_garami",
+    label: "Inside Ashi Garami (Saddle)",
+    position_name: "leg_entanglement"
+  },
+  %{
+    name: "double_outside_ashi_garami",
+    label: "Double Outside Ashi",
+    position_name: "leg_entanglement"
+  }
 ]
 
 for sub_position <- sub_positions do
@@ -235,7 +244,6 @@ action_orientation_positions = [
   {"guard", "bottom", "entries"},
   {"guard", "bottom", "escapes"},
   {"guard", "bottom", "takedowns"},
-
   {"guard", "top", "submissions"},
   {"guard", "top", "transitions"},
   {"guard", "top", "passes"},
@@ -263,13 +271,15 @@ action_orientation_positions = [
   {"leg_entanglement", "superior", "transitions"},
   {"leg_entanglement", "superior", "entries"},
   {"leg_entanglement", "inferior", "transitions"},
-  {"leg_entanglement", "inferior", "escapes"},
+  {"leg_entanglement", "inferior", "escapes"}
 ]
 
 # NOTE: This data structure needs to be updated to map position+orientation to actions
 # instead of positions to actions (e.g., {"guard", "bottom", "sweeps"})
 for {pos, ori, action} <- action_orientation_positions do
-  Ash.Seed.seed!(ActionPositionOrientation, %{position_name: pos, orientation_name: ori, action_name: action}, actor: dev_user)
+  Ash.Seed.seed!(
+    ActionPositionOrientation,
+    %{position_name: pos, orientation_name: ori, action_name: action}, actor: dev_user)
 end
 
 # ==========================================

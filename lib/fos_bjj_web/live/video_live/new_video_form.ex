@@ -1,138 +1,45 @@
 defmodule FosBjjWeb.VideoLive.NewVideoForm do
   use FosBjjWeb, :live_view
-  import FosBjjWeb.Components.Drawer
+  alias FosBjjWeb.VideoLive.VideoFormComponent
   alias FosBjjWeb.TechniqueLive.NewTechniqueForm
 
   on_mount({AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}})
 
   @impl true
   def mount(_params, _session, socket) do
-    techniques = Ash.read!(FosBjj.JiuJitsu.Technique)
-    grips = Ash.read!(FosBjj.JiuJitsu.Grip)
     current_user = socket.assigns[:current_user]
 
-    form =
-      AshPhoenix.Form.for_create(FosBjj.JiuJitsu.Video, :create,
-        as: "video",
-        actor: current_user
-      )
-      |> to_form()
-
-    {:ok,
-     socket
-     |> assign(:form, form)
-     |> assign(:techniques, techniques)
-     |> assign(:grips, grips)
-     |> assign(:selected_techniques, [])
-     |> assign(:selected_grips, [])
-     |> assign(:combobox_version, 0)
-     |> assign(:show_drawer, false)}
+    unless FosBjj.Accounts.User.coach_or_admin?(current_user) do
+      {:ok,
+       socket
+       |> put_flash(:error, "You must be a coach or admin to add videos")
+       |> push_navigate(to: ~p"/")}
+    else
+      {:ok, socket}
+    end
   end
 
   @impl true
-  def handle_event("validate", %{"video" => params}, socket) do
-    # Clean up empty strings from multi-select comboboxes before validation
-    selected_techniques =
-      Map.get(params, "techniques", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
-
-    selected_grips =
-      Map.get(params, "grips", []) |> List.wrap() |> Enum.reject(&(&1 == ""))
-
-    # Update params with cleaned values before validation
-    cleaned_params =
-      params
-      |> Map.put("techniques", selected_techniques)
-      |> Map.put("grips", selected_grips)
-
-    form =
-      AshPhoenix.Form.validate(socket.assigns.form, cleaned_params,
-        actor: socket.assigns[:current_user]
-      )
-
+  def handle_info({:video_saved, _video}, socket) do
     {:noreply,
      socket
-     |> assign(:form, form)
-     |> assign(:selected_techniques, selected_techniques)
-     |> assign(:selected_grips, selected_grips)}
-  end
-
-  @impl true
-  def handle_event("save", %{"video" => params}, socket) do
-    selected_grips = socket.assigns.selected_grips
-    selected_techniques = socket.assigns.selected_techniques
-    current_user = socket.assigns[:current_user]
-
-    cleaned_params =
-      params
-      |> Map.put("grips", selected_grips)
-      |> Map.put("techniques", selected_techniques)
-
-    before_submit = fn changeset ->
-      Ash.Changeset.manage_relationship(
-        changeset,
-        :grips,
-        selected_grips,
-        type: :append_and_remove
-      )
-      |> Ash.Changeset.manage_relationship(:techniques, selected_techniques,
-        type: :append_and_remove
-      )
-    end
-
-    case AshPhoenix.Form.submit(socket.assigns.form,
-           params: cleaned_params,
-           before_submit: before_submit,
-           actor: current_user
-         ) do
-      {:ok, _video} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Video added successfully")
-         |> push_navigate(to: ~p"/")}
-
-      {:error, form} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Something went wrong")
-         |> assign(form: form)}
-    end
-  end
-
-  @impl true
-  def handle_event("open_drawer", _, socket) do
-    {:noreply, assign(socket, :show_drawer, true)}
-  end
-
-  @impl true
-  def handle_event("close_drawer", _, socket) do
-    {:noreply, assign(socket, :show_drawer, false)}
+     |> put_flash(:info, "Video added successfully")
+     |> push_navigate(to: ~p"/")}
   end
 
   @impl true
   def handle_info({NewTechniqueForm, {:technique_created, technique}}, socket) do
-    current_technique_ids =
-      socket.assigns.form.params
-      |> Map.get("techniques", [])
-      |> List.wrap()
-
-    new_technique_ids = [to_string(technique.id) | current_technique_ids]
-
-    params =
-      socket.assigns.form.params
-      |> Map.put("techniques", new_technique_ids)
-
-    form =
-      AshPhoenix.Form.validate(socket.assigns.form, params, actor: socket.assigns[:current_user])
+    # Forward the message to the component by sending an update
+    send_update(VideoFormComponent,
+      id: "video-form-component",
+      action: :technique_created,
+      technique: technique
+    )
 
     {:noreply,
      socket
-     |> assign(:techniques, [technique | socket.assigns.techniques])
-     |> assign(:selected_techniques, new_technique_ids)
-     |> assign(:form, form)
-     |> assign(:show_drawer, false)
-     |> update(:combobox_version, &((&1 || 0) + 1))
      |> put_flash(:info, "Technique created successfully")
-     |> push_event("js-exec", %{to: "#technique-drawer", attr: "phx-remove"})}
+     |> push_event("js-exec", %{to: "#technique-drawer-video-form-component", attr: "phx-remove"})}
   end
 
   @impl true
@@ -149,135 +56,16 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
           </.link>
         </div>
 
-        <.form_wrapper for={@form} id="video-form" phx-change="validate" phx-submit="save">
-          <div class="space-y-6">
-            <.url_field
-              field={@form[:url]}
-              label="Video URL"
-              placeholder="https://youtube.com/watch?v=..."
-              required
-            />
-
-            <.text_field
-              field={@form[:title]}
-              label="Video Title"
-              placeholder="Title of video"
-              required
-            />
-
-            <.textarea_field
-              field={@form[:description]}
-              label="Description (Optional)"
-              placeholder="Brief description of the video content"
-              rows="3"
-            />
-
-            <div class="space-y-2">
-              <label class="text-sm font-semibold">Attire *</label>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={@form[:attire].name}
-                    value="gi"
-                    checked={to_string(@form[:attire].value) == "gi"}
-                    class="radio"
-                    required
-                  />
-                  <span>Gi</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={@form[:attire].name}
-                    value="no_gi"
-                    checked={to_string(@form[:attire].value) == "no_gi"}
-                    class="radio"
-                    required
-                  />
-                  <span>No-Gi</span>
-                </label>
-              </div>
-            </div>
-
-            <%!-- Technique Select/Add --%>
-            <div class="grid grid-cols-3 gap-2 items-end">
-              <div class="col-span-2">
-                <.combobox
-                  id={"technique-select-#{@combobox_version || 0}"}
-                  name="video[techniques][]"
-                  label="Technique"
-                  value={@selected_techniques}
-                  placeholder="Search for a technique..."
-                  searchable={true}
-                  multiple={true}
-                  size="extra_large"
-                  required
-                >
-                  <:option :for={technique <- @techniques} value={to_string(technique.id)}>
-                    {technique.name}
-                  </:option>
-                </.combobox>
-              </div>
-              <div class="col-span-1">
-                <.button
-                  type="button"
-                  class="w-full"
-                  phx-click={
-                    JS.push("open_drawer")
-                    |> show_drawer("technique-drawer", "right")
-                  }
-                  title="Add New Technique"
-                >
-                  Add New Technique (If Not Found)
-                </.button>
-              </div>
-            </div>
-
-            <.combobox
-              id="grips-select"
-              name="video[grips][]"
-              label="Grips"
-              multiple={true}
-              value={@selected_grips}
-              placeholder="Select grips (optional)"
-              searchable={true}
-              size="extra_large"
-            >
-              <:option :for={grip <- @grips} value={grip.name}>
-                {grip.label}
-              </:option>
-            </.combobox>
-
-            <div class="flex gap-4">
-              <.button type="submit" class="btn btn-primary">
-                Add Video
-              </.button>
-              <.button type="button" class="btn btn-ghost" phx-click={JS.navigate(~p"/")}>
-                Cancel
-              </.button>
-            </div>
-          </div>
-        </.form_wrapper>
+        <.live_component
+          module={VideoFormComponent}
+          id="video-form-component"
+          current_user={@current_user}
+          video={nil}
+          on_cancel={JS.navigate(~p"/")}
+        />
       </div>
 
-      <.drawer
-        id="technique-drawer"
-        show={@show_drawer}
-        on_hide={JS.push("close_drawer") |> hide_drawer("technique-drawer", "right")}
-        position="right"
-        title="Add New Technique"
-      >
-        <.live_component
-          :if={@show_drawer}
-          module={NewTechniqueForm}
-          id="new-technique-form"
-          current_user={@current_user}
-          show_drawer={@show_drawer}
-        />
-      </.drawer>
-
-      <%!-- Colocated hook for executing JS o close drawer w/animation --%>
+      <%!-- Colocated hook for executing JS to close drawer w/animation --%>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".JsExec">
         export default {
           mounted() {

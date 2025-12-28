@@ -59,7 +59,7 @@ defmodule FosBjjWeb.VideoShowComponent do
             <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
           </.link>
         </div>
-
+        
     <!-- Video Player -->
         <div class="relative w-full" style="padding-bottom: 56.25%;">
           <iframe
@@ -71,7 +71,7 @@ defmodule FosBjjWeb.VideoShowComponent do
           >
           </iframe>
         </div>
-
+        
     <!-- Video Info (matching database card structure) -->
         <div class="flex-1 overflow-y-auto">
           <div class="p-3">

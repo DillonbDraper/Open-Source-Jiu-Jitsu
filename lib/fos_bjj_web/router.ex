@@ -82,12 +82,6 @@ defmodule FosBjjWeb.Router do
       auth_routes_prefix: "/auth",
       overrides: [FosBjjWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
     )
-
-    # Remove this if you do not use the magic link strategy.
-    magic_sign_in_route(FosBjj.Accounts.User, :magic_link,
-      auth_routes_prefix: "/auth",
-      overrides: [FosBjjWeb.AuthOverrides, Elixir.AshAuthentication.Phoenix.Overrides.DaisyUI]
-    )
   end
 
   # Other scopes may use custom stacks.

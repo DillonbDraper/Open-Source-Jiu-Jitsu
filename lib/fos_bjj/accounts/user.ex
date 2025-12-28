@@ -18,7 +18,7 @@ defmodule FosBjj.Accounts.User do
         confirm_on_update?(false)
         require_interaction?(true)
         confirmed_at_field(:confirmed_at)
-        auto_confirm_actions([:sign_in_with_magic_link, :reset_password_with_token])
+        auto_confirm_actions([:reset_password_with_token])
         sender(FosBjj.Accounts.User.Senders.SendNewUserConfirmationEmail)
       end
     end
@@ -42,14 +42,6 @@ defmodule FosBjj.Accounts.User do
           password_reset_action_name(:reset_password_with_token)
           request_password_reset_action_name(:request_password_reset_token)
         end
-      end
-
-      magic_link do
-        identity_field(:email)
-        registration_enabled?(true)
-        require_interaction?(true)
-
-        sender(FosBjj.Accounts.User.Senders.SendMagicLinkEmail)
       end
     end
   end
