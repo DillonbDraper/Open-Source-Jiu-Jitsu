@@ -1,0 +1,71 @@
+* Context
+I need to implement a User Dashboard/Profile feature in my Ash Phoenix application.
+
+    The application uses Ash Framework for data and logic.
+
+    The application uses Phoenix LiveView for the UI.
+
+    The application uses Tailwind and a CoreComponents module for UI elements.
+
+    Authentication is handled by AshAuthentication.
+
+* Task: Create User Profile & Settings LiveView
+Create a new LiveView (e.g., Web.UserProfileLive) that serves as a central hub for the logged-in user.
+
+** Entry Point
+
+    Modify layouts.ex (or app.html.heex / user_menu.html.heex) to link the "Profile" option in the user popover/dropdown to this new LiveView.
+
+** UI & Layout
+
+    Use CoreComponents for all UI elements (buttons, tables, modals).
+
+    The view should display a "Theme Settings" section (implementing the existing theme toggles from layouts as a selectable menu/radio list).
+
+** Role-Based Logic (Ash Policies)
+The view must dynamically render sections based on the current user's role. Use the current actor (user) to determine visibility.
+
+*** Coach & Admin Features
+If the user has the role coach or admin:
+
+    Render a "Coach Options" section.
+
+    Add a "My Videos" button that toggles a list of videos (use a LiveComponent or conditional render).
+
+    Data Fetching: Fetch videos using the Video resource. Use an Ash Read Action that filters by user_id == actor.id.
+
+    Table Columns: Video Name, Techniques, Grips, Actions.
+
+    Actions:
+
+        "Edit": Opens the existing video edit form/modal.
+
+        "Delete" (Admin only): Use a hero icon button to delete the video via the appropriate Ash Destroy action.
+
+*** Admin Only Features
+If the user has the role admin:
+
+    Render a "Manage Users" section.
+
+    Add a button "Manage Users" that navigates to a new LiveView: Web.UserManagementLive.
+
+* Task: Create User Management LiveView (Web.UserManagementLive)
+Create a separate LiveView for admins to view system users.
+
+** Requirements
+
+    Route: Add this to router.ex under an admin-authenticated scope if available, or ensure the mount callback checks for admin permissions.
+
+    Data Fetching: Fetch all users from the User resource.
+
+    UI: Render a table containing:
+
+        Email
+
+        Confirmation Date
+
+        Role
+
+    Filtering: Add a simple filter to the table to filter users by Role.
+
+    Note: Do not implement editing/deleting users yet, just the read-only table.

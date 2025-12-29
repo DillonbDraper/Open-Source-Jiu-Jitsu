@@ -2,9 +2,10 @@
 - Actually set up email client/test creating users.
   - Actually works fine with built-in, but need to impelment real service for prod and fix styling.
     - Styling now, real service as part of deploy process.
-- Resolve redirect "bug" on video save (Implement plug-navigation-history library (maybe))
-- Add admin UI page
-- Add modal update form for videos/techniques -> How do I access techniques in the UI?
+- Add admin/coach UI page
+  - Done, but needs styling and fix for both delete functionality and user management pages.
+- Edit form modal renders drawer on mount/momentarily after close.
+- Edit pencils get in way of top titles in some specific length conditions
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
 - Adequate seed database of techniques/videos
