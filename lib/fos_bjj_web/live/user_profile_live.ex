@@ -4,6 +4,7 @@ defmodule FosBjjWeb.UserProfileLive do
   alias FosBjj.JiuJitsu.Video
   alias FosBjjWeb.VideoLive.VideoFormComponent
   import FosBjjWeb.Components.SearchField
+  import FosBjjWeb.Components.Pagination
   require Ash.Query
 
   @impl true
@@ -15,7 +16,9 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:videos, [])
      |> assign(:video_to_edit, nil)
      |> assign(:show_edit_modal, false)
-     |> assign(:video_search_query, "")}
+     |> assign(:video_search_query, "")
+     |> assign(:current_page, 1)
+     |> assign(:total_videos, 0)}
   end
 
   @impl true
@@ -23,19 +26,59 @@ defmodule FosBjjWeb.UserProfileLive do
     if socket.assigns.show_videos do
       {:noreply, assign(socket, :show_videos, false)}
     else
-      videos = list_user_videos(socket.assigns.current_user, socket.assigns.video_search_query)
+      page = 1
+
+      videos =
+        list_user_videos(socket.assigns.current_user, socket.assigns.video_search_query, page)
 
       {:noreply,
        socket
        |> assign(:show_videos, true)
-       |> assign(:videos, videos)}
+       |> assign(:videos, videos)
+       |> assign(:current_page, page)
+       |> assign(:total_videos, videos.count)}
     end
   end
 
   @impl true
   def handle_event("search_videos", %{"query" => query}, socket) do
-    videos = list_user_videos(socket.assigns.current_user, query)
-    {:noreply, assign(socket, video_search_query: query, videos: videos)}
+    page = 1
+    videos = list_user_videos(socket.assigns.current_user, query, page)
+
+    {:noreply,
+     assign(socket,
+       video_search_query: query,
+       videos: videos,
+       current_page: page,
+       total_videos: videos.count
+     )}
+  end
+
+  @impl true
+  def handle_event("pagination", params, socket) do
+    current_page = socket.assigns.current_page || 1
+
+    total_pages =
+      if socket.assigns[:total_videos], do: ceil(socket.assigns.total_videos / 10), else: 1
+
+    page =
+      case params["action"] do
+        "select" -> params["page"]
+        "next" -> min(current_page + 1, total_pages)
+        "previous" -> max(current_page - 1, 1)
+        "first" -> 1
+        "last" -> total_pages
+        _ -> params["page"] || current_page
+      end
+
+    videos =
+      list_user_videos(socket.assigns.current_user, socket.assigns.video_search_query, page)
+
+    {:noreply,
+     socket
+     |> assign(:videos, videos)
+     |> assign(:current_page, page)
+     |> assign(:total_videos, videos.count)}
   end
 
   @impl true
@@ -63,9 +106,21 @@ defmodule FosBjjWeb.UserProfileLive do
       |> Ash.get!(id, actor: socket.assigns.current_user)
       |> Ash.destroy!(actor: socket.assigns.current_user)
 
-      videos = list_user_videos(socket.assigns.current_user, socket.assigns.video_search_query)
+      page = socket.assigns.current_page
+      user = socket.assigns.current_user
+      query = socket.assigns.video_search_query
 
-      {:noreply, assign(socket, :videos, videos)}
+      videos = list_user_videos(user, query, page)
+
+      {videos, page} =
+        if videos.results == [] && page > 1 do
+          new_page = page - 1
+          {list_user_videos(user, query, new_page), new_page}
+        else
+          {videos, page}
+        end
+
+      {:noreply, assign(socket, videos: videos, total_videos: videos.count, current_page: page)}
     else
       {:noreply, put_flash(socket, :error, "Unauthorized")}
     end
@@ -73,17 +128,33 @@ defmodule FosBjjWeb.UserProfileLive do
 
   @impl true
   def handle_info({:video_saved, _video}, socket) do
-    videos = list_user_videos(socket.assigns.current_user, socket.assigns.video_search_query)
+    page = socket.assigns.current_page
+    user = socket.assigns.current_user
+    query = socket.assigns.video_search_query
+
+    videos = list_user_videos(user, query, page)
+
+    {videos, page} =
+      if videos.results == [] && page > 1 do
+        new_page = page - 1
+        {list_user_videos(user, query, new_page), new_page}
+      else
+        {videos, page}
+      end
 
     {:noreply,
      socket
      |> assign(:videos, videos)
+     |> assign(:current_page, page)
+     |> assign(:total_videos, videos.count)
      |> assign(:show_edit_modal, false)
      |> assign(:video_to_edit, nil)
      |> put_flash(:info, "Video updated successfully")}
   end
 
-  defp list_user_videos(user, query) do
+  defp list_user_videos(user, query, page) do
+    offset = (page - 1) * 5
+
     Video
     |> Ash.Query.filter(created_by.id == ^user.id)
     |> then(fn q ->
@@ -93,8 +164,8 @@ defmodule FosBjjWeb.UserProfileLive do
         q
       end
     end)
-    |> Ash.read!(actor: user, page: [limit: 20])
-    |> Ash.load!([:techniques, :grips])
+    |> Ash.Query.load([:techniques, :grips])
+    |> Ash.read!(actor: user, page: [limit: 5, offset: offset, count: true])
   end
 
   @impl true
@@ -186,6 +257,16 @@ defmodule FosBjjWeb.UserProfileLive do
                     </div>
                   </:action>
                 </.table>
+
+                <%= if @total_videos > 5 do %>
+                  <div class="mt-4 flex justify-center">
+                    <.pagination
+                      total={ceil(@total_videos / 5)}
+                      active={@current_page}
+                      siblings={1}
+                    />
+                  </div>
+                <% end %>
               </div>
             <% end %>
           </div>
