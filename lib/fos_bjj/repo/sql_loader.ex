@@ -159,7 +159,6 @@ defmodule FosBjj.Repo.SqlLoader do
     tables = [
       "techniques",
       "videos",
-      "technique_sub_positions",
       "video_grips",
       "video_techniques"
     ]
@@ -170,6 +169,7 @@ defmodule FosBjj.Repo.SqlLoader do
     IO.puts("Note: User/authentication tables were not exported for security.")
   end
 
+  # TODO Create carve out to ensure all created_by_ids for videos/techniques are system user in reset
   defp export_table(table_name) do
     IO.write("  Exporting #{table_name}... ")
 

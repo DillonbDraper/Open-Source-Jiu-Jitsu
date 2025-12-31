@@ -31,8 +31,8 @@ defmodule FosBjjWeb.VideosDashboardLive do
       end
 
     technique_id = params["technique_id"]
-    attire = params["attire"] || socket.assigns[:selected_attire] || "both"
-    title = params["title"] || socket.assigns[:title_search] || nil
+    attire = params["attire"] || "both"
+    title = params["title"]
 
     page =
       case params["page"] do
@@ -53,7 +53,6 @@ defmodule FosBjjWeb.VideosDashboardLive do
 
   @impl true
   def handle_event("pagination", params, socket) do
-    # Calculate the target page based on the action
     current_page = socket.assigns.current_page || 1
 
     total_pages =
@@ -192,13 +191,14 @@ defmodule FosBjjWeb.VideosDashboardLive do
             />
           <% end %>
         </div>
-
-        <!-- Right: Technique Tree (40% = 2 cols, always mounted) -->
+        
+    <!-- Right: Technique Tree (40% = 2 cols, always mounted) -->
         <div class="col-span-2 min-w-0">
           <.live_component
             module={FosBjjWeb.TechniqueTreeComponent}
             id="technique-tree"
             selected_technique_id={@selected_technique_id}
+            selected_attire={@selected_attire}
             title_search={@title_search}
           />
         </div>

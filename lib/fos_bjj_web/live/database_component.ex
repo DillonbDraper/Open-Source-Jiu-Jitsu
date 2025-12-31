@@ -215,7 +215,7 @@ defmodule FosBjjWeb.DatabaseComponent do
                             </span>
                             <div class="flex flex-wrap gap-1.5">
                               <%= for grip <- video.grips do %>
-                                <span class="px-2 py-0.5 text-xs bg-secondary/20 text-secondary rounded-full border border-secondary/30">
+                                <span class="px-2 py-0.5 text-xs font-medium bg-secondary/10 text-secondary rounded-full border border-secondary/20">
                                   {grip.label}
                                 </span>
                               <% end %>

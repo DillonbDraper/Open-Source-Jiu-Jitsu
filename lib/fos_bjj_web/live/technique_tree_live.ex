@@ -7,6 +7,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   import FosBjjWeb.Components.ScrollArea
   import FosBjjWeb.Components.RadioField
   import FosBjjWeb.Components.SearchField
+  import FosBjjWeb.Components.Popover
   require Ash.Query
 
   @impl true
@@ -24,7 +25,6 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     {:ok, socket}
   end
 
-  # TODO: Cleanup
   @impl true
   def handle_event("attire_change", %{"attire" => attire}, socket) do
     # Build query params, preserving technique_id or title search if present
@@ -54,7 +54,21 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     socket =
       socket
       |> assign(:title_search, title_search)
-      |> push_patch(to: "/database?title=#{title_search}")
+      |> push_patch(
+        to: "/database?title=#{title_search}&attire=#{socket.assigns.selected_attire}"
+      )
+
+    {:noreply, socket}
+  end
+
+  def handle_event("clear_all", _params, socket) do
+    socket =
+      socket
+      |> assign(:expanded_ids, MapSet.new())
+      |> assign(:selected_technique_id, nil)
+      |> assign(:title_search, nil)
+      |> assign(:selected_attire, "both")
+      |> push_patch(to: "/database?attire=both")
 
     {:noreply, socket}
   end
@@ -127,6 +141,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:id, assigns.id)
       |> assign(:selected_technique_id, new_technique_id)
       |> assign(:title_search, assigns[:title_search])
+      |> assign(:selected_attire, assigns[:selected_attire])
 
     socket =
       if technique_selected? and not is_nil(new_technique_id) do
@@ -164,11 +179,29 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="h-[calc(50vh-4rem)] flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
-      <div class="p-4 border-b border-base-200 bg-base-200/50 flex-shrink-0">
+    <div class="h-[calc(70vh-4rem)] flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+      <div class="p-4 border-b border-base-200 bg-base-200/50 flex-shrink-0 flex justify-between items-center">
         <h2 class="text-xl font-bold flex items-center gap-2">
           <.icon name="hero-book-open" class="w-6 h-6" /> Techniques
         </h2>
+        <.popover variant="shadow" color="danger" id="clear-tree-popover">
+          <:trigger>
+            <button
+              phx-click="clear_all"
+              phx-target={@myself}
+              class="hover:bg-base-300 p-1 rounded-md transition-colors"
+              aria-label="Clear all selections"
+            >
+              <.icon
+                name="hero-x-circle"
+                class="w-6 h-6 text-red-600 cursor-pointer hover: shadow"
+              />
+            </button>
+          </:trigger>
+          <:content class="text-s">
+            Click to clear all selections
+          </:content>
+        </.popover>
       </div>
       <div class="px-2 py-4 flex-shrink-0">
         <.form for={@form} phx-change="attire_change" phx-target={@myself}>
@@ -279,7 +312,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                                     <% else %>
                                       <%= for technique <- techniques do %>
                                         <.link
-                                          patch={"/database?technique_id=#{technique.id}"}
+                                          patch={"/database?technique_id=#{technique.id}&attire=#{@selected_attire}"}
                                           class={[
                                             "btn btn-ghost btn-s btn-block justify-start font-normal h-auto py-1.5 px-2 text-left whitespace-normal leading-tight",
                                             @selected_technique_id == "#{technique.id}" &&

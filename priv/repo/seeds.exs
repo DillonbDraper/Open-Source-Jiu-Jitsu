@@ -279,7 +279,9 @@ action_orientation_positions = [
 for {pos, ori, action} <- action_orientation_positions do
   Ash.Seed.seed!(
     ActionPositionOrientation,
-    %{position_name: pos, orientation_name: ori, action_name: action}, actor: dev_user)
+    %{position_name: pos, orientation_name: ori, action_name: action},
+    actor: dev_user
+  )
 end
 
 # ==========================================
@@ -287,8 +289,8 @@ end
 # ==========================================
 # Load techniques, videos, and other user-generated content from SQL files
 
-# if File.exists?("priv/repo/sql_data") and File.dir?("priv/repo/sql_data") do
-#   FosBjj.Repo.SqlLoader.load_all()
-# end
+if File.exists?("priv/repo/sql_data") and File.dir?("priv/repo/sql_data") do
+  FosBjj.Repo.SqlLoader.load_all()
+end
 
-# IO.puts("\n✓ Database seeding complete!\n")
+IO.puts("\n✓ Database seeding complete!\n")

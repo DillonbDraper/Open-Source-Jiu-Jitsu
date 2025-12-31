@@ -5,10 +5,8 @@
 - Add admin/coach UI page
   - Done, but needs styling and fix for both delete functionality and user management pages.
 - Edit form modal renders drawer on mount/momentarily after close.
-- Edit pencils get in way of top titles in some specific length conditions
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
 - Adequate seed database of techniques/videos
 - User notes/favoriting system for videos
 - General styling enhancements.
-- Cleaner nav bar/access to coach/admin options

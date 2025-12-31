@@ -44,7 +44,7 @@ defmodule FosBjjWeb.Layouts do
     <.navbar
       id="main-navbar"
       name="Open Source BJJ"
-      color="dawn"
+      color="secondary"
       variant="shadow"
       padding="small"
       link={~p"/database"}

@@ -84,8 +84,6 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   defp list_user_videos(user, query) do
-    IO.inspect(query)
-
     Video
     |> Ash.Query.filter(created_by.id == ^user.id)
     |> then(fn q ->
@@ -102,120 +100,126 @@ defmodule FosBjjWeb.UserProfileLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-8">
-      <div>
-        <.h1 class="text-2xl font-bold">{@page_title}</.h1>
-        <.p class="text-gray-600">Manage your account settings and preferences.</.p>
-      </div>
+    <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]}>
+      <div class="space-y-8">
+        <header>
+          <h1 class="text-3xl font-extrabold tracking-tight text-base-content">
+            {@page_title}
+          </h1>
+          <p class="mt-2 text-lg text-base-content/70">
+            Manage your account settings and preferences.
+          </p>
+        </header>
 
-      <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-        <.h3 class="text-lg font-medium mb-4">Theme Settings</.h3>
-        <div class="flex flex-wrap gap-4">
-          <.button
-            class="btn btn-outline"
-            phx-click={JS.dispatch("phx:set-theme")}
-            data-phx-theme="light"
-          >
-            <.icon name="hero-sun" class="w-5 h-5 mr-2" /> Light
-          </.button>
-          <.button
-            class="btn btn-outline"
-            phx-click={JS.dispatch("phx:set-theme")}
-            data-phx-theme="dark"
-          >
-            <.icon name="hero-moon" class="w-5 h-5 mr-2" /> Dark
-          </.button>
-        </div>
-      </div>
-
-      <%= if @current_user.role_name in ["coach", "admin"] do %>
         <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-          <h3 class="text-lg font-medium mb-4">Coach Options</h3>
-          <div>
-            <.button phx-click="toggle_videos" class="btn-primary">
-              {if @show_videos, do: "Hide My Videos", else: "Show My Videos"}
+          <.h3 class="text-lg font-medium mb-4">Theme Settings</.h3>
+          <div class="flex flex-wrap gap-4">
+            <.button
+              class="btn btn-outline"
+              phx-click={JS.dispatch("phx:set-theme")}
+              data-phx-theme="light"
+            >
+              <.icon name="hero-sun" class="w-5 h-5 mr-2" /> Light
+            </.button>
+            <.button
+              class="btn btn-outline"
+              phx-click={JS.dispatch("phx:set-theme")}
+              data-phx-theme="dark"
+            >
+              <.icon name="hero-moon" class="w-5 h-5 mr-2" /> Dark
             </.button>
           </div>
+        </div>
 
-          <%= if @show_videos do %>
-            <div class="mt-6">
-              <div class="mb-4">
-                <form phx-change="search_videos" phx-submit="search_videos">
-                  <.search_field
-                    name="query"
-                    value={@video_search_query}
-                    placeholder="Search videos by title..."
-                    phx-change="search_videos"
-                    phx-debounce="400"
-                  />
-                </form>
-              </div>
-              <.table padding="extra_small" border="medium" rows={@videos.results}>
-                <:col :let={video} label="Thumbnail">
-                  <.image height={250} width={200} src={video.thumbnail_url} />
-                </:col>
-                <:col :let={video} label="Title">{video.title}</:col>
-                <:col :let={video} label="Techniques">
-                  {Enum.map(video.techniques, & &1.name) |> Enum.join(", ")}
-                </:col>
-                <:col :let={video} label="Grips">
-                  {Enum.map(video.grips, & &1.label) |> Enum.join(", ")}
-                </:col>
-                <:action :let={video} label="Action(s)">
-                  <div class="flex gap-2">
-                    <.button
-                      phx-click="edit_video"
-                      phx-value-id={video.id}
-                      class="btn btn-sm btn-ghost"
-                    >
-                      <.icon name="hero-pencil" class="w-4 h-4" />
-                    </.button>
-                    <%= if @current_user.role_name == "admin" do %>
-                      <.button
-                        phx-click="delete_video"
-                        phx-value-id={video.id}
-                        data-confirm="Are you sure?"
-                        class="btn btn-sm btn-ghost text-error"
-                      >
-                        <.icon name="hero-trash" class="w-4 h-4" />
-                      </.button>
-                    <% end %>
-                  </div>
-                </:action>
-              </.table>
+        <%= if @current_user.role_name in ["coach", "admin"] do %>
+          <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
+            <h3 class="text-lg font-medium mb-4">Coach Options</h3>
+            <div>
+              <.button phx-click="toggle_videos" class="btn-primary">
+                {if @show_videos, do: "Hide My Videos", else: "Show My Videos"}
+              </.button>
             </div>
-          <% end %>
-        </div>
-      <% end %>
 
-      <%= if @current_user.role_name == "admin" do %>
-        <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-          <h3 class="text-lg font-medium mb-4">Admin Options</h3>
-          <div>
-            <.link navigate={~p"/admin/users"} class="btn btn-secondary">
-              Manage Users
-            </.link>
+            <%= if @show_videos do %>
+              <div class="mt-6">
+                <div class="mb-4">
+                  <form phx-change="search_videos" phx-submit="search_videos">
+                    <.search_field
+                      name="query"
+                      value={@video_search_query}
+                      placeholder="Search videos by title..."
+                      phx-change="search_videos"
+                      phx-debounce="400"
+                    />
+                  </form>
+                </div>
+                <.table padding="extra_small" border="medium" rows={@videos.results}>
+                  <:col :let={video} label="Thumbnail">
+                    <.image height={250} width={200} src={video.thumbnail_url} />
+                  </:col>
+                  <:col :let={video} label="Title">{video.title}</:col>
+                  <:col :let={video} label="Techniques">
+                    {Enum.map(video.techniques, & &1.name) |> Enum.join(", ")}
+                  </:col>
+                  <:col :let={video} label="Grips">
+                    {Enum.map(video.grips, & &1.label) |> Enum.join(", ")}
+                  </:col>
+                  <:action :let={video}>
+                    <div class="flex gap-2">
+                      <.button
+                        phx-click="edit_video"
+                        phx-value-id={video.id}
+                        class="btn btn-sm btn-ghost"
+                      >
+                        <.icon name="hero-pencil" class="w-4 h-4" />
+                      </.button>
+                      <%= if @current_user.role_name == "admin" do %>
+                        <.button
+                          phx-click="delete_video"
+                          phx-value-id={video.id}
+                          data-confirm="Are you sure?"
+                          class="btn btn-sm btn-ghost text-error"
+                        >
+                          <.icon name="hero-trash" class="w-4 h-4" />
+                        </.button>
+                      <% end %>
+                    </div>
+                  </:action>
+                </.table>
+              </div>
+            <% end %>
           </div>
-        </div>
-      <% end %>
+        <% end %>
 
-      <.modal
-        :if={@show_edit_modal}
-        show
-        id="edit-video-modal"
-        size="triple_large"
-        on_cancel={JS.push("close_edit_modal")}
-      >
-        <.live_component
-          module={VideoFormComponent}
-          id="edit-video-form"
-          video={@video_to_edit}
-          current_user={@current_user}
-          action={:update}
-          on_cancel={JS.exec("data-cancel", to: "#edit-video-modal")}
-        />
-      </.modal>
-    </div>
+        <%= if @current_user.role_name == "admin" do %>
+          <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
+            <h3 class="text-lg font-medium mb-4">Admin Options</h3>
+            <div>
+              <.link navigate={~p"/admin/users"} class="btn btn-secondary">
+                Manage Users
+              </.link>
+            </div>
+          </div>
+        <% end %>
+
+        <.modal
+          :if={@show_edit_modal}
+          show
+          id="edit-video-modal"
+          size="triple_large"
+          on_cancel={JS.push("close_edit_modal")}
+        >
+          <.live_component
+            module={VideoFormComponent}
+            id="edit-video-form"
+            video={@video_to_edit}
+            current_user={@current_user}
+            action={:update}
+            on_cancel={JS.exec("data-cancel", to: "#edit-video-modal")}
+          />
+        </.modal>
+      </div>
+    </Layouts.app>
     """
   end
 end
