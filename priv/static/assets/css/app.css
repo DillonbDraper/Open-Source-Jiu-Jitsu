@@ -3782,6 +3782,17 @@
     width: 1.5rem;
     height: 1.5rem;
   }
+  .hero-pencil-square {
+    --hero-pencil-square: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m16.862%204.487%201.687-1.688a1.875%201.875%200%201%201%202.652%202.652L10.582%2016.07a4.5%204.5%200%200%201-1.897%201.13L6%2018l.8-2.685a4.5%204.5%200%200%201%201.13-1.897l8.932-8.931Zm0%200L19.5%207.125M18%2014v4.75A2.25%202.25%200%200%201%2015.75%2021H5.25A2.25%202.25%200%200%201%203%2018.75V8.25A2.25%202.25%200%200%201%205.25%206H10%22%2F%3E%3C%2Fsvg%3E');
+    -webkit-mask: var(--hero-pencil-square);
+    mask: var(--hero-pencil-square);
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    vertical-align: middle;
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
   .hero-plus {
     --hero-plus: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%204.5v15m7.5-7.5h-15%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-plus);
@@ -5862,6 +5873,12 @@
   .border-secondary-light {
     border-color: var(--color-secondary-light);
   }
+  .border-secondary\/20 {
+    border-color: var(--color-secondary);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent);
+    }
+  }
   .border-secondary\/30 {
     border-color: var(--color-secondary);
     @supports (color: color-mix(in lab, red, red)) {
@@ -6172,6 +6189,12 @@
     background-color: var(--color-secondary-light);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-secondary-light) var(--overlay-opacity), transparent);
+    }
+  }
+  .bg-secondary\/10 {
+    background-color: var(--color-secondary);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-secondary) 10%, transparent);
     }
   }
   .bg-secondary\/20 {
@@ -6583,6 +6606,10 @@
   .select-sm {
     --size: calc(var(--size-field, 0.25rem) * 8);
     font-size: 0.75rem;
+  }
+  .select-xs {
+    --size: calc(var(--size-field, 0.25rem) * 6);
+    font-size: 0.6875rem;
   }
   .text-\[10px\] {
     font-size: 10px;
@@ -7398,6 +7425,11 @@
     --fontsize: 0.75rem;
     --btn-p: 0.75rem;
     --size: calc(var(--size-field, 0.25rem) * 8);
+  }
+  .btn-xs {
+    --fontsize: 0.6875rem;
+    --btn-p: 0.5rem;
+    --size: calc(var(--size-field, 0.25rem) * 6);
   }
   .badge-primary {
     --badge-color: var(--color-primary);
