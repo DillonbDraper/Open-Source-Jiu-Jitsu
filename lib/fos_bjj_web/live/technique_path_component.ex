@@ -94,7 +94,7 @@ defmodule FosBjjWeb.TechniquePathComponent do
       end
 
     segments =
-      [%{label: "#{technique.name} (#{technique.video_count})", type: :technique} | segments]
+      [%{label: "#{technique.name}", type: :technique} | segments]
 
     Enum.reverse(segments)
   end

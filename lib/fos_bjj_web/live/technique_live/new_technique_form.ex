@@ -267,7 +267,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             Select a position to enable sub-positions
           </p>
 
-          <%!-- Orientation Select --%>
+          <%!-- Orientation Select.  Brittle, should probably move to loading full struct vs using orientation_name --%>
           <.combobox
             label="Orientation"
             disabled={@child_fields_disabled}
@@ -278,7 +278,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             id={"orientation-#{@selected_position || "none"}"}
           >
             <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
-              {orientation_name}
+              {String.capitalize(orientation_name)}
             </:option>
           </.combobox>
 

@@ -7,6 +7,8 @@ defmodule FosBjjWeb.UserProfileLive do
   import FosBjjWeb.Components.Pagination
   require Ash.Query
 
+  on_mount({AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}})
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok,

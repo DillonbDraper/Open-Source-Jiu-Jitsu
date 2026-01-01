@@ -439,27 +439,30 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
 
   defp count_videos_for_branch(position_name, orientation_name, sub_position_name, action_name) do
     query =
-      from vt in "video_techniques",
+      from(vt in "video_techniques",
         join: t in "techniques",
         on: vt.technique_id == t.id,
+        as: :technique,
         join: sp in "sub_positions",
         on: sp.name == t.sub_position_name,
+        as: :sub_position,
         where: sp.position_name == ^position_name,
         select: count(vt.video_id, :distinct)
+      )
 
     query =
       if orientation_name,
-        do: where(query, [vt, t], t.orientation_name == ^orientation_name),
+        do: where(query, [technique: t], t.orientation_name == ^orientation_name),
         else: query
 
     query =
       if sub_position_name,
-        do: where(query, [vt, t], t.sub_position_name == ^sub_position_name),
+        do: where(query, [technique: t], t.sub_position_name == ^sub_position_name),
         else: query
 
     query =
       if action_name,
-        do: where(query, [vt, t], t.action_name == ^action_name),
+        do: where(query, [technique: t], t.action_name == ^action_name),
         else: query
 
     FosBjj.Repo.one(query) || 0

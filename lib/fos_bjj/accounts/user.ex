@@ -252,6 +252,12 @@ defmodule FosBjj.Accounts.User do
 
       run(AshAuthentication.Strategy.MagicLink.Request)
     end
+
+    update :update_role do
+      accept([])
+      argument(:role, :string, allow_nil?: false)
+      change(set_attribute(:role_name, arg(:role)))
+    end
   end
 
   policies do

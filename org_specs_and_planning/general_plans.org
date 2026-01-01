@@ -2,8 +2,6 @@
 - Actually set up email client/test creating users.
   - Actually works fine with built-in, but need to impelment real service for prod and fix styling.
     - Styling now, real service as part of deploy process.
-- Add admin/coach UI page
-  - Done, but needs styling and fix for both delete functionality and user management pages.
 - Edit form modal renders drawer on mount/momentarily after close.
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.

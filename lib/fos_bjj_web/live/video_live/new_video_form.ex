@@ -1,7 +1,7 @@
 defmodule FosBjjWeb.VideoLive.NewVideoForm do
   use FosBjjWeb, :live_view
-  alias FosBjjWeb.VideoLive.VideoFormComponent
   alias FosBjjWeb.TechniqueLive.NewTechniqueForm
+  alias FosBjjWeb.VideoLive.VideoFormComponent
 
   on_mount({AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}})
 
@@ -24,7 +24,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     {:noreply,
      socket
      |> put_flash(:info, "Video added successfully")
-     |> push_navigate(to: ~p"/")}
+     |> push_navigate(to: ~p"/database")}
   end
 
   @impl true
@@ -51,7 +51,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
         <.flash kind={:error} title="Error" flash={@flash} />
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-3xl font-bold">Add New Video</h1>
-          <.link navigate={~p"/"} class="btn btn-ghost">
+          <.link navigate={~p"/database"} class="btn btn-ghost">
             ← Back
           </.link>
         </div>
