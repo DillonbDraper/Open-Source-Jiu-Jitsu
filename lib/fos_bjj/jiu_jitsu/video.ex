@@ -97,6 +97,12 @@ defmodule FosBjj.JiuJitsu.Video do
       public?(true)
     end
 
+    has_many :notes, FosBjj.JiuJitsu.VideoNote do
+      source_attribute(:id)
+      destination_attribute(:id)
+      public?(true)
+    end
+
     belongs_to :created_by, FosBjj.Accounts.User do
       attribute_type(:integer)
       public?(true)

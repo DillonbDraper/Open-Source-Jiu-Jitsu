@@ -10,6 +10,16 @@ defmodule FosBjjWeb.VideoShowComponent do
   def update(assigns, socket) do
     socket = assign(socket, assigns)
 
+    socket =
+      if Map.has_key?(socket.assigns, :show_info),
+        do: socket,
+        else: assign(socket, :show_info, true)
+
+    socket =
+      if Map.has_key?(socket.assigns, :show_notes),
+        do: socket,
+        else: assign(socket, :show_notes, true)
+
     # Only load video if video_id changed or it's the first load
     socket =
       if socket.assigns[:video] == nil or socket.assigns[:video_id] != assigns.video_id do
@@ -24,6 +34,16 @@ defmodule FosBjjWeb.VideoShowComponent do
   @impl true
   def handle_event("select_technique", %{"technique-id" => technique_id}, socket) do
     {:noreply, push_patch(socket, to: ~p"/database?technique_id=#{technique_id}")}
+  end
+
+  @impl true
+  def handle_event("toggle_info", _, socket) do
+    {:noreply, update(socket, :show_info, &(!&1))}
+  end
+
+  @impl true
+  def handle_event("toggle_notes", _, socket) do
+    {:noreply, update(socket, :show_notes, &(!&1))}
   end
 
   defp load_video(socket, video_id) do
@@ -51,83 +71,191 @@ defmodule FosBjjWeb.VideoShowComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+    <div class="w-full flex flex-col gap-6 pb-8">
       <%= if assigns[:video] do %>
-        <!-- Back button header -->
-        <div class="p-4 border-b border-base-200 bg-base-200/50">
+        <div class="flex items-center justify-between">
           <.link patch={~p"/database"} class="btn btn-ghost btn-sm gap-2">
             <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
           </.link>
         </div>
-        
-    <!-- Video Player -->
-        <div class="relative w-full" style="padding-bottom: 56.25%;">
-          <iframe
-            src={youtube_embed_url(@video.video_id)}
-            class="absolute top-0 left-0 w-full h-full"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          >
-          </iframe>
-        </div>
-        
-    <!-- Video Info (matching database card structure) -->
-        <div class="flex-1 overflow-y-auto">
-          <div class="p-3">
-            <h1 class="text-base font-bold mb-1">{@video.title}</h1>
-          </div>
 
-          <%= if @video.description do %>
-            <p class="text-base-content/70 text-sm line-clamp-2 mb-2 ml-3 whitespace-pre-wrap">
-              {@video.description}
-            </p>
+        <div class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+          <div class="relative w-full" style="padding-bottom: 56.25%;">
+            <div
+              class="absolute top-0 left-0 w-full h-full"
+              id={"#{@id}-player"}
+              phx-hook=".YouTubeSeeker"
+              phx-update="ignore"
+              data-video-id={@video.video_id}
+            >
+            </div>
+          </div>
+        </div>
+
+        <% order = if !@show_info, do: [:notes, :info], else: [:info, :notes] %>
+
+        <%= for section <- order do %>
+          <%= if section == :info do %>
+            <div class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+              <div
+                class="p-3 bg-base-200/50 border-b border-base-200 flex justify-between items-center cursor-pointer hover:bg-base-200 transition-colors select-none"
+                phx-click="toggle_info"
+                phx-target={@myself}
+              >
+                <h2 class="font-bold text-sm uppercase tracking-wide text-base-content/70">
+                  Video Information
+                </h2>
+                <.icon
+                  name={if @show_info, do: "hero-chevron-up", else: "hero-chevron-down"}
+                  class="w-5 h-5 text-base-content/50"
+                />
+              </div>
+
+              <%= if @show_info do %>
+                <div class="p-4">
+                  <h1 class="text-xl font-bold mb-4">{@video.title}</h1>
+
+                  <%= if @video.description do %>
+                    <div class="prose prose-sm max-w-none mb-6">
+                      {@video.description}
+                    </div>
+                  <% end %>
+
+                  <div class="space-y-4 pt-4 border-t border-base-200">
+                    <%= if @video.techniques && @video.techniques != [] do %>
+                      <div class="flex items-start gap-3">
+                        <span class="text-xs font-bold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                          Techniques
+                        </span>
+                        <div class="flex flex-wrap gap-2">
+                          <%= for technique <- @video.techniques do %>
+                            <.button
+                              phx-click="select_technique"
+                              phx-target={@myself}
+                              phx-value-technique-id={technique.id}
+                              size="extra_small"
+                              color="primary"
+                              rounded="full"
+                              variant="default"
+                            >
+                              {technique.name} ({technique.video_count})
+                            </.button>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+
+                    <%= if @video.grips && @video.grips != [] do %>
+                      <div class="flex items-start gap-3">
+                        <span class="text-xs font-bold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                          Grips
+                        </span>
+                        <div class="flex flex-wrap gap-2">
+                          <%= for grip <- @video.grips do %>
+                            <span class="px-2 py-1 text-xs font-medium bg-secondary/10 text-secondary rounded-md border border-secondary/20">
+                              {grip.label}
+                            </span>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
           <% end %>
 
-          <div class="mt-auto ml-3 mb-3 pt-2 border-t border-base-200 space-y-2">
-            <%= if @video.techniques && @video.techniques != [] do %>
-              <div class="flex items-start gap-2">
-                <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                  Techniques
-                </span>
-                <div class="flex flex-wrap gap-1.5">
-                  <%= for technique <- @video.techniques do %>
-                    <.button
-                      phx-click="select_technique"
-                      phx-target={@myself}
-                      phx-value-technique-id={technique.id}
-                      size="extra_small"
-                      color="primary"
-                      rounded="full"
-                      variant="default"
-                    >
-                      {technique.name} ({technique.video_count})
-                    </.button>
-                  <% end %>
-                </div>
+          <%= if section == :notes && @current_user do %>
+            <div class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
+              <div
+                class="p-3 bg-base-200/50 border-b border-base-200 flex justify-between items-center cursor-pointer hover:bg-base-200 transition-colors select-none"
+                phx-click="toggle_notes"
+                phx-target={@myself}
+              >
+                <h2 class="font-bold text-sm uppercase tracking-wide text-base-content/70">
+                  My Notes
+                </h2>
+                <.icon
+                  name={if @show_notes, do: "hero-chevron-up", else: "hero-chevron-down"}
+                  class="w-5 h-5 text-base-content/50"
+                />
               </div>
-            <% end %>
-            <%= if @video.grips && @video.grips != [] do %>
-              <div class="flex items-start gap-2">
-                <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                  Grips
-                </span>
-                <div class="flex flex-wrap gap-1.5">
-                  <%= for grip <- @video.grips do %>
-                    <span class="px-2 py-0.5 text-xs bg-secondary/20 text-secondary rounded-full border border-secondary/30">
-                      {grip.label}
-                    </span>
-                  <% end %>
+
+              <%= if @show_notes do %>
+                <div class="p-4">
+                  <.live_component
+                    module={FosBjjWeb.VideoNotesComponent}
+                    id="video-notes"
+                    video_id={@video.id}
+                    current_user={@current_user}
+                  />
                 </div>
-              </div>
-            <% end %>
-          </div>
-        </div>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
       <% else %>
-        <div class="flex items-center justify-center h-full">
+        <div class="flex items-center justify-center h-64">
           <span class="loading loading-spinner loading-lg"></span>
         </div>
       <% end %>
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".YouTubeSeeker">
+        export default {
+        mounted() {
+          this.videoId = this.el.dataset.videoId;
+          this.loadYouTubeAPI();
+
+          // Listen for the specific "seek" event from the server
+          this.handleEvent("seek", ({ seconds }) => {
+            if (this.player && this.player.seekTo) {
+              // The 'true' flag allows the video to seek ahead of buffered data
+              this.player.seekTo(seconds, true);
+
+              // Optional: Force play if it was paused
+              // this.player.playVideo();
+            }
+          });
+        },
+
+        destroyed() {
+          if (this.player) this.player.destroy();
+        },
+
+        loadYouTubeAPI() {
+          // If API is ready, init immediately
+          if (window.YT && window.YT.Player) {
+            this.initPlayer();
+            return;
+          }
+
+          // Standard queueing mechanism for the async script load
+          window.onYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady || [];
+          const existingCallback = window.onYouTubeIframeAPIReady;
+
+          window.onYouTubeIframeAPIReady = () => {
+            if (existingCallback && typeof existingCallback === 'function') existingCallback();
+            this.initPlayer();
+          };
+
+          if (!document.getElementById("youtube-api-script")) {
+            const tag = document.createElement('script');
+            tag.id = "youtube-api-script";
+            tag.src = "https://www.youtube.com/iframe_api";
+            document.head.appendChild(tag);
+          }
+        },
+
+        initPlayer() {
+          this.player = new YT.Player(this.el.id, {
+            videoId: this.videoId,
+            playerVars: {
+              'playsinline': 1,
+              'modestbranding': 1
+            }
+          });
+        }
+        }
+      </script>
     </div>
     """
   end

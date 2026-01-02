@@ -169,9 +169,15 @@ defmodule FosBjjWeb.VideosDashboardLive do
         title_search={@title_search}
       />
 
-      <div class="grid grid-cols-5 gap-8 h-[calc(100vh-12rem)] w-full mt-4">
+      <div class={[
+        "grid grid-cols-5 gap-8 w-full mt-4",
+        if(@view_mode == :database, do: "h-[calc(100vh-12rem)]", else: "")
+      ]}>
         <!-- Left: Dynamic Content Area (60% = 3 cols) -->
-        <div class="col-span-3 h-full flex flex-col min-w-0 overflow-hidden">
+        <div class={[
+          "col-span-3 flex flex-col min-w-0",
+          if(@view_mode == :database, do: "h-full overflow-hidden", else: "")
+        ]}>
           <%= if @view_mode == :database do %>
             <.live_component
               module={FosBjjWeb.DatabaseComponent}
@@ -188,6 +194,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
               id="video-show-component"
               video_id={@video_id}
               selected_technique_id={@selected_technique_id}
+              current_user={assigns[:current_user]}
             />
           <% end %>
         </div>

@@ -18,5 +18,6 @@ defmodule FosBjj.JiuJitsu do
     resource(FosBjj.JiuJitsu.VideoGrip)
     resource(FosBjj.JiuJitsu.TechniqueSubPosition)
     resource(FosBjj.JiuJitsu.VideoTechnique)
+    resource(FosBjj.JiuJitsu.VideoNote)
   end
 end

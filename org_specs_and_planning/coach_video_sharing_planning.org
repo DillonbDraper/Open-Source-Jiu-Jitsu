@@ -1,0 +1,12 @@
+* This is an outline on creating a system for coaches to share videos with students
+- Like most things, this will be migration/schema driven.  We will need:
+  - Most broadly, a way to link students and coaches.  This would be a many to many join table with users to users, with a coach_id and a student_id as fkeys to the users table, with a row for each of a coach's students.
+  - A messages table.  Should include message body (a description of video contents), video_id, sender_id (user_id), and timestamps.
+  - A video_message_recipients table that has a user_id, a seen/viewed boolean, and an fkey to the message.
+- To implement this in the UI, the user profile would need something that allows users to opt in to being "seen" by other users, which would then "unlock" them in a search field searching for coaches (if they're students) or both if they're coaches admins (coaches may want to follow/see other coaches' recommendations.  This necessitates either new fields on students or a separate table. to track these things
+  - This would also necessitate either expanding the message schema/system, or adding a separate kind of "follow request" messaging system.
+- Once all of the above is set up, it's relatively simple. Coaches would get a button from the video player page that allows them to broadcast/share to all of their students, prompting for a message.  That would create the message and a row in each of a coach's students' video_message_recipients table.  This would be reflected in an inbox icon in the navbar with ane exclamation mark/number attached when new unseen video messages exist for that student/recipient.  Clicking it would display all recent ones in a dense table, and clicking a view from there would render the video playing page and mark the message as seen in the corresponding table.
+  - Lists (tables?) of video messages sorted by coach would exist on a user's profile page as a history/reference of past shared videos.
+
+* It strikes me that this whole thing might be trying to invent BJJ social media.
+- Subscribing to a coach's feed of techniques is incredibly social media-esque, and I should consider long and hard if that's a road I want to go down.  Even if I intentionally remove "social" interactive aspects, it's still there to an extent.

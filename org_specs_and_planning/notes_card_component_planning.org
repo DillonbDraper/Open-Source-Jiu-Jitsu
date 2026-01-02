@@ -1,0 +1,6 @@
+#+title: Notes Card Component Planning
+* We are creating a card system that tracks/displays user notes based on video timestamps.  We will implement the timestamp collection later, as it involves some potentially complex JS hooks, but everything else should be straightforward.
+- This should be an expansion of the video_show_component that is meant to integrate with the video_dashboard_live.
+- This list of card components card (use card.ex) should go under the video player in show_video_live.ex.  It should contain a list of notes (ordered by timestamp if present, with nulls first) that displays the user's notes about a given video with the note body on the left and the timestamp on the right. The source table is video_notes.ex
+- Under these notes, we should have a button to add a new note.  This will bring up a modal that contains textfields for both the note body and timestamp, as well as a buttons for saving/canceling and exiting the modal. Ensure we use modal.ex for this component.
+- In the top right of the card, there should be a delete button using an X-Mark heroicon colored red that deletes the note for the user.  It should use the basic data-confirm prop to prompt to make sure that the user is okay with permanently deleting the note.
