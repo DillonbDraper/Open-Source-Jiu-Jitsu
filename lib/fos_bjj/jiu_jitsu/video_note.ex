@@ -14,6 +14,10 @@ defmodule FosBjj.JiuJitsu.VideoNote do
 
     read :read do
       primary?(true)
+      pagination(offset?: true, countable: true)
+    end
+
+    read :read_all do
     end
 
     create :create do

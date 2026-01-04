@@ -18,6 +18,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:title_search, nil)
      |> assign(:total_videos, 0)
      |> assign(:show_edit_modal, false)
+     |> assign(:show_technique_drawer, false)
      |> assign(:editing_video, nil)}
   end
 
@@ -82,6 +83,16 @@ defmodule FosBjjWeb.VideosDashboardLive do
   end
 
   @impl true
+  def handle_event("open_technique_drawer", _, socket) do
+    {:noreply, assign(socket, :show_technique_drawer, true)}
+  end
+
+  @impl true
+  def handle_event("close_technique_drawer", _, socket) do
+    {:noreply, assign(socket, :show_technique_drawer, false)}
+  end
+
+  @impl true
   def handle_info({:update_total_videos, total}, socket) do
     {:noreply, assign(socket, :total_videos, total)}
   end
@@ -132,7 +143,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
     {:noreply,
      socket
      |> put_flash(:info, "Technique created successfully")
-     |> push_event("js-exec", %{to: "#technique-drawer-edit-video-form", attr: "phx-remove"})}
+     |> assign(:show_technique_drawer, false)}
   end
 
   defp build_url_params(socket, page) do
@@ -198,7 +209,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
             />
           <% end %>
         </div>
-        
+
     <!-- Right: Technique Tree (40% = 2 cols, always mounted) -->
         <div class="col-span-2 min-w-0">
           <.live_component
@@ -218,6 +229,8 @@ defmodule FosBjjWeb.VideosDashboardLive do
         title="Edit Video"
         show={@show_edit_modal}
         size="triple_large"
+        close_on_click_away={!@show_technique_drawer}
+        close_on_escape={!@show_technique_drawer}
         on_cancel={JS.push("close_edit_modal")}
       >
         <.live_component
@@ -229,18 +242,28 @@ defmodule FosBjjWeb.VideosDashboardLive do
         />
       </.modal>
 
-      <%!-- Colocated hook for executing JS to close modal w/animation --%>
-      <script :type={Phoenix.LiveView.ColocatedHook} name=".JsExec">
-        export default {
-          mounted() {
-            this.handleEvent("js-exec", ({ to, attr }) => {
-              document.querySelectorAll(to).forEach((el) => {
-                this.liveSocket.execJS(el, el.getAttribute(attr));
-              });
-            });
-          }
+      <.drawer
+        :if={@show_technique_drawer}
+        id="technique-drawer"
+        show={@show_technique_drawer}
+        on_hide={
+          JS.push("close_technique_drawer")
+          |> hide_drawer("technique-drawer", "right")
         }
-      </script>
+        on_hide_away={
+          JS.push("close_technique_drawer")
+          |> hide_drawer("technique-drawer", "right")
+        }
+        position="right"
+      >
+        <.live_component
+          :if={@show_technique_drawer}
+          module={NewTechniqueForm}
+          id="new-technique-form"
+          current_user={@current_user}
+        />
+      </.drawer>
+
     </Layouts.app>
     """
   end

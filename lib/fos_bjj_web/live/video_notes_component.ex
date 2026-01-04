@@ -13,7 +13,6 @@ defmodule FosBjjWeb.VideoNotesComponent do
   def update(assigns, socket) do
     socket = assign(socket, assigns)
 
-    # Initialize state if not present
     socket =
       if Map.has_key?(socket.assigns, :show_modal) do
         socket
@@ -21,7 +20,6 @@ defmodule FosBjjWeb.VideoNotesComponent do
         assign(socket, :show_modal, false)
       end
 
-    # Initialize form if not present
     socket =
       if Map.has_key?(socket.assigns, :form) do
         socket
@@ -42,7 +40,8 @@ defmodule FosBjjWeb.VideoNotesComponent do
           video_id == ^socket.assigns.video_id and user_id == ^socket.assigns.current_user.id
         )
         |> Ash.Query.sort(video_timestamp: :asc_nils_first)
-        |> Ash.read!()
+        |> Ash.Query.for_read(:read_all)
+        |> Ash.read!(page: false)
 
       assign(socket, :notes, notes)
     else

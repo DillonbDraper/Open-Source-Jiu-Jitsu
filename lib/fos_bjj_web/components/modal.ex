@@ -101,6 +101,8 @@ defmodule FosBjjWeb.Components.Modal do
     doc: "Custom CSS class for additional styling to overlay"
 
   attr :show, :boolean, default: false, doc: "Show element"
+  attr :close_on_click_away, :boolean, default: true, doc: "Close modal when clicking away"
+  attr :close_on_escape, :boolean, default: true, doc: "Close modal when pressing escape"
   attr :on_cancel, JS, default: %JS{}, doc: "Custom JS module for on_cancel action"
   slot :inner_block, required: true, doc: "Inner block that renders HEEx content"
 
@@ -130,9 +132,9 @@ defmodule FosBjjWeb.Components.Modal do
           <div class="w-full">
             <.focus_wrap
               id={"#{@id}-container"}
-              phx-window-keydown={JS.exec("data-cancel", to: "##{@id}")}
+              phx-window-keydown={if @close_on_escape, do: JS.exec("data-cancel", to: "##{@id}")}
               phx-key="escape"
-              phx-click-away={JS.exec("data-cancel", to: "##{@id}")}
+              phx-click-away={if @close_on_click_away, do: JS.exec("data-cancel", to: "##{@id}")}
               class={[
                 "relative hidden transition",
                 color_variant(@variant, @color),

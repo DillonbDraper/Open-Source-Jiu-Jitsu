@@ -1,7 +1,6 @@
 defmodule FosBjjWeb.VideoLive.VideoFormComponent do
   use FosBjjWeb, :live_component
   import FosBjjWeb.Components.Button
-  alias FosBjjWeb.TechniqueLive.NewTechniqueForm
   alias Phoenix.LiveView.JS
 
   @impl true
@@ -29,7 +28,6 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
        |> assign(:techniques, [technique | socket.assigns.techniques])
        |> assign(:selected_techniques, new_technique_ids)
        |> assign(:form, form)
-       |> assign(:show_drawer, false)
        |> update(:combobox_version, &((&1 || 0) + 1))}
     else
       # Normal update flow
@@ -80,7 +78,6 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
        |> assign(:selected_techniques, selected_techniques)
        |> assign(:selected_grips, selected_grips)
        |> assign(:combobox_version, 0)
-       |> assign(:show_drawer, false)
        |> assign(:url_value, url_value)}
     end
   end
@@ -159,16 +156,6 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
          |> put_flash(:error, "Something went wrong")
          |> assign(form: form)}
     end
-  end
-
-  @impl true
-  def handle_event("open_drawer", _, socket) do
-    {:noreply, assign(socket, :show_drawer, true)}
-  end
-
-  @impl true
-  def handle_event("close_drawer", _, socket) do
-    {:noreply, assign(socket, :show_drawer, false)}
   end
 
   @impl true
@@ -256,10 +243,7 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
               <.button
                 type="button"
                 class="w-full"
-                phx-click={
-                  JS.push("open_drawer", target: @myself)
-                  |> show_drawer("technique-drawer-#{@id}", "right")
-                }
+                phx-click="open_technique_drawer"
                 title="Add New Technique"
               >
                 Add New Technique (If Not Found)
@@ -296,24 +280,6 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
           </div>
         </div>
       </.form_wrapper>
-
-      <.drawer
-        id={"technique-drawer-#{@id}"}
-        show={@show_drawer}
-        on_hide={
-          JS.push("close_drawer", target: @myself)
-          |> hide_drawer("technique-drawer-#{@id}", "right")
-        }
-        position="right"
-      >
-        <.live_component
-          :if={@show_drawer}
-          module={NewTechniqueForm}
-          id={"new-technique-form-#{@id}"}
-          current_user={@current_user}
-          show_drawer={@show_drawer}
-        />
-      </.drawer>
     </div>
     """
   end

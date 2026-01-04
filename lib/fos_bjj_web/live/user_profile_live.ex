@@ -2,6 +2,7 @@ defmodule FosBjjWeb.UserProfileLive do
   use FosBjjWeb, :live_view
 
   alias FosBjj.JiuJitsu.Video
+  alias FosBjj.JiuJitsu.VideoNote
   alias FosBjjWeb.VideoLive.VideoFormComponent
   import FosBjjWeb.Components.SearchField
   import FosBjjWeb.Components.Pagination
@@ -11,6 +12,9 @@ defmodule FosBjjWeb.UserProfileLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    user = socket.assigns.current_user
+    notes = list_user_notes(user, "", 1)
+
     {:ok,
      socket
      |> assign(:page_title, "User Profile")
@@ -20,7 +24,47 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:show_edit_modal, false)
      |> assign(:video_search_query, "")
      |> assign(:current_page, 1)
-     |> assign(:total_videos, 0)}
+     |> assign(:total_videos, 0)
+     |> assign(:notes, notes)
+     |> assign(:notes_page, 1)
+     |> assign(:notes_search_query, "")}
+  end
+
+  @impl true
+  def handle_event("search_notes", %{"query" => query}, socket) do
+    page = 1
+    notes = list_user_notes(socket.assigns.current_user, query, page)
+
+    {:noreply,
+     assign(socket,
+       notes_search_query: query,
+       notes: notes,
+       notes_page: page
+     )}
+  end
+
+  @impl true
+  def handle_event("notes_pagination", params, socket) do
+    current_page = socket.assigns.notes_page || 1
+    total_pages = ceil(socket.assigns.notes.count / 10)
+
+    page =
+      case params["action"] do
+        "select" -> params["page"]
+        "next" -> min(current_page + 1, total_pages)
+        "previous" -> max(current_page - 1, 1)
+        "first" -> 1
+        "last" -> total_pages
+        _ -> params["page"] || current_page
+      end
+
+    notes =
+      list_user_notes(socket.assigns.current_user, socket.assigns.notes_search_query, page)
+
+    {:noreply,
+     socket
+     |> assign(:notes, notes)
+     |> assign(:notes_page, page)}
   end
 
   @impl true
@@ -154,6 +198,39 @@ defmodule FosBjjWeb.UserProfileLive do
      |> put_flash(:info, "Video updated successfully")}
   end
 
+  defp list_user_notes(user, query, page) do
+    offset = (page - 1) * 10
+
+    VideoNote
+    |> Ash.Query.filter(user_id == ^user.id)
+    |> Ash.Query.load(:video)
+    |> then(fn q ->
+      if query != "" do
+        query_string = "%#{query}%"
+
+        Ash.Query.filter(
+          q,
+          ilike(body, ^query_string) or
+            ilike(video.title, ^query_string)
+        )
+      else
+        q
+      end
+    end)
+    |> Ash.Query.sort(inserted_at: :desc)
+    |> Ash.read!(actor: user, page: [limit: 10, offset: offset, count: true])
+  end
+
+  defp format_timestamp(nil), do: "--:--"
+
+  defp format_timestamp(seconds) when is_integer(seconds) do
+    min = div(seconds, 60)
+    sec = rem(seconds, 60)
+    :io_lib.format("~2..0B:~2..0B", [min, sec]) |> to_string()
+  end
+
+  defp format_timestamp(_), do: "--:--"
+
   defp list_user_videos(user, query, page) do
     offset = (page - 1) * 5
 
@@ -177,31 +254,61 @@ defmodule FosBjjWeb.UserProfileLive do
       <div class="space-y-8">
         <header>
           <h1 class="text-3xl font-extrabold tracking-tight text-base-content">
-            {@page_title}
+            Hey there!
           </h1>
           <p class="mt-2 text-lg text-base-content/70">
-            Manage your account settings and preferences.
+            Here's your profile and settings.
           </p>
         </header>
 
         <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-          <.h3 class="text-lg font-medium mb-4">Theme Settings</.h3>
-          <div class="flex flex-wrap gap-4">
-            <.button
-              class="btn btn-outline"
-              phx-click={JS.dispatch("phx:set-theme")}
-              data-phx-theme="light"
-            >
-              <.icon name="hero-sun" class="w-5 h-5 mr-2" /> Light
-            </.button>
-            <.button
-              class="btn btn-outline"
-              phx-click={JS.dispatch("phx:set-theme")}
-              data-phx-theme="dark"
-            >
-              <.icon name="hero-moon" class="w-5 h-5 mr-2" /> Dark
-            </.button>
+          <h3 class="text-lg font-medium mb-4">My Notes</h3>
+          <div class="mb-4">
+            <form phx-change="search_notes" phx-submit="search_notes">
+              <.search_field
+                name="query"
+                value={@notes_search_query}
+                placeholder="Search notes by note or video title..."
+                phx-change="search_notes"
+                phx-debounce="400"
+              />
+            </form>
           </div>
+
+          <.table padding="extra_small" border="medium" rows={@notes.results}>
+            <:col :let={note} label="Video">
+              <.link navigate={~p"/videos/#{note.video_id}"} class="link link-primary font-semibold">
+                {note.video.title}
+              </.link>
+            </:col>
+            <:col :let={note} label="Note">
+              <div class="group relative">
+                <div class="truncate max-w-xs cursor-help">
+                  {note.body}
+                </div>
+                <div class="invisible group-hover:visible absolute left-0 z-50 p-2 mt-1 text-sm leading-tight text-white bg-gray-800 rounded shadow-lg w-72 whitespace-normal">
+                  {note.body}
+                </div>
+              </div>
+            </:col>
+            <:col :let={note} label="Timestamp">
+              {format_timestamp(note.video_timestamp)}
+            </:col>
+            <:col :let={note} label="Created">
+              {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M")}
+            </:col>
+          </.table>
+
+          <%= if @notes.count > 10 do %>
+            <div class="mt-4 flex justify-center">
+              <.pagination
+                total={ceil(@notes.count / 10)}
+                active={@notes_page}
+                siblings={1}
+                phx-click="notes_pagination"
+              />
+            </div>
+          <% end %>
         </div>
 
         <%= if @current_user.role_name in ["coach", "admin"] do %>
@@ -284,6 +391,26 @@ defmodule FosBjjWeb.UserProfileLive do
             </div>
           </div>
         <% end %>
+
+        <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
+          <.h3 class="text-lg font-medium mb-4">Theme Settings</.h3>
+          <div class="flex flex-wrap gap-4">
+            <.button
+              class="btn btn-outline"
+              phx-click={JS.dispatch("phx:set-theme")}
+              data-phx-theme="light"
+            >
+              <.icon name="hero-sun" class="w-5 h-5 mr-2" /> Light
+            </.button>
+            <.button
+              class="btn btn-outline"
+              phx-click={JS.dispatch("phx:set-theme")}
+              data-phx-theme="dark"
+            >
+              <.icon name="hero-moon" class="w-5 h-5 mr-2" /> Dark
+            </.button>
+          </div>
+        </div>
 
         <.modal
           :if={@show_edit_modal}

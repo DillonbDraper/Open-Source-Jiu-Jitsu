@@ -2,7 +2,6 @@
 - Actually set up email client/test creating users.
   - Actually works fine with built-in, but need to impelment real service for prod and fix styling.
     - Styling now, real service as part of deploy process.
-- Edit form modal renders drawer on mount/momentarily after close.
 = Polish/expand note system.  Note list in user profile page (dense table?).
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
