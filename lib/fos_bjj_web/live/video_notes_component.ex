@@ -14,15 +14,42 @@ defmodule FosBjjWeb.VideoNotesComponent do
     socket =
       socket
       |> assign_new(:show_modal, fn -> false end)
-      |> assign_new(:form, fn -> to_form(%{"body" => "", "video_timestamp" => nil}) end)
-      |> load_notes()
+      |> assign_new(:form, fn -> to_form(%{"body" => "", "minutes" => 0, "seconds" => 0}) end)
+      |> assign_new(:notes, fn -> [] end)
 
     {:ok, socket}
   end
 
   @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    socket = assign(socket, assigns)
+
+    socket =
+      if socket.assigns[:video_id] != socket.assigns[:notes_video_id] do
+        socket
+        |> assign(:notes_video_id, socket.assigns.video_id)
+        |> load_notes()
+      else
+        socket
+      end
+
+    socket =
+      if socket.assigns[:show_modal] && assigns[:current_time] do
+        minutes = div(assigns.current_time, 60)
+        seconds = rem(assigns.current_time, 60)
+
+        changes = %{
+          "body" => socket.assigns.form.params["body"],
+          "minutes" => minutes,
+          "seconds" => seconds
+        }
+
+        assign(socket, :form, to_form(changes))
+      else
+        socket
+      end
+
+    {:ok, socket}
   end
 
   defp load_notes(socket) do
@@ -56,11 +83,17 @@ defmodule FosBjjWeb.VideoNotesComponent do
   end
 
   @impl true
-  def handle_event("save_note", %{"body" => body, "video_timestamp" => timestamp}, socket) do
+  def handle_event(
+        "save_note",
+        %{"body" => body, "minutes" => minutes, "seconds" => seconds},
+        socket
+      ) do
+    timestamp = (parse_timestamp(minutes) || 0) * 60 + (parse_timestamp(seconds) || 0)
+
     params = %{
       video_id: socket.assigns.video_id,
       body: body,
-      video_timestamp: parse_timestamp(timestamp)
+      video_timestamp: timestamp
     }
 
     case create_note(params, socket.assigns.current_user) do
@@ -68,7 +101,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
         socket =
           socket
           |> assign(:show_modal, false)
-          |> assign(:form, to_form(%{"body" => "", "video_timestamp" => nil}))
+          |> assign(:form, to_form(%{"body" => "", "minutes" => 0, "seconds" => 0}))
           |> load_notes()
           |> put_flash(:info, "Note added successfully")
 
@@ -140,7 +173,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
                 <div class="flex items-center gap-2">
                   <%= if note.video_timestamp do %>
                     <button
-                      class="font-mono text-sm text-primary hover:underline whitespace-nowrap cursor-pointer"
+                      class="font-mono text-sm text-blue-600 hover:underline whitespace-nowrap cursor-pointer"
                       phx-click="seek_video"
                       phx-target={@myself}
                       phx-value-seconds={note.video_timestamp}
@@ -184,13 +217,28 @@ defmodule FosBjjWeb.VideoNotesComponent do
       >
         <div class="p-1">
           <.form for={@form} phx-submit="save_note" phx-target={@myself} class="flex flex-col gap-4">
-            <.input
-              field={@form[:video_timestamp]}
-              type="number"
-              label="Timestamp (seconds)"
-              placeholder="e.g. 65 for 1:05"
-              value={@current_time}
-            />
+            <div class="flex items-end gap-2">
+              <div class="flex-1">
+                <.input
+                  field={@form[:minutes]}
+                  type="number"
+                  label="Min"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+              <div class="pb-3 font-bold text-lg">:</div>
+              <div class="flex-1">
+                <.input
+                  field={@form[:seconds]}
+                  type="number"
+                  label="Sec"
+                  placeholder="00"
+                  min="0"
+                  max="59"
+                />
+              </div>
+            </div>
 
             <.input
               field={@form[:body]}

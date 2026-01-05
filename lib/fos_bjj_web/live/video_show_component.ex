@@ -25,6 +25,13 @@ defmodule FosBjjWeb.VideoShowComponent do
         do: socket,
         else: assign(socket, :show_notes, true)
 
+    socket =
+      if assigns[:seek_time] do
+        push_event(socket, "seek", %{seconds: assigns.seek_time})
+      else
+        socket
+      end
+
     # Only load video if video_id changed or it's the first load
     socket =
       if socket.assigns[:video] == nil or socket.assigns[:video_id] != assigns.video_id do
@@ -54,7 +61,6 @@ defmodule FosBjjWeb.VideoShowComponent do
   @impl true
   def handle_event("player_status_report", %{"current_time" => time}, socket) do
     rounded_time = floor(time)
-    IO.inspect(rounded_time)
     {:noreply, assign(socket, :current_time, rounded_time)}
   end
 
@@ -212,11 +218,15 @@ defmodule FosBjjWeb.VideoShowComponent do
                 export default {
                 mounted() {
         this.videoId = this.el.dataset.videoId;
+        this.pendingSeek = null;
+        this.playerReady = false;
         this.loadYouTubeAPI();
 
         this.handleEvent("seek", ({ seconds }) => {
-          if (this.player && this.player.seekTo) {
+          if (this.playerReady && this.player && typeof this.player.seekTo === 'function') {
             this.player.seekTo(seconds, true);
+          } else {
+            this.pendingSeek = seconds;
           }
         });
 
@@ -273,6 +283,15 @@ defmodule FosBjjWeb.VideoShowComponent do
             playerVars: {
               'playsinline': 1,
               'modestbranding': 1
+            },
+            events: {
+              'onReady': (event) => {
+                this.playerReady = true;
+                if (this.pendingSeek !== null) {
+                  event.target.seekTo(this.pendingSeek, true);
+                  this.pendingSeek = null;
+                }
+              }
             }
             });
             }

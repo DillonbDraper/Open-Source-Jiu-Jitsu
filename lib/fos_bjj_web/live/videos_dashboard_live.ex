@@ -35,6 +35,12 @@ defmodule FosBjjWeb.VideosDashboardLive do
     attire = params["attire"] || "both"
     title = params["title"]
 
+    seek_time =
+      case params["time"] do
+        nil -> nil
+        t -> String.to_integer(t)
+      end
+
     page =
       case params["page"] do
         nil -> 1
@@ -49,7 +55,8 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:selected_technique_id, technique_id)
      |> assign(:selected_attire, attire)
      |> assign(:title_search, title)
-     |> assign(:current_page, page)}
+     |> assign(:current_page, page)
+     |> assign(:seek_time, seek_time)}
   end
 
   @impl true
@@ -206,6 +213,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
               video_id={@video_id}
               selected_technique_id={@selected_technique_id}
               current_user={assigns[:current_user]}
+              seek_time={@seek_time}
             />
           <% end %>
         </div>
@@ -263,7 +271,6 @@ defmodule FosBjjWeb.VideosDashboardLive do
           current_user={@current_user}
         />
       </.drawer>
-
     </Layouts.app>
     """
   end

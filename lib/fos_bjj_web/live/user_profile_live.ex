@@ -253,16 +253,16 @@ defmodule FosBjjWeb.UserProfileLive do
     <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]}>
       <div class="space-y-8">
         <header>
-          <h1 class="text-3xl font-extrabold tracking-tight text-base-content">
+          <.h1 class="text-3xl font-extrabold tracking-tight text-base-content">
             Hey there!
-          </h1>
+          </.h1>
           <p class="mt-2 text-lg text-base-content/70">
             Here's your profile and settings.
           </p>
         </header>
 
         <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-          <h3 class="text-lg font-medium mb-4">My Notes</h3>
+          <.h3 class="text-lg font-medium mb-4">My Notes</.h3>
           <div class="mb-4">
             <form phx-change="search_notes" phx-submit="search_notes">
               <.search_field
@@ -282,20 +282,31 @@ defmodule FosBjjWeb.UserProfileLive do
               </.link>
             </:col>
             <:col :let={note} label="Note">
-              <div class="group relative">
-                <div class="truncate max-w-xs cursor-help">
+              <.popover
+                id={"note-popover-#{note.id}"}
+                width="double_large"
+                variant="default"
+                color="dark"
+                show_delay={400}
+              >
+                <:trigger class="truncate max-w-xs cursor-help block">
                   {note.body}
-                </div>
-                <div class="invisible group-hover:visible absolute left-0 z-50 p-2 mt-1 text-sm leading-tight text-white bg-gray-800 rounded shadow-lg w-72 whitespace-normal">
+                </:trigger>
+                <:content class="text-sm">
                   {note.body}
-                </div>
-              </div>
+                </:content>
+              </.popover>
             </:col>
             <:col :let={note} label="Timestamp">
-              {format_timestamp(note.video_timestamp)}
+              <.link
+                navigate={~p"/videos/#{note.video_id}?time=#{note.video_timestamp}"}
+                class="link link-primary font-semibold text-blue-600"
+              >
+                {format_timestamp(note.video_timestamp)}
+              </.link>
             </:col>
             <:col :let={note} label="Created">
-              {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M")}
+              {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M %p")}
             </:col>
           </.table>
 
