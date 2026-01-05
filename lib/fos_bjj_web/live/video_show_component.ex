@@ -7,6 +7,11 @@ defmodule FosBjjWeb.VideoShowComponent do
   require Ash.Query
 
   @impl true
+  def mount(socket) do
+    {:ok, assign(socket, :current_time, 0)}
+  end
+
+  @impl true
   def update(assigns, socket) do
     socket = assign(socket, assigns)
 
@@ -44,6 +49,13 @@ defmodule FosBjjWeb.VideoShowComponent do
   @impl true
   def handle_event("toggle_notes", _, socket) do
     {:noreply, update(socket, :show_notes, &(!&1))}
+  end
+
+  @impl true
+  def handle_event("player_status_report", %{"current_time" => time}, socket) do
+    rounded_time = floor(time)
+    IO.inspect(rounded_time)
+    {:noreply, assign(socket, :current_time, rounded_time)}
   end
 
   defp load_video(socket, video_id) do
@@ -117,6 +129,7 @@ defmodule FosBjjWeb.VideoShowComponent do
                     id="video-notes"
                     video_id={@video.id}
                     current_user={@current_user}
+                    current_time={@current_time}
                   />
                 </div>
               <% end %>
@@ -196,67 +209,74 @@ defmodule FosBjjWeb.VideoShowComponent do
         </div>
       <% end %>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".YouTubeSeeker">
-            export default {
-            mounted() {
-              this.videoId = this.el.dataset.videoId;
-              this.loadYouTubeAPI();
+                export default {
+                mounted() {
+        this.videoId = this.el.dataset.videoId;
+        this.loadYouTubeAPI();
 
-              // Listen for the specific "seek" event from the server
-              this.handleEvent("seek", ({ seconds }) => {
-                if (this.player && this.player.seekTo) {
-                  // The 'true' flag allows the video to seek ahead of buffered data
-                  this.player.seekTo(seconds, true);
-
-                  // Optional: Force play if it was paused
-                  // this.player.playVideo();
-                }
-              });
-            },
-
-            destroyed() {
-              if (this.player) this.player.destroy();
-            },
-
-            loadYouTubeAPI() {
-              // If API is ready, init immediately
-              if (window.YT && window.YT.Player) {
-                this.initPlayer();
-                return;
-              }
-
-              // Standard queueing mechanism for the async script load
-              window.onYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady || [];
-              const existingCallback = window.onYouTubeIframeAPIReady;
-
-              window.onYouTubeIframeAPIReady = () => {
-                if (existingCallback && typeof existingCallback === 'function') existingCallback();
-                this.initPlayer();
-              };
-
-              if (!document.getElementById("youtube-api-script")) {
-                const tag = document.createElement('script');
-                tag.id = "youtube-api-script";
-                tag.src = "https://www.youtube.com/iframe_api";
-                document.head.appendChild(tag);
-              }
-            },
-
-            initPlayer() {
-        // We grab the ID of the sacrificial child div
-        const playerId = this.el.dataset.playerId;
-
-        this.player = new YT.Player(playerId, { // <--- Use the child ID here
-        videoId: this.videoId,
-        height: '100%', // Ensure the iframe fills the wrapper
-        width: '100%',
-        playerVars: {
-          'playsinline': 1,
-          'modestbranding': 1
-        }
+        this.handleEvent("seek", ({ seconds }) => {
+          if (this.player && this.player.seekTo) {
+            this.player.seekTo(seconds, true);
+          }
         });
-        }
-            }
 
+        this.handleEvent("request_player_status", () => {
+          if (!this.player || !this.player.getCurrentTime) return;
+          this.player.pauseVideo();
+
+          const currentTime = this.player.getCurrentTime();
+
+          // Send result back to the specific component that owns this hook
+          // 'player_status_report' must match handle_event in the Elixir component
+          this.pushEventTo(this.el, "player_status_report", {
+            current_time: currentTime
+          });
+        });
+        },
+
+                destroyed() {
+                  if (this.player) this.player.destroy();
+                },
+
+                loadYouTubeAPI() {
+                  // If API is ready, init immediately
+                  if (window.YT && window.YT.Player) {
+                    this.initPlayer();
+                    return;
+                  }
+
+                  // Standard queueing mechanism for the async script load
+                  window.onYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady || [];
+                  const existingCallback = window.onYouTubeIframeAPIReady;
+
+                  window.onYouTubeIframeAPIReady = () => {
+                    if (existingCallback && typeof existingCallback === 'function') existingCallback();
+                    this.initPlayer();
+                  };
+
+                  if (!document.getElementById("youtube-api-script")) {
+                    const tag = document.createElement('script');
+                    tag.id = "youtube-api-script";
+                    tag.src = "https://www.youtube.com/iframe_api";
+                    document.head.appendChild(tag);
+                  }
+                },
+
+                initPlayer() {
+            // We grab the ID of the sacrificial child div
+            const playerId = this.el.dataset.playerId;
+
+            this.player = new YT.Player(playerId, { // <--- Use the child ID here
+            videoId: this.videoId,
+            height: '100%', // Ensure the iframe fills the wrapper
+            width: '100%',
+            playerVars: {
+              'playsinline': 1,
+              'modestbranding': 1
+            }
+            });
+            }
+                }
       </script>
     </div>
     """

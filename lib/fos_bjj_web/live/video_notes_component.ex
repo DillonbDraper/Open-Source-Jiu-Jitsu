@@ -10,26 +10,19 @@ defmodule FosBjjWeb.VideoNotesComponent do
   require Ash.Query
 
   @impl true
-  def update(assigns, socket) do
-    socket = assign(socket, assigns)
-
+  def mount(socket) do
     socket =
-      if Map.has_key?(socket.assigns, :show_modal) do
-        socket
-      else
-        assign(socket, :show_modal, false)
-      end
-
-    socket =
-      if Map.has_key?(socket.assigns, :form) do
-        socket
-      else
-        assign(socket, :form, to_form(%{"body" => "", "video_timestamp" => nil}))
-      end
-
-    socket = load_notes(socket)
+      socket
+      |> assign_new(:show_modal, fn -> false end)
+      |> assign_new(:form, fn -> to_form(%{"body" => "", "video_timestamp" => nil}) end)
+      |> load_notes()
 
     {:ok, socket}
+  end
+
+  @impl true
+  def update(assigns, socket) do
+    {:ok, assign(socket, assigns)}
   end
 
   defp load_notes(socket) do
@@ -51,7 +44,10 @@ defmodule FosBjjWeb.VideoNotesComponent do
 
   @impl true
   def handle_event("add_note", _, socket) do
-    {:noreply, assign(socket, :show_modal, true)}
+    {:noreply,
+     socket
+     |> push_event("request_player_status", %{})
+     |> assign(:show_modal, true)}
   end
 
   @impl true
@@ -193,6 +189,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
               type="number"
               label="Timestamp (seconds)"
               placeholder="e.g. 65 for 1:05"
+              value={@current_time}
             />
 
             <.input

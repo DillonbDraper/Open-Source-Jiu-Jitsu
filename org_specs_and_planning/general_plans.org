@@ -2,7 +2,13 @@
 - Actually set up email client/test creating users.
   - Actually works fine with built-in, but need to impelment real service for prod and fix styling.
     - Styling now, real service as part of deploy process.
-= Polish/expand note system.  Note list in user profile page (dense table?).
+- Polish/expand note system
+  - Even denser table?
+  - Create better UX for timestamp notetaking - prefilled, pauses video when taking note, minutes/seconds separated in UI, backend handles calculation
+  - Clickable timestamps from user notes page
+- Style guide for adding videos/techniques
+- Refine/Redo mission statement
+- Application to become a coach/system to submit videos (can be post-live)
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
 - Adequate seed database of techniques/videos
