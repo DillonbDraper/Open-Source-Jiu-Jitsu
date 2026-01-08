@@ -1,35 +1,52 @@
-<Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-  <div class="text-center space-y-6">
-    <.h1 class="mb-8 text-center" font_weight="font-bold">Mission Statement</.h1>
+<Layouts.app full_width flash={@flash} current_user={assigns[:current_user]}>
+  <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <.header class="mb-8">
+      Mission Statement
+    </.header>
 
-    <div class="max-w-4xl mx-auto text-left space-y-6">
-      <.p size="large" class="leading-relaxed">
-        The mission of this project is to be a free and high quality repository of grappling video instruction with a focus on Brazilian Jiu-Jitsu (BJJ).
-        This project seeks to provide value to your Jiu Jitsu journey in two key ways:
-      </.p>
+    <div class="mt-8 space-y-8 text-base leading-7 text-base-content">
+      <p class="text-lg">
+        Open Source Jiu-Jitsu’s mission is to be a free and high quality repository of Brazilian Jiu Jitsu and grappling video instruction.
+        It seeks to provide value to your Jiu Jitsu journey in a few key ways:
+      </p>
 
-      <.ol style="list-decimal" size="large" space="medium" class="ps-8">
-        <.li>
-          An adapted, easy to use version of the famous inAction navigation system, making it easy to find material on exactly what you are looking for
-        </.li>
-        <.li>
-          <div class="space-y-3">
-            <.p>
-              A trusted, curated source of free online instruction that you can trust. While much of the available free Jiu-Jitsu content is excellent, a good deal of it is also either of lesser quality, an ad masquerading as coaching, or at worst outright technical information. To combat this, each video resource this site uses is guaranteed to meet the following criteria:
-            </.p>
+      <ol class="list-decimal list-outside pl-5 space-y-6">
+        <li class="pl-2">
+          <span class="font-semibold block mb-1">Intuitive Navigation</span>
+          An adapted, easy to use version of the famous inAction navigation system, making it easy to find material on exactly what you are looking for.
+        </li>
+        <li class="pl-2">
+          <span class="font-semibold block mb-1">Curated Quality</span>
+          <p class="mb-3">
+            A trusted, curated source of free online instruction. While much of the available free Jiu-Jitsu content is excellent, that cannot be said for all of it.
+            For beginners without experience with Jiu Jitsu or its online ecosystem, it can be easy to go down bad paths and waste time on video footage that is low quality, more ad than instruction, or sometimes even outright fraudulent.
+            That is why we guarantee that all videos on Open Source Jitsu meets three simple criteria:
+          </p>
 
-            <.ul style="list-disc" size="large" space="small" class="ps-8 mt-3">
-              <.li>High quality, real-world accurate instruction</.li>
-              <.li>
-                Not an ad - videos may contain some amount of promotion, but focus primarily on instruction and do not waste your time
-              </.li>
-              <.li>
-                Minimum acceptable production values - None of the videos here will contain egregiously poor audio or video, and should feel "watchable" for all users
-              </.li>
-            </.ul>
-          </div>
-        </.li>
-      </.ol>
+          <ul class="list-disc list-outside pl-5 space-y-3 mt-2">
+            <li class="pl-2">
+              <strong class="font-semibold">High quality, real-world accurate instruction: </strong>
+              There will be no 10 second clips with 3 unneecessary inversions and no real explanation. No worrying about fraudulent instructor credentials.
+              All videos added have been vetted for quality by a verified Brazilian Jiu Jitsu black belt.
+            </li>
+            <li class="pl-2">
+              <strong class="font-semibold">Not an ad: </strong>
+              Videos may contain some amount of promotion, but focus primarily on instruction and do not waste your time.
+            </li>
+            <li class="pl-2">
+              <strong class="font-semibold">Minimum acceptable production values: </strong>
+              None of the videos here will contain egregiously poor audio or video, and should feel "watchable" for all users.
+            </li>
+          </ul>
+        </li>
+      </ol>
+      <div class="mt-25 pt-6 ">
+      <.link navigate={~p"/database"} class="btn btn-primary btn-lg">
+          Enter Database
+        </.link>
     </div>
-  </div>
+
+    </div>
+
+      </div>
 </Layouts.app>

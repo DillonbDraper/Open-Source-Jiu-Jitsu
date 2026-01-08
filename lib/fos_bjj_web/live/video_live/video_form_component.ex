@@ -182,13 +182,17 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
             field={@form[:title]}
             label="Video Title"
             placeholder="Title of video"
+            popover="A descriptive, focused list of the techniques covered video without any hype or clickbait,
+              ideally with the instructor's name at the end.  I.E. 'Knee/Elbow Mount Escape by Some Famous Guy' "
             required
           />
 
           <.textarea_field
             field={@form[:description]}
-            label="Description (Optional)"
-            placeholder="Brief description of the video content"
+            label="Description"
+            placeholder="Description of the video content"
+            popover="A detailed description of what you believe are the key points and/or novel insights that the video brings to the table.
+              Tell the user why they may want to watch beyond the obvious."
             rows="3"
           />
 
@@ -232,6 +236,9 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
                 searchable={true}
                 multiple={true}
                 size="extra_large"
+                popover="Multi select box for techniques in the video.  List all techniques covered in detail in the video, but not techniques that are only touched on.
+                  With techniques, more specificity is better.  If a video covers butterfly sweeps in detail from both butterfly and half guard, it is best to include
+                  both 'butterfly sweep from butterfly guard' and 'butterfly sweep from half butterfly' both, rather than just one."
                 required
               >
                 <:option :for={technique <- @techniques} value={to_string(technique.id)}>
@@ -260,6 +267,7 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
             placeholder="Select grips (optional)"
             searchable={true}
             size="extra_large"
+            popover="There are near-infinite grips in Jiu-Jitsu and it is very possible the one your are looking for may not be here, and that is okay."
           >
             <:option :for={grip <- @grips} value={grip.name}>
               {grip.label}

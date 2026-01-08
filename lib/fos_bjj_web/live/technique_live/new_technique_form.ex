@@ -223,6 +223,8 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             field={@form[:name]}
             label="Technique Name"
             placeholder="Enter technique name"
+            popover="Enter the technique name.  As mentioned in the video form, more specificity is better with techniques.  Knee/Elbow Escape from Side Control and Knee/Elbow
+              Escape From Mount count as different moves and should be labeled as such."
             required
           />
 

@@ -119,6 +119,7 @@ defmodule FosBjjWeb.Components.Combobox do
   attr :description, :string, default: nil, doc: "Determines a short description"
   attr :searchable, :boolean, default: false, doc: "Enables search functionality in the combobox"
   attr :multiple, :boolean, default: false, doc: "Multiple selections in the combobox"
+  attr :popover, :string, default: nil, doc: "Text for the info popover"
 
   slot :start_section, required: false, doc: "Renders heex content in start of an element" do
     attr :class, :string, doc: "Custom CSS class for additional styling"
@@ -178,7 +179,7 @@ defmodule FosBjjWeb.Components.Combobox do
         :if={@label || @description}
         class={["combobox-label-wrapper", @description_wrapper_class]}
       >
-        <.label :if={@label} for={@id} class={@label_class}>{@label}</.label>
+        <.label :if={@label} for={@id} class={@label_class} popover={@popover}>{@label}</.label>
         <div :if={@description} class={@description_class}>
           {@description}
         </div>
@@ -380,7 +381,7 @@ defmodule FosBjjWeb.Components.Combobox do
         :if={@label || @description}
         class={["combobox-label-wrapper", @description_wrapper_class]}
       >
-        <.label :if={@label} for={@id} class={@label_class}>{@label}</.label>
+        <.label :if={@label} for={@id} class={@label_class} popover={@popover}>{@label}</.label>
         <div :if={@description} class={@description_class}>
           {@description}
         </div>
@@ -590,13 +591,19 @@ defmodule FosBjjWeb.Components.Combobox do
   attr :id, :string, default: nil, doc: "Unique identifier"
   attr :for, :string, default: nil, doc: "Specifies the form which is associated with"
   attr :class, :any, default: nil, doc: "Custom CSS class for additional styling"
+  attr :popover, :string, default: nil, doc: "Text for the info popover"
   slot :inner_block, required: true, doc: "Inner block that renders HEEx content"
 
   defp label(assigns) do
     ~H"""
-    <label for={@for} class={["leading-5 font-semibold", @class]} id={@id}>
-      {render_slot(@inner_block)}
-    </label>
+    <div class="flex items-center gap-1">
+      <label for={@for} class={["leading-5 font-semibold", @class]} id={@id}>
+        {render_slot(@inner_block)}
+      </label>
+      <div :if={@popover} class="tooltip tooltip-right font-normal z-10" data-tip={@popover}>
+        <.icon name="hero-information-circle" class="size-4 text-current opacity-70 cursor-help" />
+      </div>
+    </div>
     """
   end
 
