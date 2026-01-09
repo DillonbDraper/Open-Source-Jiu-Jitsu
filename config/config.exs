@@ -75,6 +75,20 @@ config :fos_bjj, FosBjjWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :fos_bjj, FosBjj.Mailer, adapter: Swoosh.Adapters.Local
 
+if File.exists?("/etc/nixos/configuration.nix") do
+  # NixOS specific configuration can go here if needed
+else
+  config :tailwind,
+    version: "4.1.17",
+    fos_bjj: [
+      args: ~w(
+        --input=css/app.css
+        --output=../priv/static/assets/css/app.css
+      ),
+      cd: Path.expand("../assets", __DIR__)
+    ]
+end
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",

@@ -25,9 +25,16 @@ config :fos_bjj, FosBjjWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "83V7ZveaeozceajXSFkyRfsJWWPhWXiH+v8hsnoAfSHdDEF5cNcnNvwiEKqdBo4v",
-  watchers: [
-    esbuild: {Esbuild, :install_and_run, [:fos_bjj, ~w(--sourcemap=inline --watch)]}
-  ]
+  watchers:
+    [
+      esbuild: {Esbuild, :install_and_run, [:fos_bjj, ~w(--sourcemap=inline --watch)]}
+    ] ++
+      if(File.exists?("/etc/nixos/configuration.nix"),
+        do: [],
+        else: [
+          tailwind: {Tailwind, :install_and_run, [:fos_bjj, ~w(--watch)]}
+        ]
+      )
 
 # ## SSL Support
 #

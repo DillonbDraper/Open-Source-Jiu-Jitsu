@@ -81,7 +81,7 @@ defmodule FosBjj.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:video_link_helper, "~> 0.3.0"}
-    ]
+    ] ++ tailwind_dep()
   end
 
   # Aliases are shortcuts or tasks specific to the current project.
@@ -96,18 +96,54 @@ defmodule FosBjj.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ash.setup --quiet", "test"],
-      "assets.setup": ["esbuild.install --if-missing"],
-      "assets.build": [
-        "compile",
-        "cmd --cd assets tailwindcss --input=css/app.css --output=../priv/static/assets/css/app.css",
-        "esbuild fos_bjj"
-      ],
-      "assets.deploy": [
-        "cmd --cd assets tailwindcss --input=css/app.css --output=../priv/static/assets/css/app.css --minify",
-        "esbuild fos_bjj --minify",
-        "phx.digest"
-      ],
+      "assets.setup": assets_setup(),
+      "assets.build": assets_build(),
+      "assets.deploy": assets_deploy(),
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
+  end
+
+  defp nixos? do
+    File.exists?("/etc/nixos/configuration.nix")
+  end
+
+  defp tailwind_dep do
+    if nixos?() do
+      []
+    else
+      [{:tailwind, "~> 0.3.1", runtime: Mix.env() == :dev}]
+    end
+  end
+
+  defp assets_setup do
+    if nixos?() do
+      ["esbuild.install --if-missing"]
+    else
+      ["tailwind.install --if-missing", "esbuild.install --if-missing"]
+    end
+  end
+
+  defp assets_build do
+    base = ["compile"]
+
+    tailwind =
+      if nixos?() do
+        "cmd --cd assets tailwindcss --input=css/app.css --output=../priv/static/assets/css/app.css"
+      else
+        "tailwind fos_bjj"
+      end
+
+    base ++ [tailwind, "esbuild fos_bjj"]
+  end
+
+  defp assets_deploy do
+    tailwind =
+      if nixos?() do
+        "cmd --cd assets tailwindcss --input=css/app.css --output=../priv/static/assets/css/app.css --minify"
+      else
+        "tailwind fos_bjj --minify"
+      end
+
+    [tailwind, "esbuild fos_bjj --minify", "phx.digest"]
   end
 end
