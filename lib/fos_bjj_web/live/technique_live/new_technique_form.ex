@@ -99,7 +99,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
     # Filter actions based on position + orientation
     available_actions =
-      get_available_actions(selected_position, selected_orientation)
+      get_available_actions(final_sub_position, selected_orientation)
 
     valid_action_names = Enum.map(available_actions, & &1.name)
 
@@ -182,18 +182,18 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
     end
   end
 
-  defp get_available_actions(selected_position, selected_orientation) do
+  defp get_available_actions(selected_sub_position, selected_orientation) do
     # Actions require both position AND orientation to be selected
-    if is_nil(selected_position) or selected_position == "" or
+    if is_nil(selected_sub_position) or selected_sub_position == "" or
          is_nil(selected_orientation) or selected_orientation == "" do
       []
     else
       import Ecto.Query
 
-      from(apo in "action_position_orientations",
+      from(apo in "action_sub_position_orientations",
         join: a in "actions",
         on: a.name == apo.action_name,
-        where: apo.position_name == ^selected_position,
+        where: apo.sub_position_name == ^selected_sub_position,
         where: apo.orientation_name == ^selected_orientation,
         select: %{name: a.name, label: a.label},
         order_by: a.label
@@ -291,19 +291,19 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
           <%!-- Action Select --%>
           <.combobox
             id={
-              "action-select-#{@selected_position || "none"}-#{@selected_orientation || "none"}"
+              "action-select-#{@selected_sub_position || "none"}-#{@selected_orientation || "none"}"
             }
             name="technique[action_name]"
             label="Action"
             value={@selected_action}
             placeholder={
               cond do
-                is_nil(@selected_position) -> "Select a position first"
+                is_nil(@selected_sub_position) -> "Select a sub-position first"
                 is_nil(@selected_orientation) -> "Select an orientation first"
                 true -> "Select an action"
               end
             }
-            disabled={is_nil(@selected_position) or is_nil(@selected_orientation)}
+            disabled={is_nil(@selected_sub_position) or is_nil(@selected_orientation)}
             size="extra_large"
           >
             <:option :for={action <- @available_actions} value={action.name}>
@@ -312,10 +312,10 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
           </.combobox>
 
           <p
-            :if={is_nil(@selected_position) or is_nil(@selected_orientation)}
+            :if={is_nil(@selected_sub_position) or is_nil(@selected_orientation)}
             class="text-sm text-gray-500 mt-1"
           >
-            Select a position and orientation to enable actions
+            Select a sub-position and orientation to enable actions
           </p>
 
           <%!-- Submit Buttons --%>

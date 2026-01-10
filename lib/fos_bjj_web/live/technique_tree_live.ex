@@ -101,7 +101,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
           "sub_position" ->
             # Load actions filtered by position+orientation and compute their counts
             socket
-            |> maybe_load_actions(id, params["pos"], params["ori"])
+            |> maybe_load_actions(id, params["sub"], params["ori"])
             |> compute_action_counts(id, params["pos"], params["ori"], params["sub"])
 
           "action" ->
@@ -400,16 +400,16 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     """
   end
 
-  defp maybe_load_actions(socket, sub_id, position_name, orientation_name) do
+  defp maybe_load_actions(socket, sub_id, sub_position_name, orientation_name) do
     if Map.has_key?(socket.assigns.actions_map, sub_id) do
       socket
     else
       # Query actions that are associated with this position+orientation
       actions =
-        from(apo in "action_position_orientations",
+        from(apo in "action_sub_position_orientations",
           join: a in "actions",
           on: a.name == apo.action_name,
-          where: apo.position_name == ^position_name,
+          where: apo.sub_position_name == ^sub_position_name,
           where: apo.orientation_name == ^orientation_name,
           select: %{name: a.name, label: a.label},
           order_by: a.label

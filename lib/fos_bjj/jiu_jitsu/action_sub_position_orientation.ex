@@ -1,11 +1,11 @@
-defmodule FosBjj.JiuJitsu.ActionPositionOrientation do
+defmodule FosBjj.JiuJitsu.ActionSubPositionOrientation do
   use Ash.Resource,
     otp_app: :fos_bjj,
     domain: FosBjj.JiuJitsu,
     data_layer: AshPostgres.DataLayer
 
   postgres do
-    table("action_position_orientations")
+    table("action_sub_position_orientations")
     repo(FosBjj.Repo)
   end
 
@@ -21,7 +21,7 @@ defmodule FosBjj.JiuJitsu.ActionPositionOrientation do
       public?(true)
     end
 
-    attribute :position_name, :string do
+    attribute :sub_position_name, :string do
       allow_nil?(false)
       public?(true)
     end
@@ -45,8 +45,8 @@ defmodule FosBjj.JiuJitsu.ActionPositionOrientation do
       public?(true)
     end
 
-    belongs_to :position, FosBjj.JiuJitsu.Position do
-      source_attribute(:position_name)
+    belongs_to :sub_position, FosBjj.JiuJitsu.SubPosition do
+      source_attribute(:sub_position_name)
       destination_attribute(:name)
       attribute_type(:string)
       primary_key?(true)

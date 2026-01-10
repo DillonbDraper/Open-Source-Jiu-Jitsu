@@ -35,7 +35,7 @@ defmodule FosBjj.JiuJitsu.Action do
       public?(true)
     end
 
-    has_many :action_position_orientations, FosBjj.JiuJitsu.ActionPositionOrientation do
+    has_many :action_sub_position_orientations, FosBjj.JiuJitsu.ActionSubPositionOrientation do
       source_attribute(:name)
       destination_attribute(:action_name)
       public?(true)
