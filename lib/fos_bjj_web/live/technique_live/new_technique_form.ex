@@ -83,7 +83,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
     {child_fields_disabled, available_orientations} =
       get_orientation_options(selected_position, socket.assigns.positions)
 
-    # Filter sub_positions to only show those belonging to selected position
     available_sub_positions =
       get_available_sub_positions(socket.assigns.sub_positions, selected_position)
 
@@ -97,7 +96,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         nil
       end
 
-    # Filter actions based on position + orientation
+    # Filter actions based on subposition + orientation
     available_actions =
       get_available_actions(final_sub_position, selected_orientation)
 
@@ -110,12 +109,11 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         nil
       end
 
-    # Only pass fields that exist on the Technique resource
     updated_params =
       params
       |> Map.put("sub_position_name", final_sub_position)
       |> Map.put("action_name", final_action)
-      # Remove position as it's not on the resource
+      # Remove position as it's not on the resource - actually necessary?
       |> Map.delete("position")
 
     form =
@@ -218,13 +216,13 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         phx-target={@myself}
       >
         <div class="space-y-6">
-          <%!-- Technique Name --%>
           <.text_field
             field={@form[:name]}
             label="Technique Name"
             placeholder="Enter technique name"
-            popover="Enter the technique name.  As mentioned in the video form, more specificity is better with techniques.  Knee/Elbow Escape from Side Control and Knee/Elbow
-              Escape From Mount count as different moves and should be labeled as such."
+            popover="Enter the technique name.  As mentioned in the video form, more specificity is better with techniques.
+              I.E. Butterfly Sweep from Butterfly Guard and Butterfly Sweep from Half (Butterfly) Guard count as different moves
+              and should be labeled as such."
             required
           />
 
@@ -246,7 +244,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             Select a position to filter sub-positions
           </p>
 
-          <%!-- Sub-Position Single Select --%>
           <.combobox
             id={"sub-position-select-#{@selected_position || "none"}"}
             name="technique[sub_position_name]"
@@ -288,7 +285,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             Select a position to enable orientation
           </p>
 
-          <%!-- Action Select --%>
           <.combobox
             id={
               "action-select-#{@selected_sub_position || "none"}-#{@selected_orientation || "none"}"
@@ -318,7 +314,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             Select a sub-position and orientation to enable actions
           </p>
 
-          <%!-- Submit Buttons --%>
           <div class="flex gap-4">
             <.button type="submit" class="btn btn-primary">
               Create Technique

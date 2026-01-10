@@ -49,7 +49,6 @@ defmodule FosBjjWeb.DatabaseComponent do
 
   @impl true
   def handle_event("pagination", params, socket) do
-    # Forward the event to the parent LiveView
     send(self(), {:pagination, params})
     {:noreply, socket}
   end
@@ -66,7 +65,6 @@ defmodule FosBjjWeb.DatabaseComponent do
   end
 
   defp load_videos(socket, params, page) do
-    # Ensure page is an integer
     page_int = if is_binary(page), do: String.to_integer(page), else: page
     offset = (page_int - 1) * 10
 
@@ -150,7 +148,6 @@ defmodule FosBjjWeb.DatabaseComponent do
                     patch={~p"/videos/#{video.id}"}
                     class="block cursor-pointer hover:shadow-xl transition-shadow group min-w-0"
                   >
-                    <%!-- Title at top --%>
                     <div class="pl-3 pr-3 pt-3 pb-2 border-b border-base-200 relative flex justify-between">
                       <div class="flex-1 min-w-0">
                         <.h2 font_weight="font-bold" class="break-words whitespace-normal">
@@ -162,7 +159,6 @@ defmodule FosBjjWeb.DatabaseComponent do
                       <% end %>
                     </div>
 
-                    <%!-- Horizontal layout: thumbnail on left, description on right --%>
                     <div class="flex gap-4 p-3">
                       <div class="flex-shrink-0 w-48 relative">
                         <.card_media
@@ -224,7 +220,6 @@ defmodule FosBjjWeb.DatabaseComponent do
                         <% end %>
                       </div>
 
-                      <%!-- Gi/No-Gi Indicator --%>
                       <.tooltip position="left" inline={true}>
                         <:trigger>
                           <span class={[
