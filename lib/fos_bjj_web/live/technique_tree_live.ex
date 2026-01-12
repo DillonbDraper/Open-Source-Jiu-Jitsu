@@ -1,7 +1,14 @@
 defmodule FosBjjWeb.TechniqueTreeComponent do
   use FosBjjWeb, :live_component
 
-  alias FosBjj.JiuJitsu.{Position, SubPosition, Technique}
+  alias FosBjj.JiuJitsu.{
+    Position,
+    SubPosition,
+    Technique,
+    ActionSubPositionOrientation,
+    VideoTechnique
+  }
+
   import Ecto.Query
   import FosBjjWeb.Components.Icon
   import FosBjjWeb.Components.ScrollArea
@@ -86,12 +93,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       socket =
         case params["level"] do
           "position" ->
-            # Pre-compute counts for all child orientations
-            position = find_position(socket.assigns.positions, params["pos"])
+            position = Enum.find(socket.assigns.positions, fn p -> p.name == params["pos"] end)
             compute_orientation_counts(socket, position, params["pos"])
 
           "orientation" ->
-            # Compute count for this orientation
             count = count_videos_for_branch(params["pos"], params["ori"], nil, nil)
 
             socket
@@ -99,7 +104,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
             |> compute_sub_position_counts(params["pos"], params["ori"])
 
           "sub_position" ->
-            # Load actions filtered by position+orientation and compute their counts
+            # Load actions filtered by subposition+orientation and compute their counts
             socket
             |> maybe_load_actions(id, params["sub"], params["ori"])
             |> compute_action_counts(id, params["pos"], params["ori"], params["sub"])
@@ -132,10 +137,9 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     new_technique_id = assigns[:selected_technique_id]
 
     technique_selected? =
-      is_nil(old_technique_id) or
-        old_technique_id != new_technique_id
+      (is_nil(old_technique_id) or
+         old_technique_id != new_technique_id) and not is_nil(new_technique_id)
 
-    # Only update specific assigns from parent, preserve internal state
     socket =
       socket
       |> assign(:id, assigns.id)
@@ -144,7 +148,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:selected_attire, assigns[:selected_attire])
 
     socket =
-      if technique_selected? and not is_nil(new_technique_id) do
+      if technique_selected? do
         assign(socket, :title_search, nil)
       else
         socket
@@ -404,10 +408,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     if Map.has_key?(socket.assigns.actions_map, sub_id) do
       socket
     else
-      # Query actions that are associated with this position+orientation
+      # Query actions that are associated with this subposition+orientation
       actions =
-        from(apo in "action_sub_position_orientations",
-          join: a in "actions",
+        from(apo in ActionSubPositionOrientation,
+          join: a in assoc(apo, :action),
           on: a.name == apo.action_name,
           where: apo.sub_position_name == ^sub_position_name,
           where: apo.orientation_name == ^orientation_name,
@@ -439,12 +443,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
 
   defp count_videos_for_branch(position_name, orientation_name, sub_position_name, action_name) do
     query =
-      from(vt in "video_techniques",
-        join: t in "techniques",
-        on: vt.technique_id == t.id,
+      from(vt in VideoTechnique,
+        join: t in assoc(vt, :technique),
         as: :technique,
-        join: sp in "sub_positions",
-        on: sp.name == t.sub_position_name,
+        join: sp in assoc(t, :sub_position),
         as: :sub_position,
         where: sp.position_name == ^position_name,
         select: count(vt.video_id, :distinct)
@@ -484,6 +486,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   defp compute_sub_position_counts(socket, position_name, orientation_name) do
     sub_positions = filter_sub_positions(socket.assigns.sub_positions, position_name)
 
+    # Concerning if enough subpositions come to exist
     Enum.reduce(sub_positions, socket, fn sub_pos, acc_socket ->
       sub_id = "pos:#{position_name}:ori:#{orientation_name}:sub:#{sub_pos.name}"
       count = count_videos_for_branch(position_name, orientation_name, sub_pos.name, nil)
@@ -508,6 +511,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     Enum.find(positions, fn p -> p.name == position_name end)
   end
 
+  # Dynamically construct id for tree node level
   defp construct_id(%{"level" => "position", "pos" => pos}), do: "pos:#{pos}"
 
   defp construct_id(%{"level" => "orientation", "pos" => pos, "ori" => ori}),

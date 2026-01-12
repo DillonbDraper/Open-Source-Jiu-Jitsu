@@ -3,25 +3,21 @@ defmodule FosBjjWeb.UserManagementLive do
   alias FosBjj.Accounts.User
   require Ash.Query
 
-  on_mount {FosBjjWeb.LiveUserAuth, :live_user_required}
+  on_mount {FosBjjWeb.LiveUserAuth, :live_admin_required}
 
   @impl true
   def mount(_params, _session, socket) do
     current_user = socket.assigns.current_user
 
-    if current_user && User.admin?(current_user) do
-      users = Ash.read!(User, actor: current_user)
+    users = Ash.read!(User, actor: current_user)
 
-      {:ok,
-       socket
-       |> assign(:page_title, "User Management")
-       |> assign(:users, users)
-       |> assign(:role_filter, "all")
-       |> assign(:editing_user, nil)
-       |> assign(:target_role, nil)}
-    else
-      {:ok, push_navigate(socket, to: ~p"/")}
-    end
+    {:ok,
+     socket
+     |> assign(:page_title, "User Management")
+     |> assign(:users, users)
+     |> assign(:role_filter, "all")
+     |> assign(:editing_user, nil)
+     |> assign(:target_role, nil)}
   end
 
   @impl true

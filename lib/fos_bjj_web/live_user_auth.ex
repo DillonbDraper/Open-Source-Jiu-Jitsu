@@ -28,6 +28,22 @@ defmodule FosBjjWeb.LiveUserAuth do
     end
   end
 
+  def on_mount(:live_admin_required, _params, session, socket) do
+    socket = AshAuthentication.Phoenix.LiveSession.assign_new_resources(socket, session)
+    user = socket.assigns[:current_user]
+
+    cond do
+      user && FosBjj.Accounts.User.admin?(user) ->
+        {:cont, socket}
+
+      user ->
+        {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/")}
+
+      true ->
+        {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/sign-in")}
+    end
+  end
+
   def on_mount(:live_no_user, _params, _session, socket) do
     if socket.assigns[:current_user] do
       {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/")}

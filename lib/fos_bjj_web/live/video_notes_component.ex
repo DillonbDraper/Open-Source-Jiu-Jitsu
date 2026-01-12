@@ -144,12 +144,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
   defp parse_timestamp(""), do: nil
   defp parse_timestamp(val) when is_integer(val), do: val
 
-  defp parse_timestamp(val) when is_binary(val) do
-    case Integer.parse(val) do
-      {int, _} -> int
-      :error -> nil
-    end
-  end
+  defp parse_timestamp(val) when is_binary(val), do: String.to_integer(val)
 
   defp format_timestamp(nil), do: "--:--"
 

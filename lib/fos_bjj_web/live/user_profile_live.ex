@@ -160,7 +160,7 @@ defmodule FosBjjWeb.UserProfileLive do
 
       {videos, page} =
         if videos.results == [] && page > 1 do
-          new_page = page - 1
+          new_page = 1
           {list_user_videos(user, query, new_page), new_page}
         else
           {videos, page}
@@ -207,7 +207,7 @@ defmodule FosBjjWeb.UserProfileLive do
     |> then(fn q ->
       if query != "" do
         query_string = "%#{query}%"
-
+        # This is extremely ugly and the docs lie than contains is case insensitive
         Ash.Query.filter(
           q,
           ilike(body, ^query_string) or

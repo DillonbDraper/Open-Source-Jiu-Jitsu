@@ -38,7 +38,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
        |> assign(:selected_orientation, nil)
        |> assign(:selected_sub_position, nil)
        |> assign(:selected_action, nil)
-       |> assign(:child_fields_disabled, true)
        |> assign(:available_orientations, [])
        |> assign(:available_sub_positions, [])
        |> assign(:available_actions, [])}
@@ -47,6 +46,9 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
   @impl true
   def handle_event("validate", %{"technique" => params}, socket) do
+    # This general ugliness is needed because the component library built in features change to empty strings rather than nils
+    # when using the clear feature
+
     # Position is only used for UI filtering, not persisted
     selected_position =
       Map.get(params, "position")
@@ -80,7 +82,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
         value -> value
       end
 
-    {child_fields_disabled, available_orientations} =
+    available_orientations =
       get_orientation_options(selected_position, socket.assigns.positions)
 
     available_sub_positions =
@@ -113,8 +115,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
       params
       |> Map.put("sub_position_name", final_sub_position)
       |> Map.put("action_name", final_action)
-      # Remove position as it's not on the resource - actually necessary?
-      |> Map.delete("position")
 
     form =
       AshPhoenix.Form.validate(socket.assigns.form, updated_params,
@@ -128,7 +128,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
      |> assign(:selected_sub_position, final_sub_position)
      |> assign(:selected_orientation, selected_orientation)
      |> assign(:selected_action, final_action)
-     |> assign(:child_fields_disabled, child_fields_disabled)
      |> assign(:available_orientations, available_orientations)
      |> assign(:available_sub_positions, available_sub_positions)
      |> assign(:available_actions, available_actions)}
@@ -154,19 +153,15 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
 
   defp get_orientation_options(selected_position, positions) do
     if is_nil(selected_position) or selected_position == "" do
-      {true, []}
+      []
     else
       position = Enum.find(positions, &(&1.name == selected_position))
 
-      if position do
-        orientations =
-          position.orientations
-          |> Enum.map(& &1.name)
+      orientations =
+        position.orientations
+        |> Enum.map(& &1.name)
 
-        {false, orientations}
-      else
-        {true, []}
-      end
+      orientations
     end
   end
 
@@ -181,7 +176,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
   end
 
   defp get_available_actions(selected_sub_position, selected_orientation) do
-    # Actions require both position AND orientation to be selected
+    # Actions require both subposition AND orientation to be selected
     if is_nil(selected_sub_position) or selected_sub_position == "" or
          is_nil(selected_orientation) or selected_orientation == "" do
       []
@@ -220,29 +215,25 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             field={@form[:name]}
             label="Technique Name"
             placeholder="Enter technique name"
-            popover="Enter the technique name.  As mentioned in the video form, more specificity is better with techniques.
+            popover="More specificity is better with techniques.
               I.E. Butterfly Sweep from Butterfly Guard and Butterfly Sweep from Half (Butterfly) Guard count as different moves
               and should be labeled as such."
             required
           />
 
-          <%!-- Position Select (Not actually part of technique resource) --%>
+          <%!-- (Not actually part of technique resource) --%>
           <.combobox
             id="position-select"
             name="technique[position]"
             label="Position"
+            placeholder="Select a Position"
             value={@selected_position}
-            placeholder="Select a position"
             size="extra_large"
           >
             <:option :for={position <- @positions} value={position.name}>
               {position.label}
             </:option>
           </.combobox>
-
-          <p :if={is_nil(@selected_position)} class="text-sm text-gray-500 mt-1">
-            Select a position to filter sub-positions
-          </p>
 
           <.combobox
             id={"sub-position-select-#{@selected_position || "none"}"}
@@ -251,7 +242,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             value={@selected_sub_position}
             placeholder={
               if is_nil(@selected_position),
-                do: "Select a position first",
+                do: "Select a position to Enable",
                 else: "Select a sub-position"
             }
             disabled={is_nil(@selected_position)}
@@ -262,28 +253,24 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             </:option>
           </.combobox>
 
-          <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
-            Select a position to enable sub-positions
-          </p>
-
           <%!-- Orientation Select.  Brittle, should probably move to loading full struct vs using orientation_name --%>
           <.combobox
             label="Orientation"
-            disabled={@child_fields_disabled}
+            disabled={is_nil(@selected_position)}
             name="technique[orientation_name]"
             value={@selected_orientation}
             size="extra_large"
-            placeholder="Select an orientation"
+            placeholder={
+              if is_nil(@selected_position),
+                do: "Select A Position To Enable",
+                else: "Select an Orientation"
+            }
             id={"orientation-#{@selected_position || "none"}"}
           >
             <:option :for={orientation_name <- @available_orientations} value={orientation_name}>
               {String.capitalize(orientation_name)}
             </:option>
           </.combobox>
-
-          <p :if={@child_fields_disabled} class="text-sm text-gray-500 mt-1">
-            Select a position to enable orientation
-          </p>
 
           <.combobox
             id={
@@ -293,11 +280,9 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
             label="Action"
             value={@selected_action}
             placeholder={
-              cond do
-                is_nil(@selected_sub_position) -> "Select a sub-position first"
-                is_nil(@selected_orientation) -> "Select an orientation first"
-                true -> "Select an action"
-              end
+              if is_nil(@selected_sub_position) or is_nil(@selected_orientation),
+                do: "Select a Sub-Position + Orientation To Enable",
+                else: nil
             }
             disabled={is_nil(@selected_sub_position) or is_nil(@selected_orientation)}
             size="extra_large"
@@ -306,13 +291,6 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
               {action.label}
             </:option>
           </.combobox>
-
-          <p
-            :if={is_nil(@selected_sub_position) or is_nil(@selected_orientation)}
-            class="text-sm text-gray-500 mt-1"
-          >
-            Select a sub-position and orientation to enable actions
-          </p>
 
           <div class="flex gap-4">
             <.button type="submit" class="btn btn-primary">

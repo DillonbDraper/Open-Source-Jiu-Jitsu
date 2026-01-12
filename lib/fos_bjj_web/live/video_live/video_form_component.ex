@@ -224,7 +224,6 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
             </div>
           </div>
 
-          <%!-- Technique Select/Add --%>
           <div class="grid grid-cols-3 gap-2 items-end">
             <div class="col-span-2">
               <.combobox
@@ -267,7 +266,8 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
             placeholder="Select grips (optional)"
             searchable={true}
             size="extra_large"
-            popover="There are near-infinite grips in Jiu-Jitsu and it is very possible the one your are looking for may not be here, and that is okay."
+            popover="There are near-infinite grips in Jiu-Jitsu and it is very possible the one your are looking for may not be here,
+              but do not let them deter you from adding a video"
           >
             <:option :for={grip <- @grips} value={grip.name}>
               {grip.label}

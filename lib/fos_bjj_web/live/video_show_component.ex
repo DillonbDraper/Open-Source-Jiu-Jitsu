@@ -15,6 +15,7 @@ defmodule FosBjjWeb.VideoShowComponent do
   def update(assigns, socket) do
     socket = assign(socket, assigns)
 
+    # This feels wrong but I'm not sure how else it ought be done
     socket =
       if Map.has_key?(socket.assigns, :show_info),
         do: socket,
