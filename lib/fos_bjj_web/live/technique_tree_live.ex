@@ -444,7 +444,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   defp count_videos_for_branch(position_name, orientation_name, sub_position_name, action_name) do
     query =
       from(vt in VideoTechnique,
-        join: t in assoc(vt, :technique),
+        join: t in assoc(vt, :techniques),
         as: :technique,
         join: sp in assoc(t, :sub_position),
         as: :sub_position,
@@ -505,10 +505,6 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
 
       put_count(acc_socket, action_id, count)
     end)
-  end
-
-  defp find_position(positions, position_name) do
-    Enum.find(positions, fn p -> p.name == position_name end)
   end
 
   # Dynamically construct id for tree node level
