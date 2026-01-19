@@ -113,7 +113,7 @@ if config_env() == :prod do
   config :fos_bjj, FosBjj.Mailer,
     adapter: Swoosh.Adapters.Resend,
     api_key: System.get_env("RESEND_API_KEY"),
-    domain: System.get_env("ossbjj.org")
+    domain: "ossbjj.org"
 
   # Most non-SMTP adapters require an API client. Swoosh supports Req, Hackney,
   # and Finch out-of-the-box. This configuration is typically done at
