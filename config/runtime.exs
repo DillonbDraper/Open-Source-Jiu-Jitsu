@@ -66,7 +66,8 @@ if config_env() == :prod do
       # for details about using IPv6 vs IPv4 and loopback vs public addresses.
       ip: {0, 0, 0, 0, 0, 0, 0, 0}
     ],
-    secret_key_base: secret_key_base
+    secret_key_base: secret_key_base,
+    check_origin: ["//ossbjj.org", "//www.ossbjj.org", "//localhost"]
 
   config :fos_bjj,
     token_signing_secret:
@@ -109,12 +110,11 @@ if config_env() == :prod do
   #
   # In production you need to configure the mailer to use a different adapter.
   # Here is an example configuration for Mailgun:
-  #
-  #     config :fos_bjj, FosBjj.Mailer,
-  #       adapter: Swoosh.Adapters.Mailgun,
-  #       api_key: System.get_env("MAILGUN_API_KEY"),
-  #       domain: System.get_env("MAILGUN_DOMAIN")
-  #
+  config :fos_bjj, FosBjj.Mailer,
+    adapter: Swoosh.Adapters.Resend,
+    api_key: System.get_env("RESEND_API_KEY"),
+    domain: System.get_env("ossbjj.org")
+
   # Most non-SMTP adapters require an API client. Swoosh supports Req, Hackney,
   # and Finch out-of-the-box. This configuration is typically done at
   # compile-time in your config/prod.exs:
