@@ -4,6 +4,7 @@ defmodule FosBjjWeb.VideoShowComponent do
   alias FosBjj.JiuJitsu.Video
   import FosBjjWeb.Components.Icon
   import FosBjjWeb.Components.Button
+  import FosBjjWeb.Components.Authorization
   require Ash.Query
 
   @impl true
@@ -113,7 +114,7 @@ defmodule FosBjjWeb.VideoShowComponent do
         </div>
 
         <div id="video-sections-container" class="flex flex-col gap-6">
-          <%= if @current_user do %>
+          <.verified_user_only current_user={@current_user}>
             <div class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
               <div
                 class="p-3 bg-base-200/50 border-b border-base-200 flex justify-between items-center cursor-pointer hover:bg-base-200 transition-colors select-none"
@@ -141,7 +142,7 @@ defmodule FosBjjWeb.VideoShowComponent do
                 </div>
               <% end %>
             </div>
-          <% end %>
+          </.verified_user_only>
           <div class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
             <div
               class="p-3 bg-base-200/50 border-b border-base-200 flex justify-between items-center cursor-pointer hover:bg-base-200 transition-colors select-none"

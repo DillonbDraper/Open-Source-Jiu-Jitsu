@@ -88,11 +88,11 @@ defmodule FosBjj.Accounts.User do
     end
 
     read :sign_in_with_password do
-      description("Attempt to sign in using a email and password.")
+      description("Attempt to sign in using email or username and password.")
       get?(true)
 
       argument :email, :ci_string do
-        description("The email to use for retrieving the user.")
+        description("The email or username to use for retrieving the user.")
         allow_nil?(false)
       end
 
@@ -101,6 +101,9 @@ defmodule FosBjj.Accounts.User do
         allow_nil?(false)
         sensitive?(true)
       end
+
+      # Filter by email OR user_name matching the provided identifier
+      filter expr(email == ^arg(:email) or user_name == ^arg(:email))
 
       # validates the provided email and password and generates a token
       prepare(AshAuthentication.Strategy.Password.SignInPreparation)
@@ -139,7 +142,11 @@ defmodule FosBjj.Accounts.User do
     end
 
     create :register_with_password do
-      description("Register a new user with a email and password.")
+      description("Register a new user with a username, email, and password.")
+
+      argument :user_name, :string do
+        allow_nil?(false)
+      end
 
       argument :email, :ci_string do
         allow_nil?(false)
@@ -157,6 +164,9 @@ defmodule FosBjj.Accounts.User do
         allow_nil?(false)
         sensitive?(true)
       end
+
+      # Sets the user_name from the argument
+      change(set_attribute(:user_name, arg(:user_name)))
 
       # Sets the email from the argument
       change(set_attribute(:email, arg(:email)))
@@ -283,6 +293,11 @@ defmodule FosBjj.Accounts.User do
       public?(true)
     end
 
+    attribute :user_name, :string do
+      allow_nil?(false)
+      public?(true)
+    end
+
     attribute :hashed_password, :string do
       sensitive?(true)
     end
@@ -308,17 +323,22 @@ defmodule FosBjj.Accounts.User do
 
   identities do
     identity(:unique_email, [:email])
+    identity(:unique_user_name, [:user_name])
   end
 
-  @doc "Check if user has admin role"
-  def admin?(%{role_name: "admin"}), do: true
+  @doc "Check if user has verified their email"
+  def verified?(%{confirmed_at: confirmed_at}) when not is_nil(confirmed_at), do: true
+  def verified?(_), do: false
+
+  @doc "Check if user has admin role (requires verification)"
+  def admin?(%{role_name: "admin"} = user), do: verified?(user)
   def admin?(_), do: false
 
-  @doc "Check if user has coach role"
-  def coach?(%{role_name: "coach"}), do: true
+  @doc "Check if user has coach role (requires verification)"
+  def coach?(%{role_name: "coach"} = user), do: verified?(user)
   def coach?(_), do: false
 
-  @doc "Check if user has coach or admin role"
-  def coach_or_admin?(%{role_name: role}) when role in ["coach", "admin"], do: true
+  @doc "Check if user has coach or admin role (requires verification)"
+  def coach_or_admin?(%{role_name: role} = user) when role in ["coach", "admin"], do: verified?(user)
   def coach_or_admin?(_), do: false
 end

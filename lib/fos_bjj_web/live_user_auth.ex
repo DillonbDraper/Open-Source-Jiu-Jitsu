@@ -20,11 +20,18 @@ defmodule FosBjjWeb.LiveUserAuth do
 
   def on_mount(:live_user_required, _params, session, socket) do
     socket = AshAuthentication.Phoenix.LiveSession.assign_new_resources(socket, session)
+    user = socket.assigns[:current_user]
 
-    if socket.assigns[:current_user] do
-      {:cont, socket}
-    else
-      {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/sign-in")}
+    cond do
+      user && FosBjj.Accounts.User.verified?(user) ->
+        {:cont, socket}
+
+      user ->
+        # User exists but not verified - redirect to verification notice
+        {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/sign-in?unverified=true")}
+
+      true ->
+        {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/sign-in")}
     end
   end
 
@@ -33,10 +40,15 @@ defmodule FosBjjWeb.LiveUserAuth do
     user = socket.assigns[:current_user]
 
     cond do
-      user && FosBjj.Accounts.User.admin?(user) ->
+      user && FosBjj.Accounts.User.verified?(user) && FosBjj.Accounts.User.admin?(user) ->
         {:cont, socket}
 
+      user && !FosBjj.Accounts.User.verified?(user) ->
+        # User exists but not verified
+        {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/sign-in?unverified=true")}
+
       user ->
+        # User is verified but not admin
         {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/")}
 
       true ->
@@ -45,10 +57,14 @@ defmodule FosBjjWeb.LiveUserAuth do
   end
 
   def on_mount(:live_no_user, _params, _session, socket) do
-    if socket.assigns[:current_user] do
+    user = socket.assigns[:current_user]
+
+    if user && FosBjj.Accounts.User.verified?(user) do
+      # Only redirect verified users away from sign-in pages
       {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/")}
     else
-      {:cont, assign(socket, :current_user, nil)}
+      # Allow unverified users to stay on sign-in pages (to see verification messages)
+      {:cont, assign(socket, :current_user, user)}
     end
   end
 end

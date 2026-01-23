@@ -11,4 +11,9 @@ defmodule FosBjjWeb.AuthOverrides do
     set(:dark_image_class, "hidden dark:block h-32 w-auto")
     set(:href_url, "/database")
   end
+
+  # Use custom sign-in form that shows "Email or Username" label
+  override AshAuthentication.Phoenix.Components.Password do
+    set(:sign_in_form_module, FosBjjWeb.Components.Auth.CustomSignInForm)
+  end
 end

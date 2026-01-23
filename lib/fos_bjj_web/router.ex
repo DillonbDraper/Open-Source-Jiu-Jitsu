@@ -58,8 +58,9 @@ defmodule FosBjjWeb.Router do
     auth_routes(AuthController, FosBjj.Accounts.User, path: "/auth")
     sign_out_route(AuthController)
 
-    # Remove these if you'd like to use your own authentication views
+    # Custom sign-in route with username field support
     sign_in_route(
+      live_view: FosBjjWeb.Live.Auth.SignInLive,
       register_path: "/register",
       reset_path: "/reset",
       auth_routes_prefix: "/auth",
