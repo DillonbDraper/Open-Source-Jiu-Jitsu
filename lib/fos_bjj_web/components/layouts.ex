@@ -46,9 +46,11 @@ defmodule FosBjjWeb.Layouts do
       name="Open Source BJJ"
       color="secondary"
       variant="shadow"
-      padding="small"
+      padding="p-1 md:p-2"
       link={~p"/database"}
       class="px-4 sm:px-6 lg:px-8"
+      nav_wrapper_class="flex flex-nowrap items-center"
+      link_class="!mb-0"
     >
       <:list>
         <%= if @current_user do %>

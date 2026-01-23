@@ -188,13 +188,13 @@ defmodule FosBjjWeb.VideosDashboardLive do
       />
 
       <div class={[
-        "grid grid-cols-5 gap-8 w-full mt-4",
-        if(@view_mode == :database, do: "h-[calc(100vh-12rem)]", else: "")
+        "flex flex-col-reverse gap-4 md:grid md:grid-cols-5 md:gap-8 w-full mt-4",
+        if(@view_mode == :database, do: "md:h-[calc(100vh-12rem)]", else: "")
       ]}>
-        <!-- Left: Dynamic Content Area (60% = 3 cols) -->
+        <!-- Dynamic Content Area: In HTML first, but on mobile appears second (bottom) due to flex-col-reverse, on desktop appears first (left) -->
         <div class={[
           "col-span-3 flex flex-col min-w-0",
-          if(@view_mode == :database, do: "h-full overflow-hidden", else: "")
+          if(@view_mode == :database, do: "md:h-full md:overflow-hidden", else: "")
         ]}>
           <%= if @view_mode == :database do %>
             <.live_component
@@ -218,7 +218,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
           <% end %>
         </div>
 
-    <!-- Right: Technique Tree (40% = 2 cols, always mounted) -->
+        <!-- Technique Tree: In HTML second, but on mobile appears first (top) due to flex-col-reverse, on desktop appears second (right) -->
         <div class="col-span-2 min-w-0">
           <.live_component
             module={FosBjjWeb.TechniqueTreeComponent}
