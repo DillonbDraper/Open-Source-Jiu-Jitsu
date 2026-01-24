@@ -1,0 +1,12 @@
+* The primary goal here is to create a way for users to apply for the "coach" goal from within our application.
+** To accomplish this, we should implement the following:
+ - Create, in user_profile_live.ex in the top right, a button for all users with the "student" role that reads "Become A Coach"
+  - Upon click, this button would render a modal form that briefly explains the criteria to become a "coach" on the website (BJJ black belt, proven high levekl in another art),
+    as well as the responsiblities expected of coaches (the ability to upload videos comes with the implicit understanding that it will not be used for self promotion. Ability to broadcast messages to students will not be misused.)
+  - To have the capacity to provide proof, the form should allow the upload of a file (image, usually).
+    - To save on costs, we will not save this image in S3 or any kind of DB.  Instead, it will be sent as an attachment as part of an email that goes to my personal email address.
+    - The resulting email should be sent to my personal address (ommitted on purpose here), with a title of "OSSBJJ Coach Application", with a body that is input by the user explaining their desire/qualifications, and optionally an attached peice of photo evidence of qualification.
+    - These applications should be saved under a new table (use/create an Ash framework Resource) in the database called "coach_applications".  This table should store the user_id and the body of the message from the email, as well as a "status" field that can be "pending" (default), approved, or denied.
+      - This table will be surfaced in user_management_live for admins to have the ability to approve/deny coach applications.  Users with denied applications should be disabled from applying again, and have the button apply hidden.
+	  
+-
