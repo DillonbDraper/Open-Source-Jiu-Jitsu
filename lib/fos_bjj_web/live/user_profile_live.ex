@@ -261,66 +261,68 @@ defmodule FosBjjWeb.UserProfileLive do
           </p>
         </header>
 
-        <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-          <.h3 class="text-lg font-medium mb-4">My Notes</.h3>
-          <div class="mb-4">
-            <form phx-change="search_notes" phx-submit="search_notes">
-              <.search_field
-                name="query"
-                value={@notes_search_query}
-                placeholder="Search notes by note or video title..."
-                phx-change="search_notes"
-                phx-debounce="400"
-              />
-            </form>
-          </div>
-
-          <.table padding="extra_small" border="medium" rows={@notes.results}>
-            <:col :let={note} label="Video">
-              <.link navigate={~p"/videos/#{note.video_id}"} class="link link-primary font-semibold">
-                {note.video.title}
-              </.link>
-            </:col>
-            <:col :let={note} label="Note">
-              <.popover
-                id={"note-popover-#{note.id}"}
-                width="double_large"
-                variant="default"
-                color="dark"
-                show_delay={400}
-              >
-                <:trigger class="truncate max-w-xs cursor-help block">
-                  {note.body}
-                </:trigger>
-                <:content class="text-sm">
-                  {note.body}
-                </:content>
-              </.popover>
-            </:col>
-            <:col :let={note} label="Timestamp">
-              <.link
-                navigate={~p"/videos/#{note.video_id}?time=#{note.video_timestamp}"}
-                class="link link-primary font-semibold text-blue-600"
-              >
-                {format_timestamp(note.video_timestamp)}
-              </.link>
-            </:col>
-            <:col :let={note} label="Created">
-              {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M %p")}
-            </:col>
-          </.table>
-
-          <%= if @notes.count > 10 do %>
-            <div class="mt-4 flex justify-center">
-              <.pagination
-                total={ceil(@notes.count / 10)}
-                active={@notes_page}
-                siblings={1}
-                phx-click="notes_pagination"
-              />
+        <%= if FosBjj.Accounts.User.verified?(@current_user) do %>
+          <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
+            <.h3 class="text-lg font-medium mb-4">My Notes</.h3>
+            <div class="mb-4">
+              <form phx-change="search_notes" phx-submit="search_notes">
+                <.search_field
+                  name="query"
+                  value={@notes_search_query}
+                  placeholder="Search notes by note or video title..."
+                  phx-change="search_notes"
+                  phx-debounce="400"
+                />
+              </form>
             </div>
-          <% end %>
-        </div>
+
+            <.table padding="extra_small" border="medium" rows={@notes.results}>
+              <:col :let={note} label="Video">
+                <.link navigate={~p"/videos/#{note.video_id}"} class="link link-primary font-semibold">
+                  {note.video.title}
+                </.link>
+              </:col>
+              <:col :let={note} label="Note">
+                <.popover
+                  id={"note-popover-#{note.id}"}
+                  width="double_large"
+                  variant="default"
+                  color="dark"
+                  show_delay={400}
+                >
+                  <:trigger class="truncate max-w-xs cursor-help block">
+                    {note.body}
+                  </:trigger>
+                  <:content class="text-sm">
+                    {note.body}
+                  </:content>
+                </.popover>
+              </:col>
+              <:col :let={note} label="Timestamp">
+                <.link
+                  navigate={~p"/videos/#{note.video_id}?time=#{note.video_timestamp}"}
+                  class="link link-primary font-semibold text-blue-600"
+                >
+                  {format_timestamp(note.video_timestamp)}
+                </.link>
+              </:col>
+              <:col :let={note} label="Created">
+                {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M %p")}
+              </:col>
+            </.table>
+
+            <%= if @notes.count > 10 do %>
+              <div class="mt-4 flex justify-center">
+                <.pagination
+                  total={ceil(@notes.count / 10)}
+                  active={@notes_page}
+                  siblings={1}
+                  phx-click="notes_pagination"
+                />
+              </div>
+            <% end %>
+          </div>
+        <% end %>
 
         <%= if @current_user.role_name in ["coach", "admin"] do %>
           <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
