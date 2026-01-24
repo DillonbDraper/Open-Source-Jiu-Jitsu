@@ -1,10 +1,10 @@
 # Open Source Jiu-Jitsu
 
-Open Source Jiu Jitsu (OSBJJ) is a simple web app designed to organize and enable the searching of a curated collection of free Brazilian Jiu Jitsu instructional videos, with all entries approved by a verified expert.  Over time, it aims to develop into a complete educational platform for the subject.
+Open Source Jiu Jitsu (OSSBJJ) is a simple web app designed to organize and enable the searching of a curated collection of free Brazilian Jiu Jitsu instructional videos, with all entries approved by a verified expert.  Over time, it aims to develop into a complete educational platform for the subject.
 
 ## Installation
 
-These instructions are for running the app locally for development.    Simply visiting the URL (forthcoming) should be how the majority of users interface with the app.
+These instructions are for running the app locally for development.  Simply visiting the URL ([OSSBJJ.org](https://ossbjj.org)) should be how the majority of users interface with the app.
 
 The included nix.flake should handle all needed dependencies dependencies for those using the nix package manager.  For those not using the nix package manager, a .tool-versions should point asdf/mise/your preferred installation solution towards compatible versions of erlang/elixir. 
 
