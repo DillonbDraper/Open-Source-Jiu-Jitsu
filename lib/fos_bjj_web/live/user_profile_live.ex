@@ -3,6 +3,8 @@ defmodule FosBjjWeb.UserProfileLive do
 
   alias FosBjj.JiuJitsu.Video
   alias FosBjj.JiuJitsu.VideoNote
+  alias FosBjj.Accounts.CoachApplication
+  alias FosBjjWeb.CoachApplicationForm
   alias FosBjjWeb.VideoLive.VideoFormComponent
   import FosBjjWeb.Components.SearchField
   import FosBjjWeb.Components.Pagination
@@ -14,6 +16,7 @@ defmodule FosBjjWeb.UserProfileLive do
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
     notes = list_user_notes(user, "", 1)
+    coach_application_status = coach_application_status(user)
 
     {:ok,
      socket
@@ -27,7 +30,9 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:total_videos, 0)
      |> assign(:notes, notes)
      |> assign(:notes_page, 1)
-     |> assign(:notes_search_query, "")}
+     |> assign(:notes_search_query, "")
+     |> assign(:show_coach_application_modal, false)
+     |> assign(:coach_application_status, coach_application_status)}
   end
 
   @impl true
@@ -173,6 +178,40 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   @impl true
+  def handle_event("open_coach_application_modal", _, socket) do
+    {:noreply, assign(socket, :show_coach_application_modal, true)}
+  end
+
+  @impl true
+  def handle_info({:coach_application_closed}, socket) do
+    {:noreply, assign(socket, :show_coach_application_modal, false)}
+  end
+
+  @impl true
+  def handle_info({:coach_application_submitted, {:ok, _}}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_coach_application_modal, false)
+     |> assign(:coach_application_status, :pending)
+     |> put_flash(:info, "Coach application submitted successfully.")}
+  end
+
+  @impl true
+  def handle_info({:coach_application_submitted, {:error, :missing_recipient}}, socket) do
+    {:noreply,
+     put_flash(
+       socket,
+       :error,
+       "Coach application recipient is not configured. Please contact support."
+     )}
+  end
+
+  @impl true
+  def handle_info({:coach_application_submitted, {:error, _}}, socket) do
+    {:noreply, put_flash(socket, :error, "Failed to deliver coach application email.")}
+  end
+
+  @impl true
   def handle_info({:video_saved, _video}, socket) do
     page = socket.assigns.current_page
     user = socket.assigns.current_user
@@ -247,79 +286,164 @@ defmodule FosBjjWeb.UserProfileLive do
     |> Ash.read!(actor: user, page: [limit: 5, offset: offset, count: true])
   end
 
+  defp coach_application_status(user) do
+    has_denied? =
+      CoachApplication
+      |> Ash.Query.filter(user_id == ^user.id and status == :denied)
+      |> Ash.read!(actor: user)
+      |> Enum.any?()
+
+    cond do
+      has_denied? ->
+        :denied
+
+      coach_application_pending?(user) ->
+        :pending
+
+      true ->
+        :none
+    end
+  end
+
+  defp coach_application_pending?(user) do
+    CoachApplication
+    |> Ash.Query.filter(user_id == ^user.id and status == :pending)
+    |> Ash.read!(actor: user)
+    |> Enum.any?()
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]}>
       <div class="space-y-8">
-        <header>
-          <.h1 class="text-3xl font-extrabold tracking-tight text-base-content">
-            Hey there!
-          </.h1>
-          <p class="mt-2 text-lg text-base-content/70">
-            Here's your profile and settings.
-          </p>
+        <header class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <.h1 class="text-3xl font-extrabold tracking-tight text-base-content">
+              Hey there!
+            </.h1>
+            <p class="mt-2 text-lg text-base-content/70">
+              Here's your profile and settings.
+            </p>
+          </div>
+
+          <%= if @current_user.role_name == "student" && @coach_application_status != :denied do %>
+            <div class="flex items-center gap-3">
+              <%= if @coach_application_status == :pending do %>
+                <div class="flex items-center gap-2">
+                  <.tooltip
+                    id="coach-application-processing-tooltip"
+                    inline={true}
+                    position="bottom"
+                    width="triple_large"
+                    trigger_class="inline-flex"
+                    content_class="max-w-xs whitespace-normal text-sm"
+                  >
+                    <:trigger>
+                      <span class="inline-flex cursor-help">
+                        <.icon
+                          name="hero-information-circle"
+                          class="size-5 text-base-content/70"
+                        />
+                      </span>
+                    </:trigger>
+                    <:content>
+                      Your application to become a coach and gain the ability to upload videos, share with your students, and more is
+                      being processed. Thank you for your interest in contributing to OSSBJJ!
+                    </:content>
+                  </.tooltip>
+                  <.button
+                    id="coach-application-processing"
+                    class="btn btn-primary"
+                    disabled
+                  >
+                    Application processing...
+                  </.button>
+                </div>
+              <% else %>
+                <.button
+                  id="open-coach-application"
+                  phx-click="open_coach_application_modal"
+                  class="btn btn-primary"
+                >
+                  Become A Coach
+                </.button>
+              <% end %>
+            </div>
+          <% end %>
         </header>
 
         <%= if FosBjj.Accounts.User.verified?(@current_user) do %>
           <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
             <.h3 class="text-lg font-medium mb-4">My Notes</.h3>
-            <div class="mb-4">
-              <form phx-change="search_notes" phx-submit="search_notes">
-                <.search_field
-                  name="query"
-                  value={@notes_search_query}
-                  placeholder="Search notes by note or video title..."
-                  phx-change="search_notes"
-                  phx-debounce="400"
-                />
-              </form>
-            </div>
-
-            <.table padding="extra_small" border="medium" rows={@notes.results}>
-              <:col :let={note} label="Video">
-                <.link navigate={~p"/videos/#{note.video_id}"} class="link link-primary font-semibold">
-                  {note.video.title}
-                </.link>
-              </:col>
-              <:col :let={note} label="Note">
-                <.popover
-                  id={"note-popover-#{note.id}"}
-                  width="double_large"
-                  variant="default"
-                  color="dark"
-                  show_delay={400}
-                >
-                  <:trigger class="truncate max-w-xs cursor-help block">
-                    {note.body}
-                  </:trigger>
-                  <:content class="text-sm">
-                    {note.body}
-                  </:content>
-                </.popover>
-              </:col>
-              <:col :let={note} label="Timestamp">
-                <.link
-                  navigate={~p"/videos/#{note.video_id}?time=#{note.video_timestamp}"}
-                  class="link link-primary font-semibold text-blue-600"
-                >
-                  {format_timestamp(note.video_timestamp)}
-                </.link>
-              </:col>
-              <:col :let={note} label="Created">
-                {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M %p")}
-              </:col>
-            </.table>
-
-            <%= if @notes.count > 10 do %>
-              <div class="mt-4 flex justify-center">
-                <.pagination
-                  total={ceil(@notes.count / 10)}
-                  active={@notes_page}
-                  siblings={1}
-                  phx-click="notes_pagination"
-                />
+            <%= if @notes.results == [] do %>
+              <div
+                id="notes-empty-state"
+                class="rounded-xl border border-dashed border-base-200 bg-base-50 px-4 py-10 text-center"
+              >
+                <.p class="text-sm text-base-content/70">You have no notes taken.</.p>
               </div>
+            <% else %>
+              <div class="mb-4">
+                <form phx-change="search_notes" phx-submit="search_notes">
+                  <.search_field
+                    name="query"
+                    value={@notes_search_query}
+                    placeholder="Search notes by note or video title..."
+                    phx-change="search_notes"
+                    phx-debounce="400"
+                  />
+                </form>
+              </div>
+
+              <.table padding="extra_small" border="medium" rows={@notes.results}>
+                <:col :let={note} label="Video">
+                  <.link
+                    navigate={~p"/videos/#{note.video_id}"}
+                    class="link link-primary font-semibold"
+                  >
+                    {note.video.title}
+                  </.link>
+                </:col>
+                <:col :let={note} label="Note">
+                  <.popover
+                    id={"note-popover-#{note.id}"}
+                    width="double_large"
+                    variant="default"
+                    color="dark"
+                    show_delay={400}
+                  >
+                    <:trigger class="truncate max-w-xs cursor-help block">
+                      {note.body}
+                    </:trigger>
+                    <:content class="text-sm">
+                      {note.body}
+                    </:content>
+                  </.popover>
+                </:col>
+                <:col :let={note} label="Timestamp">
+                  <.link
+                    navigate={~p"/videos/#{note.video_id}?time=#{note.video_timestamp}"}
+                    class="link link-primary font-semibold text-blue-600"
+                  >
+                    {format_timestamp(note.video_timestamp)}
+                  </.link>
+                </:col>
+                <:col :let={note} label="Created">
+                  {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M %p")}
+                </:col>
+              </.table>
+
+              <%= if @notes.count > 10 do %>
+                <div class="mt-4 flex justify-center">
+                  <.pagination
+                    total={ceil(@notes.count / 10)}
+                    active={@notes_page}
+                    siblings={1}
+                    phx-click="notes_pagination"
+                  />
+                </div>
+              <% end %>
             <% end %>
           </div>
         <% end %>
@@ -441,6 +565,13 @@ defmodule FosBjjWeb.UserProfileLive do
             on_cancel={JS.exec("data-cancel", to: "#edit-video-modal")}
           />
         </.modal>
+
+        <.live_component
+          module={CoachApplicationForm}
+          id="coach-application-form"
+          current_user={@current_user}
+          show={@show_coach_application_modal}
+        />
       </div>
     </Layouts.app>
     """

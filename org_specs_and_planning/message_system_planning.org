@@ -1,0 +1,19 @@
+* The goal here is to create an inbox/message system for users.
+ - We should create table/ash resource called user_messages.  Each message should have a body, timestamps, a sender_id
+    (either null or with a specific ID to indicate system sent.), and a recipient id, and a boolean "received" field that defaults to false
+    and becomes true when the user has read it.
+ - These messages should be viewable from two places: First in an inbox to the left of the personal profile icon in the navigation bar (the hero-user-circle icon in layouts.ex).
+   use the hero icons message icon for this. The second should be a table with in the user profile page (user_profile_live.ex).
+   - For the inbox, there should be a floating red bubble with a white number inside of it indicating a number of unread new messages.  If a user has
+     no messages or no unread, there should be no bubble.
+   - Clicking this inbox button should pull up a modal with all unread messages, or the 5 most recent messages.  (if, for example there were 10 messages and 3 unread,
+     it should still show 5 messages, the 3 most recent unread and then the two most recent read.)
+   - Clicking on a message should show its full body and mark it as read.
+   - Messages should have a mark as read button to their immediate right (use the hero-check-badge for this, and add a tooltip that says "mark as read" on hover.
+   - Read messages in the modal should be faded/have lower opacity, and unreads should be slightly bold and at full opacity.
+   - Once a message is marked as read, it cannot be unread.
+   - For the table on the user profile page, messages should be organized in descending order first by unread first, then by recency, and users should have the option to search by
+     message contents or sender, much like their notes on that page.
+   - The table should have inline options to mark unread messages as read (turn the check button green for read messages), as well as an option for delete that uses a phx-confirm modal to make sure the user knows that the deletion is permanent.
+   - The table should be paginated like the notes and similarly dense, with up to 10 messages per page.
+   - For longer messages whose body does not fit in the table, a popover on hover should be used to display the full text. 

@@ -217,8 +217,8 @@ defmodule FosBjjWeb.VideosDashboardLive do
             />
           <% end %>
         </div>
-
-        <!-- Technique Tree: In HTML second, but on mobile appears first (top) due to flex-col-reverse, on desktop appears second (right) -->
+        
+    <!-- Technique Tree: In HTML second, but on mobile appears first (top) due to flex-col-reverse, on desktop appears second (right) -->
         <div class="col-span-2 min-w-0">
           <.live_component
             module={FosBjjWeb.TechniqueTreeComponent}

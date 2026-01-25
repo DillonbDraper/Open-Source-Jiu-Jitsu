@@ -99,7 +99,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
           current_user={@current_user}
         />
       </.drawer>
-
     </Layouts.app>
     """
   end

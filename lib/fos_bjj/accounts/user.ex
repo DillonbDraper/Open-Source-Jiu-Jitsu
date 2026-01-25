@@ -103,7 +103,7 @@ defmodule FosBjj.Accounts.User do
       end
 
       # Filter by email OR user_name matching the provided identifier
-      filter expr(email == ^arg(:email) or user_name == ^arg(:email))
+      filter(expr(email == ^arg(:email) or user_name == ^arg(:email)))
 
       # validates the provided email and password and generates a token
       prepare(AshAuthentication.Strategy.Password.SignInPreparation)
@@ -339,6 +339,8 @@ defmodule FosBjj.Accounts.User do
   def coach?(_), do: false
 
   @doc "Check if user has coach or admin role (requires verification)"
-  def coach_or_admin?(%{role_name: role} = user) when role in ["coach", "admin"], do: verified?(user)
+  def coach_or_admin?(%{role_name: role} = user) when role in ["coach", "admin"],
+    do: verified?(user)
+
   def coach_or_admin?(_), do: false
 end

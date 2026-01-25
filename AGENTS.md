@@ -371,3 +371,8 @@ Where the server handled it via:
       document = LazyHTML.from_fragment(html)
       matches = LazyHTML.filter(document, "your-complex-selector")
       IO.inspect(matches, label: "Matches")
+
+### OSSBJJ instructions
+
+- Always prefer using MishkaChelekom components sourced from the lib/fos_bjj_web/components directory over native elements or DaisyUI ones.
+- Never attempt to commit with git.

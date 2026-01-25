@@ -33,6 +33,7 @@ dev_user =
              :register_with_password,
              %{
                email: dev_email,
+               user_name: "System User",
                password: "devpassword123",
                password_confirmation: "devpassword123"
              },

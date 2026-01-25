@@ -60,7 +60,10 @@ defmodule FosBjjWeb.Live.Auth.SignInLive do
       >
         <:register_extra :let={form}>
           <div class="mt-2 mb-2 dark:text-white">
-            <label for={form[:user_name].id} class="block text-sm font-medium text-gray-700 mb-1 dark:text-white">
+            <label
+              for={form[:user_name].id}
+              class="block text-sm font-medium text-gray-700 mb-1 dark:text-white"
+            >
               Username
             </label>
             <input

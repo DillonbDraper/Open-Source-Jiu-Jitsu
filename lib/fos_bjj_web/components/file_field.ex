@@ -72,6 +72,7 @@ defmodule FosBjjWeb.Components.FileField do
   attr :dropzone_icon, :string, default: "hero-cloud-arrow-up", doc: ""
   attr :dropzone_title, :string, default: "Click to upload, or drag and drop a file", doc: ""
   attr :dropzone_description, :string, default: nil, doc: "Specifies description for dropzone"
+  attr :phx_target, :any, default: nil, doc: "Target for events triggered inside the component"
 
   attr :field, Phoenix.HTML.FormField, doc: "a form field struct retrieved from the form"
 
@@ -168,6 +169,7 @@ defmodule FosBjjWeb.Components.FileField do
               type="button"
               phx-click="cancel-upload"
               phx-value-ref={entry.ref}
+              phx-target={@phx_target}
               aria-label={gettext("Cancel upload for %{file}", file: entry.client_name)}
               class="absolute top-2 right-2 text-custom-black-100/60 hover:text-custome-black-100"
             >
@@ -251,6 +253,7 @@ defmodule FosBjjWeb.Components.FileField do
                 type="button"
                 phx-click="cancel-upload"
                 phx-value-ref={entry.ref}
+                phx-target={@phx_target}
                 aria-label={gettext("Cancel upload for %{file}", file: entry.client_name)}
                 class="bg-black/30 rounded p-px text-white flex justify-center items-center absolute top-2 right-2 z-10"
               >

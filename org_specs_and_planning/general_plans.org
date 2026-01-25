@@ -1,12 +1,6 @@
 * This is a list of features/enhancements necessary for MVP
-- Actually set up email client/test creating users.
-  - Actually works fine with built-in, but need to impelment real service for prod and fix styling.
-    - Styling now, real service as part of deploy process.
 - Polish/expand note system
   - Even denser table?
-- Style guide for adding videos/techniques
-- Redo association of actions to work on the subposition+orientation level rather than position+orientation
-- Refine/Redo mission statement
 - Application to become a coach/system to submit videos (can be post-live)
 
 ** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.

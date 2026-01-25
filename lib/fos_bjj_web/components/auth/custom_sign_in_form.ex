@@ -89,7 +89,10 @@ defmodule FosBjjWeb.Components.Auth.CustomSignInForm do
       >
         <%!-- Custom identity field with "Email or Username" label --%>
         <div class="mt-2 mb-2 dark:text-white">
-          <label for={form[@strategy.identity_field].id} class="block text-sm font-medium text-gray-700 mb-1 dark:text-white">
+          <label
+            for={form[@strategy.identity_field].id}
+            class="block text-sm font-medium text-gray-700 mb-1 dark:text-white"
+          >
             Email or Username
           </label>
           <input

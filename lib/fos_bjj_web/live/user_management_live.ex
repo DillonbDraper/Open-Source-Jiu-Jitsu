@@ -1,5 +1,6 @@
 defmodule FosBjjWeb.UserManagementLive do
   use FosBjjWeb, :live_view
+  alias FosBjj.Accounts.CoachApplication
   alias FosBjj.Accounts.User
   require Ash.Query
 
@@ -10,6 +11,7 @@ defmodule FosBjjWeb.UserManagementLive do
     current_user = socket.assigns.current_user
 
     users = Ash.read!(User, actor: current_user)
+    coach_applications = list_coach_applications(current_user)
 
     {:ok,
      socket
@@ -17,7 +19,8 @@ defmodule FosBjjWeb.UserManagementLive do
      |> assign(:users, users)
      |> assign(:role_filter, "all")
      |> assign(:editing_user, nil)
-     |> assign(:target_role, nil)}
+     |> assign(:target_role, nil)
+     |> assign(:coach_applications, coach_applications)}
   end
 
   @impl true
@@ -69,6 +72,16 @@ defmodule FosBjjWeb.UserManagementLive do
       {:error, _error} ->
         {:noreply, put_flash(socket, :error, "Failed to update role.")}
     end
+  end
+
+  @impl true
+  def handle_event("approve_coach_application", %{"id" => id}, socket) do
+    update_coach_application_status(socket, id, :approved)
+  end
+
+  @impl true
+  def handle_event("deny_coach_application", %{"id" => id}, socket) do
+    update_coach_application_status(socket, id, :denied)
   end
 
   @impl true
@@ -143,6 +156,70 @@ defmodule FosBjjWeb.UserManagementLive do
             </:col>
           </.table>
         </div>
+
+        <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <.h3 class="text-lg font-medium">Coach Applications</.h3>
+              <.p class="text-sm text-base-content/70">
+                Review and approve applications for coach access.
+              </.p>
+            </div>
+          </div>
+
+          <.table rows={@coach_applications}>
+            <:col :let={application} label="Applicant">
+              <div class="space-y-1">
+                <div class="font-medium">{application.user.email}</div>
+                <div class="text-xs text-base-content/60">User ID: {application.user_id}</div>
+              </div>
+            </:col>
+            <:col :let={application} label="Message">
+              <.popover
+                id={"coach-app-body-#{application.id}"}
+                width="double_large"
+                variant="default"
+                color="dark"
+                show_delay={300}
+              >
+                <:trigger class="truncate max-w-xs cursor-help block">
+                  {application.body}
+                </:trigger>
+                <:content class="text-sm whitespace-pre-line">
+                  {application.body}
+                </:content>
+              </.popover>
+            </:col>
+            <:col :let={application} label="Status">
+              <span class={"badge " <> coach_application_badge_class(application.status)}>
+                {coach_application_status_label(application.status)}
+              </span>
+            </:col>
+            <:col :let={application} label="Submitted">
+              {Calendar.strftime(application.inserted_at, "%b %d, %Y %H:%M %p")}
+            </:col>
+            <:action :let={application}>
+              <div class="flex gap-2">
+                <.button
+                  class="btn btn-success btn-xs"
+                  phx-click="approve_coach_application"
+                  phx-value-id={application.id}
+                  disabled={!coach_application_pending?(application.status)}
+                >
+                  Approve
+                </.button>
+                <.button
+                  class="btn btn-error btn-xs"
+                  phx-click="deny_coach_application"
+                  phx-value-id={application.id}
+                  disabled={!coach_application_pending?(application.status)}
+                >
+                  Deny
+                </.button>
+              </div>
+            </:action>
+          </.table>
+        </div>
       </div>
     </Layouts.app>
     """
@@ -175,4 +252,78 @@ defmodule FosBjjWeb.UserManagementLive do
         nil
     end
   end
+
+  defp list_coach_applications(actor) do
+    CoachApplication
+    |> Ash.Query.load(:user)
+    |> Ash.Query.sort(inserted_at: :desc)
+    |> Ash.read!(actor: actor)
+  end
+
+  defp update_coach_application_status(socket, id, status) do
+    current_user = socket.assigns.current_user
+
+    coach_application =
+      Ash.get!(CoachApplication, id, actor: current_user, load: [:user])
+
+    case coach_application
+         |> Ash.Changeset.for_update(:set_status, %{status: status}, actor: current_user)
+         |> Ash.update() do
+      {:ok, updated_application} ->
+        socket =
+          if status == :approved do
+            maybe_grant_coach_role(socket, updated_application.user)
+          else
+            socket
+          end
+
+        coach_applications = list_coach_applications(current_user)
+        users = list_users(current_user, socket.assigns.role_filter)
+
+        {:noreply,
+         socket
+         |> assign(:coach_applications, coach_applications)
+         |> assign(:users, users)
+         |> put_flash(:info, "Coach application #{status} successfully.")}
+
+      {:error, _error} ->
+        {:noreply, put_flash(socket, :error, "Failed to update coach application.")}
+    end
+  end
+
+  defp maybe_grant_coach_role(socket, user) do
+    if user.role_name == "student" do
+      case user
+           |> Ash.Changeset.for_update(:update_role, %{role: "coach"},
+             actor: socket.assigns.current_user
+           )
+           |> Ash.update() do
+        {:ok, _user} ->
+          socket
+
+        {:error, _error} ->
+          put_flash(socket, :error, "Coach application approved, but role update failed.")
+      end
+    else
+      socket
+    end
+  end
+
+  defp coach_application_status_label(status) do
+    status
+    |> to_string()
+    |> String.capitalize()
+  end
+
+  defp coach_application_pending?(:pending), do: true
+  defp coach_application_pending?("pending"), do: true
+  defp coach_application_pending?(_), do: false
+
+  defp coach_application_badge_class(:pending), do: "badge-warning"
+  defp coach_application_badge_class(:approved), do: "badge-success"
+  defp coach_application_badge_class(:denied), do: "badge-error"
+  defp coach_application_badge_class("pending"), do: "badge-warning"
+  defp coach_application_badge_class("approved"), do: "badge-success"
+  defp coach_application_badge_class("denied"), do: "badge-error"
+  defp coach_application_badge_class(_), do: "badge-ghost"
 end
