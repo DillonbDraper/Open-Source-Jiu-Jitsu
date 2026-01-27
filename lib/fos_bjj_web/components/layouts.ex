@@ -6,6 +6,7 @@ defmodule FosBjjWeb.Layouts do
   use FosBjjWeb, :html
   import FosBjjWeb.Components.Navbar
   import FosBjjWeb.Components.Popover
+  alias FosBjjWeb.Components.InboxComponent
 
   # Embed all files in layouts/* within this module.
   # The default root.html.heex file contains the HTML
@@ -54,35 +55,38 @@ defmodule FosBjjWeb.Layouts do
     >
       <:list>
         <%= if @current_user do %>
-          <.popover
-            id="user-menu"
-            clickable
-            position="bottom"
-            color="white"
-            variant="default"
-            rounded="medium"
-            padding="none"
-            width="medium"
-          >
-            <:trigger class="flex items-center">
-              <button class="text-white hover:text-white/80 cursor-pointer transition-colors">
-                <.icon name="hero-user-circle" class="w-10 h-10" />
-              </button>
-            </:trigger>
-            <:content class="flex flex-col text-left">
-              <div class="px-4 py-3 border-b border-gray-100">
-                <p class="text-base font-medium truncate">{@current_user.email}</p>
-              </div>
-              <div class="py-1">
-                <.link navigate={~p"/profile"} class="block px-4 py-2 text-base hover:bg-gray-100">
-                  User Profile
-                </.link>
-                <.link href={~p"/sign-out"} class="block px-4 py-2 text-base hover:bg-gray-100">
-                  Sign Out
-                </.link>
-              </div>
-            </:content>
-          </.popover>
+          <div class="flex items-center gap-3">
+            <.live_component module={InboxComponent} id="inbox" current_user={@current_user} />
+            <.popover
+              id="user-menu"
+              clickable
+              position="bottom"
+              color="white"
+              variant="default"
+              rounded="medium"
+              padding="none"
+              width="medium"
+            >
+              <:trigger class="flex items-center">
+                <button class="text-white hover:text-white/80 cursor-pointer transition-colors">
+                  <.icon name="hero-user-circle" class="w-10 h-10" />
+                </button>
+              </:trigger>
+              <:content class="flex flex-col text-left">
+                <div class="px-4 py-3 border-b border-gray-100">
+                  <p class="text-base font-medium truncate">{@current_user.email}</p>
+                </div>
+                <div class="py-1">
+                  <.link navigate={~p"/profile"} class="block px-4 py-2 text-base hover:bg-gray-100">
+                    User Profile
+                  </.link>
+                  <.link href={~p"/sign-out"} class="block px-4 py-2 text-base hover:bg-gray-100">
+                    Sign Out
+                  </.link>
+                </div>
+              </:content>
+            </.popover>
+          </div>
         <% else %>
           <.link navigate={~p"/sign-in"} class="btn btn-sm btn-primary">
             Login / Sign Up

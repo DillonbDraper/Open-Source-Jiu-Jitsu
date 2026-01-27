@@ -10,5 +10,6 @@ defmodule FosBjj.Accounts do
     resource(FosBjj.Accounts.Token)
     resource(FosBjj.Accounts.User)
     resource(FosBjj.Accounts.Role)
+    resource(FosBjj.Accounts.UserMessage)
   end
 end

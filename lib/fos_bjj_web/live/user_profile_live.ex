@@ -2,10 +2,11 @@ defmodule FosBjjWeb.UserProfileLive do
   use FosBjjWeb, :live_view
 
   alias FosBjj.JiuJitsu.Video
-  alias FosBjj.JiuJitsu.VideoNote
   alias FosBjj.Accounts.CoachApplication
   alias FosBjjWeb.CoachApplicationForm
   alias FosBjjWeb.VideoLive.VideoFormComponent
+  alias FosBjjWeb.Components.MessagesTableComponent
+  alias FosBjjWeb.Components.NotesTableComponent
   import FosBjjWeb.Components.SearchField
   import FosBjjWeb.Components.Pagination
   require Ash.Query
@@ -15,7 +16,6 @@ defmodule FosBjjWeb.UserProfileLive do
   @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
-    notes = list_user_notes(user, "", 1)
     coach_application_status = coach_application_status(user)
 
     {:ok,
@@ -28,48 +28,8 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:video_search_query, "")
      |> assign(:current_page, 1)
      |> assign(:total_videos, 0)
-     |> assign(:notes, notes)
-     |> assign(:notes_page, 1)
-     |> assign(:notes_search_query, "")
      |> assign(:show_coach_application_modal, false)
      |> assign(:coach_application_status, coach_application_status)}
-  end
-
-  @impl true
-  def handle_event("search_notes", %{"query" => query}, socket) do
-    page = 1
-    notes = list_user_notes(socket.assigns.current_user, query, page)
-
-    {:noreply,
-     assign(socket,
-       notes_search_query: query,
-       notes: notes,
-       notes_page: page
-     )}
-  end
-
-  @impl true
-  def handle_event("notes_pagination", params, socket) do
-    current_page = socket.assigns.notes_page || 1
-    total_pages = ceil(socket.assigns.notes.count / 10)
-
-    page =
-      case params["action"] do
-        "select" -> params["page"]
-        "next" -> min(current_page + 1, total_pages)
-        "previous" -> max(current_page - 1, 1)
-        "first" -> 1
-        "last" -> total_pages
-        _ -> params["page"] || current_page
-      end
-
-    notes =
-      list_user_notes(socket.assigns.current_user, socket.assigns.notes_search_query, page)
-
-    {:noreply,
-     socket
-     |> assign(:notes, notes)
-     |> assign(:notes_page, page)}
   end
 
   @impl true
@@ -237,39 +197,6 @@ defmodule FosBjjWeb.UserProfileLive do
      |> put_flash(:info, "Video updated successfully")}
   end
 
-  defp list_user_notes(user, query, page) do
-    offset = (page - 1) * 10
-
-    VideoNote
-    |> Ash.Query.filter(user_id == ^user.id)
-    |> Ash.Query.load(:video)
-    |> then(fn q ->
-      if query != "" do
-        query_string = "%#{query}%"
-        # This is extremely ugly and the docs lie than contains is case insensitive
-        Ash.Query.filter(
-          q,
-          ilike(body, ^query_string) or
-            ilike(video.title, ^query_string)
-        )
-      else
-        q
-      end
-    end)
-    |> Ash.Query.sort(inserted_at: :desc)
-    |> Ash.read!(actor: user, page: [limit: 10, offset: offset, count: true])
-  end
-
-  defp format_timestamp(nil), do: "--:--"
-
-  defp format_timestamp(seconds) when is_integer(seconds) do
-    min = div(seconds, 60)
-    sec = rem(seconds, 60)
-    :io_lib.format("~2..0B:~2..0B", [min, sec]) |> to_string()
-  end
-
-  defp format_timestamp(_), do: "--:--"
-
   defp list_user_videos(user, query, page) do
     offset = (page - 1) * 5
 
@@ -374,78 +301,17 @@ defmodule FosBjjWeb.UserProfileLive do
         </header>
 
         <%= if FosBjj.Accounts.User.verified?(@current_user) do %>
-          <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-            <.h3 class="text-lg font-medium mb-4">My Notes</.h3>
-            <%= if @notes.results == [] do %>
-              <div
-                id="notes-empty-state"
-                class="rounded-xl border border-dashed border-base-200 bg-base-50 px-4 py-10 text-center"
-              >
-                <.p class="text-sm text-base-content/70">You have no notes taken.</.p>
-              </div>
-            <% else %>
-              <div class="mb-4">
-                <form phx-change="search_notes" phx-submit="search_notes">
-                  <.search_field
-                    name="query"
-                    value={@notes_search_query}
-                    placeholder="Search notes by note or video title..."
-                    phx-change="search_notes"
-                    phx-debounce="400"
-                  />
-                </form>
-              </div>
+          <.live_component
+            module={NotesTableComponent}
+            id="notes-table"
+            current_user={@current_user}
+          />
 
-              <.table padding="extra_small" border="medium" rows={@notes.results}>
-                <:col :let={note} label="Video">
-                  <.link
-                    navigate={~p"/videos/#{note.video_id}"}
-                    class="link link-primary font-semibold"
-                  >
-                    {note.video.title}
-                  </.link>
-                </:col>
-                <:col :let={note} label="Note">
-                  <.popover
-                    id={"note-popover-#{note.id}"}
-                    width="double_large"
-                    variant="default"
-                    color="dark"
-                    show_delay={400}
-                  >
-                    <:trigger class="truncate max-w-xs cursor-help block">
-                      {note.body}
-                    </:trigger>
-                    <:content class="text-sm">
-                      {note.body}
-                    </:content>
-                  </.popover>
-                </:col>
-                <:col :let={note} label="Timestamp">
-                  <.link
-                    navigate={~p"/videos/#{note.video_id}?time=#{note.video_timestamp}"}
-                    class="link link-primary font-semibold text-blue-600"
-                  >
-                    {format_timestamp(note.video_timestamp)}
-                  </.link>
-                </:col>
-                <:col :let={note} label="Created">
-                  {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M %p")}
-                </:col>
-              </.table>
-
-              <%= if @notes.count > 10 do %>
-                <div class="mt-4 flex justify-center">
-                  <.pagination
-                    total={ceil(@notes.count / 10)}
-                    active={@notes_page}
-                    siblings={1}
-                    phx-click="notes_pagination"
-                  />
-                </div>
-              <% end %>
-            <% end %>
-          </div>
+          <.live_component
+            module={MessagesTableComponent}
+            id="messages-table"
+            current_user={@current_user}
+          />
         <% end %>
 
         <%= if @current_user.role_name in ["coach", "admin"] do %>

@@ -37,9 +37,7 @@ defmodule FosBjjWeb.CoachApplicationForm do
   @impl true
   def handle_event("validate", %{"coach_application" => params}, socket) do
     form =
-      AshPhoenix.Form.validate(socket.assigns.form, params,
-        actor: socket.assigns.current_user
-      )
+      AshPhoenix.Form.validate(socket.assigns.form, params, actor: socket.assigns.current_user)
 
     {:noreply, assign(socket, :form, form)}
   end

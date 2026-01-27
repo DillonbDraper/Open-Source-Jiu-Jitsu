@@ -19,6 +19,7 @@ defmodule FosBjj.Accounts.CoachApplication do
 
     update :set_status do
       accept([:status])
+      change(relate_actor(:updated_by))
     end
   end
 
@@ -42,6 +43,11 @@ defmodule FosBjj.Accounts.CoachApplication do
 
   relationships do
     belongs_to :user, FosBjj.Accounts.User do
+      attribute_type(:integer)
+      public?(true)
+    end
+
+    belongs_to :updated_by, FosBjj.Accounts.User do
       attribute_type(:integer)
       public?(true)
     end

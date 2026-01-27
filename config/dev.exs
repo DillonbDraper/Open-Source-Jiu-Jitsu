@@ -1,6 +1,22 @@
 import Config
 config :ash, policies: [show_policy_breakdowns?: true]
 
+tailwind_watcher =
+  cond do
+    File.exists?("/etc/nixos/configuration.nix") and System.find_executable("tailwindcss") ->
+      [
+        tailwindcss:
+          ~w(--input=css/app.css --output=../priv/static/assets/css/app.css --watch) ++
+            [cd: Path.expand("../assets", __DIR__)]
+      ]
+
+    File.exists?("/etc/nixos/configuration.nix") ->
+      []
+
+    true ->
+      [tailwind: {Tailwind, :install_and_run, [:fos_bjj, ~w(--watch)]}]
+  end
+
 # Configure your database
 config :fos_bjj, FosBjj.Repo,
   username: "postgres",
@@ -28,13 +44,7 @@ config :fos_bjj, FosBjjWeb.Endpoint,
   watchers:
     [
       esbuild: {Esbuild, :install_and_run, [:fos_bjj, ~w(--sourcemap=inline --watch)]}
-    ] ++
-      if(File.exists?("/etc/nixos/configuration.nix"),
-        do: [],
-        else: [
-          tailwind: {Tailwind, :install_and_run, [:fos_bjj, ~w(--watch)]}
-        ]
-      )
+    ] ++ tailwind_watcher
 
 # ## SSL Support
 #

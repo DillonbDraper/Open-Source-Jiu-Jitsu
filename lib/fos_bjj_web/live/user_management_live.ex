@@ -2,6 +2,7 @@ defmodule FosBjjWeb.UserManagementLive do
   use FosBjjWeb, :live_view
   alias FosBjj.Accounts.CoachApplication
   alias FosBjj.Accounts.User
+  alias FosBjj.Accounts.UserMessage
   require Ash.Query
 
   on_mount {FosBjjWeb.LiveUserAuth, :live_admin_required}
@@ -277,6 +278,8 @@ defmodule FosBjjWeb.UserManagementLive do
             socket
           end
 
+        socket = maybe_send_coach_application_message(socket, updated_application, status)
+
         coach_applications = list_coach_applications(current_user)
         users = list_users(current_user, socket.assigns.role_filter)
 
@@ -290,6 +293,36 @@ defmodule FosBjjWeb.UserManagementLive do
         {:noreply, put_flash(socket, :error, "Failed to update coach application.")}
     end
   end
+
+  defp maybe_send_coach_application_message(socket, application, status) do
+    message_body = coach_application_message(status)
+
+    if message_body do
+      case UserMessage
+           |> Ash.Changeset.for_create(
+             :send_system_message,
+             %{body: message_body, recipient_id: application.user_id},
+             actor: socket.assigns.current_user
+           )
+           |> Ash.create() do
+        {:ok, _message} ->
+          socket
+
+        {:error, _error} ->
+          put_flash(socket, :error, "Coach application updated, but message delivery failed.")
+      end
+    else
+      socket
+    end
+  end
+
+  defp coach_application_message(:approved),
+    do: "TODO: add approved coach application message"
+
+  defp coach_application_message(:denied),
+    do: "TODO: add denied coach application message"
+
+  defp coach_application_message(_status), do: nil
 
   defp maybe_grant_coach_role(socket, user) do
     if user.role_name == "student" do

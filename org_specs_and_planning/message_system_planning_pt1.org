@@ -1,0 +1,46 @@
+#+title: Feature: User Messaging System - Part 1 (Backend & Navbar)
+
+* Context
+Stack: Ash Framework, Phoenix LiveView 1.7, Tailwind CSS.
+Current User is available in socket assigns as `@current_user`.
+
+* Step 1: Data Layer (Ash Resource)
+Create a new Ash Resource: `FosBjj.Accounts.UserMessage`.
+- **Attributes:**
+  - `body` (Text)
+  - `read_at` (UTC Datetime, nullable). If nil, the message is unread.
+  - `timestamps`
+- **Relationships:**
+  - `belongs_to :sender` (User, nullable). If nil, it is a "System Message".
+  - `belongs_to :recipient` (User, required).
+- **Actions:**
+  - `create`: Arguments for body, sender_id, recipient_id.
+  - `mark_read`: Sets `read_at` to `DateTime.utc_now()`.
+  - `read_inbox`: A read action that accepts a `limit` argument.
+    - **Sorting:** Prioritize Unread messages first (nil read_at), then sort by `inserted_at` DESC.
+  - `count_unread`: A read action (aggregate) that counts records where `read_at` is nil for a specific user.
+
+* Step 2: The "Fetch Count" Hook
+Create a custom LiveView Hook `FosBjjWeb.UserAuth.FetchUnreadCount`.
+- This hook should run `on_mount`.
+- It should call the `count_unread` Ash action for the `@current_user`.
+- It should assign `@unread_message_count` to the socket.
+- Add this hook to the `live_session` in `router.ex` so it runs on every page load.
+
+* Step 3: Global Navbar UI (Layouts)
+Modify `root.html.heex` (or the relevant layout file containing the navbar) to add the Inbox Icon.
+- **Location:** Left of the personal profile icon.
+- **Icon:** `hero-envelope` (or standard message icon).
+- **Badge:**
+  - Check `@unread_message_count` (assigned by the hook).
+  - If `> 0`, show a floating red rounded badge with the white number.
+  - If 0, hide the badge.
+- **Interaction:**
+  - Clicking the icon opens a `CoreComponents.modal`.
+  - The modal lists the **Top 5** messages (using the `read_inbox` action).
+- **Message Item Styling in Modal:**
+  - **Unread:** Font-bold, 100% opacity.
+  - **Read:** Font-normal, 75% opacity.
+  - **Action:** Clicking a message body or a check-icon button triggers `mark_read` Clicking the message body show also show a popover with the full message body in readable font.
+    - 
+  - **UX:** When a user marks a message as read in this modal, decrease the `@unread_message_count` in the socket immediately (optimistic UI update) so the red bubble updates without a refresh.
