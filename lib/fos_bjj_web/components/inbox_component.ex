@@ -118,7 +118,7 @@ defmodule FosBjjWeb.Components.InboxComponent do
 
   defp sender_name(message) do
     case message.sender do
-      nil -> "System"
+      nil -> "System Message"
       sender -> sender.user_name || sender.email
     end
   end

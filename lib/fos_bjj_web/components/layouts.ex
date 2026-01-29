@@ -55,7 +55,17 @@ defmodule FosBjjWeb.Layouts do
     >
       <:list>
         <%= if @current_user do %>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-4">
+            <.coach_or_admin_only current_user={@current_user}>
+              <div class="flex items-center gap-4">
+                <.link
+                  navigate={~p"/videos/new"}
+                  class="text-lg text-white hover:text-white/80 transition-colors"
+                >
+                  Add Video
+                </.link>
+              </div>
+            </.coach_or_admin_only>
             <.live_component module={InboxComponent} id="inbox" current_user={@current_user} />
             <.popover
               id="user-menu"
@@ -93,18 +103,7 @@ defmodule FosBjjWeb.Layouts do
           </.link>
         <% end %>
       </:list>
-      <:list>
-        <.coach_or_admin_only current_user={@current_user}>
-          <div class="flex items-center gap-4">
-            <.link
-              navigate={~p"/videos/new"}
-              class="text-lg text-white hover:text-white/80 transition-colors"
-            >
-              Add Video
-            </.link>
-          </div>
-        </.coach_or_admin_only>
-      </:list>
+      <:list></:list>
     </.navbar>
 
     <main class="px-4 py-20 sm:px-6 lg:px-8">
