@@ -119,7 +119,7 @@ defmodule FosBjjWeb.Components.FileField do
           "dropzone-wrapper group flex flex-col items-center justify-center w-full cursor-pointer"
         ]}
         phx-drop-target={@upload.ref}
-        for={@id}
+        for={@upload.ref}
         {@rest}
       >
         <div class="flex flex-col gap-3 items-center justify-center pt-5 pb-6">
@@ -132,7 +132,7 @@ defmodule FosBjjWeb.Components.FileField do
             {@dropzone_description}
           </div>
         </div>
-        <.live_file_input id={@id} upload={@upload} class="hidden" />
+        <.live_file_input upload={@upload} class="hidden" />
       </label>
 
       <.error :for={msg <- @errors} icon={@error_icon}>{msg}</.error>
@@ -213,7 +213,7 @@ defmodule FosBjjWeb.Components.FileField do
           "dropzone-wrapper group flex flex-col items-center justify-center w-full cursor-pointer"
         ]}
         phx-drop-target={@upload.ref}
-        for={@id}
+        for={@upload.ref}
         {@rest}
       >
         <div class="flex flex-col gap-3 items-center justify-center pt-5 pb-6">
@@ -226,7 +226,7 @@ defmodule FosBjjWeb.Components.FileField do
             {@dropzone_description}
           </div>
         </div>
-        <.live_file_input id={@id} upload={@upload} class="hidden" />
+        <.live_file_input upload={@upload} class="hidden" />
       </label>
 
       <.error :for={msg <- @errors} icon={@error_icon}>{msg}</.error>
