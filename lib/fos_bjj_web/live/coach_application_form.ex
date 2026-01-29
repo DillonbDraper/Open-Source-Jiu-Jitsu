@@ -135,7 +135,7 @@ defmodule FosBjjWeb.CoachApplicationForm do
                 <.list class="mt-3 space-y-2 text-sm text-base-content/80">
                   <:item icon="hero-shield-check">No self-promotion in uploads</:item>
                   <:item icon="hero-shield-check">
-                    Broadcast messages are for students, never spam
+                    Messages/Videos shared are for learning, never spam/solicitation
                   </:item>
                 </.list>
               </div>
@@ -175,7 +175,7 @@ defmodule FosBjjWeb.CoachApplicationForm do
 
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <p class="text-xs text-base-content/60">
-                  By applying, you agree to use coach tools responsibly and avoid self-promotion.
+                  By applying, you agree to use coach tools responsibly as outlined
                 </p>
                 <div class="flex gap-2">
                   <.button
