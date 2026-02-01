@@ -119,7 +119,7 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
 
     UserMessage
     |> Ash.Query.filter(recipient_id == ^user.id)
-    |> Ash.Query.load(:sender)
+    |> Ash.Query.load([:sender, :shared_video])
     |> then(fn q ->
       if query != "" do
         query_string = "%#{query}%"
@@ -143,6 +143,43 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
       nil -> "System"
       sender -> sender.user_name || sender.email
     end
+  end
+
+  defp message_type_label(message) do
+    UserMessage.type_label(message.type)
+  end
+
+  defp shared_video_message?(message) do
+    UserMessage.type_value(message.type) == :video_shared_by_coach
+  end
+
+  defp message_body_present?(message) do
+    case message.body do
+      body when is_binary(body) -> String.trim(body) != ""
+      _ -> false
+    end
+  end
+
+  defp shared_video_summary(message) do
+    "Video shared by #{message_sender_name(message)}"
+  end
+
+  defp message_preview(message) do
+    cond do
+      message_body_present?(message) -> message.body
+      shared_video_message?(message) -> shared_video_summary(message)
+      true -> "System notification"
+    end
+  end
+
+  defp message_trigger_class(message) do
+    [
+      "truncate max-w-xs cursor-help block",
+      message.received && "text-base-content/80",
+      !message.received && "font-semibold"
+    ]
+    |> Enum.filter(& &1)
+    |> Enum.join(" ")
   end
 
   @impl true
@@ -184,6 +221,11 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
               {message_sender_name(message)}
             </span>
           </:col>
+          <:col :let={message} label="Type">
+            <span class="text-xs text-base-content/70">
+              {message_type_label(message)}
+            </span>
+          </:col>
           <:col :let={message} label="Message">
             <.popover
               id={"message-popover-#{message.id}"}
@@ -192,15 +234,29 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
               color="dark"
               show_delay={400}
             >
-              <:trigger class={[
-                "truncate max-w-xs cursor-help block",
-                message.received && "text-base-content/80",
-                !message.received && "font-semibold"
-              ]}>
-                {message.body}
+              <:trigger class={message_trigger_class(message)}>
+                {message_preview(message)}
               </:trigger>
-              <:content class="text-sm whitespace-pre-wrap">
-                {message.body}
+              <:content class="text-sm whitespace-pre-line">
+                <%= if shared_video_message?(message) do %>
+                  <div class="mb-2 text-base-content/70">
+                    {shared_video_summary(message)}
+                  </div>
+                <% end %>
+                <%= if message_body_present?(message) do %>
+                  <div class="whitespace-pre-line">{message.body}</div>
+                <% end %>
+                <%= if message.shared_video do %>
+                  <div class="mt-3 pt-3 border-t border-gray-600">
+                    <.link
+                      navigate={~p"/videos/#{message.shared_video.id}"}
+                      class="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
+                    >
+                      <.icon name="hero-play-circle" class="w-4 h-4" />
+                      Watch: {message.shared_video.title}
+                    </.link>
+                  </div>
+                <% end %>
               </:content>
             </.popover>
           </:col>

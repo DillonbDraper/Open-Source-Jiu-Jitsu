@@ -4649,9 +4649,6 @@
   .btn-block {
     width: 100%;
   }
-  .loading-lg {
-    width: calc(var(--size-selector, 0.25rem) * 7);
-  }
   .loading-sm {
     width: calc(var(--size-selector, 0.25rem) * 5);
   }

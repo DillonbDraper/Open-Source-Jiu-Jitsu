@@ -178,7 +178,12 @@ defmodule FosBjjWeb.VideosDashboardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_user={assigns[:current_user]} full_width={true}>
+    <Layouts.app
+      flash={@flash}
+      current_user={assigns[:current_user]}
+      full_width={true}
+      socket={@socket}
+    >
       <!-- Technique Path Breadcrumb -->
       <.live_component
         module={FosBjjWeb.TechniquePathComponent}

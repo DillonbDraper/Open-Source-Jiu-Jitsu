@@ -13,12 +13,14 @@ defmodule FosBjj.Accounts.UserMessage do
     defaults([:read, :destroy])
 
     create :send do
-      accept([:body, :recipient_id])
+      accept([:body, :recipient_id, :shared_video_id])
       change(relate_actor(:sender))
+      change(set_attribute(:type, :video_shared_by_coach))
     end
 
     create :send_system_message do
       accept([:body, :recipient_id])
+      change(set_attribute(:type, :system_notification))
     end
 
     update :mark_as_read do
@@ -59,13 +61,20 @@ defmodule FosBjj.Accounts.UserMessage do
     integer_primary_key(:id)
 
     attribute :body, :string do
-      allow_nil?(false)
+      allow_nil?(true)
       public?(true)
     end
 
     attribute :received, :boolean do
       allow_nil?(false)
       default(false)
+      public?(true)
+    end
+
+    attribute :type, :atom do
+      allow_nil?(false)
+      constraints(one_of: [:system_notification, :video_shared_by_coach])
+      default(:system_notification)
       public?(true)
     end
 
@@ -83,6 +92,32 @@ defmodule FosBjj.Accounts.UserMessage do
       attribute_type(:integer)
       allow_nil?(false)
       public?(true)
+    end
+
+    belongs_to :shared_video, FosBjj.JiuJitsu.Video do
+      attribute_type(:integer)
+      allow_nil?(true)
+      public?(true)
+    end
+  end
+
+  def type_label(type) do
+    case type do
+      :system_notification -> "System Notification"
+      "system_notification" -> "System Notification"
+      :video_shared_by_coach -> "Video Shared by Coach"
+      "video_shared_by_coach" -> "Video Shared by Coach"
+      _ -> "Message"
+    end
+  end
+
+  def type_value(type) do
+    case type do
+      :system_notification -> :system_notification
+      "system_notification" -> :system_notification
+      :video_shared_by_coach -> :video_shared_by_coach
+      "video_shared_by_coach" -> :video_shared_by_coach
+      _ -> nil
     end
   end
 end
