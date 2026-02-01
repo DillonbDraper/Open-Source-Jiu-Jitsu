@@ -70,12 +70,7 @@ defmodule FosBjjWeb.Layouts do
                 </.link>
               </div>
             </.coach_or_admin_only>
-            <%= if @socket do %>
-              {live_render(@socket, InboxLive,
-                id: "inbox",
-                session: %{"current_user" => @current_user}
-              )}
-            <% end %>
+
             <.popover
               id="user-menu"
               clickable
@@ -105,6 +100,12 @@ defmodule FosBjjWeb.Layouts do
                 </div>
               </:content>
             </.popover>
+            <%= if @socket do %>
+              {live_render(@socket, InboxLive,
+                id: "inbox",
+                session: %{"current_user" => @current_user}
+              )}
+            <% end %>
           </div>
         <% else %>
           <.link navigate={~p"/sign-in"} class="btn btn-sm btn-primary">
