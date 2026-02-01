@@ -6,7 +6,7 @@ defmodule FosBjjWeb.Layouts do
   use FosBjjWeb, :html
   import FosBjjWeb.Components.Navbar
   import FosBjjWeb.Components.Popover
-  alias FosBjjWeb.Components.InboxComponent
+  alias FosBjjWeb.InboxLive
 
   # Embed all files in layouts/* within this module.
   # The default root.html.heex file contains the HTML
@@ -38,6 +38,10 @@ defmodule FosBjjWeb.Layouts do
     default: false,
     doc: "whether to use full width layout instead of max-w-2xl constraint"
 
+  attr :socket, :any,
+    default: nil,
+    doc: "the LiveView socket, required for rendering sticky LiveViews"
+
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -66,7 +70,12 @@ defmodule FosBjjWeb.Layouts do
                 </.link>
               </div>
             </.coach_or_admin_only>
-            <.live_component module={InboxComponent} id="inbox" current_user={@current_user} />
+            <%= if @socket do %>
+              {live_render(@socket, InboxLive,
+                id: "inbox",
+                session: %{"current_user" => @current_user}
+              )}
+            <% end %>
             <.popover
               id="user-menu"
               clickable

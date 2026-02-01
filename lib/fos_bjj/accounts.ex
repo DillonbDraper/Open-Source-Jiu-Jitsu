@@ -11,5 +11,6 @@ defmodule FosBjj.Accounts do
     resource(FosBjj.Accounts.User)
     resource(FosBjj.Accounts.Role)
     resource(FosBjj.Accounts.UserMessage)
+    resource(FosBjj.Accounts.StudentCoachRelationship)
   end
 end

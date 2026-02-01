@@ -279,8 +279,14 @@ defmodule FosBjj.Accounts.User do
       authorize_if(always())
     end
 
-    policy action_type([:read, :update]) do
-      description("Users can read and update their own specific record")
+    policy action_type(:read) do
+      description("Users can read their own record and coaches, but not other students'")
+      authorize_if(expr(id == ^actor(:id)))
+      authorize_if(expr(role_name in ["coach", "admin"]))
+    end
+
+    policy action_type(:update) do
+      description("Users can update their own specific record")
       authorize_if(expr(id == ^actor(:id)))
     end
   end
@@ -317,6 +323,26 @@ defmodule FosBjj.Accounts.User do
       destination_attribute(:name)
       attribute_type(:string)
       define_attribute?(false)
+      public?(true)
+    end
+
+    # Coaches that this user follows (as a learner)
+    many_to_many :followed_coaches, FosBjj.Accounts.User do
+      through(FosBjj.Accounts.StudentCoachRelationship)
+      source_attribute(:id)
+      source_attribute_on_join_resource(:learner_id)
+      destination_attribute(:id)
+      destination_attribute_on_join_resource(:coach_id)
+      public?(true)
+    end
+
+    # Students who follow this user (as a coach)
+    many_to_many :followers, FosBjj.Accounts.User do
+      through(FosBjj.Accounts.StudentCoachRelationship)
+      source_attribute(:id)
+      source_attribute_on_join_resource(:coach_id)
+      destination_attribute(:id)
+      destination_attribute_on_join_resource(:learner_id)
       public?(true)
     end
   end

@@ -2,6 +2,9 @@ defmodule FosBjjWeb.VideoShowComponent do
   use FosBjjWeb, :live_component
 
   alias FosBjj.JiuJitsu.Video
+  alias FosBjj.Accounts.StudentCoachRelationship
+  alias FosBjj.Accounts.UserMessage
+  alias FosBjj.Accounts.User
   import FosBjjWeb.Components.Icon
   import FosBjjWeb.Components.Button
   import FosBjjWeb.Components.Authorization
@@ -26,6 +29,26 @@ defmodule FosBjjWeb.VideoShowComponent do
       if Map.has_key?(socket.assigns, :show_notes),
         do: socket,
         else: assign(socket, :show_notes, true)
+
+    socket =
+      if Map.has_key?(socket.assigns, :show_share_modal),
+        do: socket,
+        else: assign(socket, :show_share_modal, false)
+
+    socket =
+      if Map.has_key?(socket.assigns, :share_form),
+        do: socket,
+        else: assign(socket, :share_form, to_form(%{"message" => ""}))
+
+    # Load student count for coaches/admins
+    socket =
+      if Map.has_key?(socket.assigns, :student_count) do
+        socket
+      else
+        user = socket.assigns[:current_user]
+        count = if user && User.coach_or_admin?(user), do: get_student_count(user), else: 0
+        assign(socket, :student_count, count)
+      end
 
     socket =
       if assigns[:seek_time] do
@@ -66,6 +89,83 @@ defmodule FosBjjWeb.VideoShowComponent do
     {:noreply, assign(socket, :current_time, rounded_time)}
   end
 
+  @impl true
+  def handle_event("open_share_modal", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_share_modal, true)
+     |> assign(:share_form, to_form(%{"message" => ""}))}
+  end
+
+  @impl true
+  def handle_event("close_share_modal", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_share_modal, false)
+     |> assign(:share_form, to_form(%{"message" => ""}))}
+  end
+
+  @impl true
+  def handle_event("update_share_message", %{"message" => message}, socket) do
+    {:noreply, assign(socket, :share_form, to_form(%{"message" => message}))}
+  end
+
+  @impl true
+  def handle_event("share_video", %{"message" => message}, socket) do
+    user = socket.assigns.current_user
+    video = socket.assigns.video
+
+    # This is somewhat brittle as share_video_with_students/3 doesn't really error handle
+    with {:ok, count} <- share_video_with_students(user, video, message) do
+      {:noreply,
+       socket
+       |> assign(:show_share_modal, false)
+       |> assign(:share_form, to_form(%{"message" => ""}))
+       |> put_flash(:info, "Video shared with #{count} student(s)")}
+    end
+  end
+
+  defp get_student_count(coach) do
+    StudentCoachRelationship
+    |> Ash.Query.filter(coach_id == ^coach.id)
+    |> Ash.read!(actor: coach)
+    |> length()
+  end
+
+  defp share_video_with_students(coach, video, optional_message) do
+    students =
+      StudentCoachRelationship
+      |> Ash.Query.filter(coach_id == ^coach.id)
+      |> Ash.Query.load(:learner)
+      |> Ash.read!(actor: coach)
+      |> Enum.map(& &1.learner)
+
+    message =
+      case optional_message do
+        text when is_binary(text) ->
+          if String.trim(text) == "", do: nil, else: text
+
+        _ ->
+          nil
+      end
+
+    Enum.each(students, fn student ->
+      UserMessage
+      |> Ash.Changeset.for_create(
+        :send,
+        %{
+          body: message,
+          recipient_id: student.id,
+          shared_video_id: video.id
+        },
+        actor: coach
+      )
+      |> Ash.create!()
+    end)
+
+    {:ok, length(students)}
+  end
+
   defp load_video(socket, video_id) do
     video =
       Video
@@ -90,9 +190,44 @@ defmodule FosBjjWeb.VideoShowComponent do
     <div class="w-full flex flex-col gap-6 pb-8">
       <%= if assigns[:video] do %>
         <div class="flex items-center justify-between">
-          <.link patch={~p"/database"} class="btn btn-ghost btn-sm gap-2">
-            <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Database
-          </.link>
+          <.button_link
+            patch={~p"/database"}
+            variant="transparent"
+            color="base"
+            size="small"
+            icon="hero-arrow-left"
+            icon_class="w-4 h-4"
+          >
+            Back to Database
+          </.button_link>
+
+          <%= if @current_user && User.coach_or_admin?(@current_user) do %>
+            <.tooltip id="share-video-tooltip" position="left" color="dark">
+              <:trigger>
+                <.button
+                  id="share-video-button"
+                  type="button"
+                  phx-click={if @student_count > 0, do: "open_share_modal"}
+                  phx-target={@myself}
+                  disabled={@student_count == 0}
+                  variant="default"
+                  color="primary"
+                  size="small"
+                  circle
+                  icon="hero-radio"
+                  icon_class="w-5 h-5"
+                  class={if @student_count == 0, do: "cursor-not-allowed opacity-70", else: ""}
+                />
+              </:trigger>
+              <:content>
+                <%= if @student_count > 0 do %>
+                  Share this Video To Your Students
+                <% else %>
+                  You must have students following you to broadcast videos
+                <% end %>
+              </:content>
+            </.tooltip>
+          <% end %>
         </div>
 
         <div
@@ -199,9 +334,9 @@ defmodule FosBjjWeb.VideoShowComponent do
                       </span>
                       <div class="flex flex-wrap gap-2">
                         <%= for grip <- @video.grips do %>
-                          <span class="px-2 py-1 text-xs font-medium bg-secondary/10 text-secondary rounded-md border border-secondary/20">
+                          <.badge variant="outline" color="secondary" size="extra_small" class="px-2">
                             {grip.label}
-                          </span>
+                          </.badge>
                         <% end %>
                       </div>
                     </div>
@@ -211,9 +346,64 @@ defmodule FosBjjWeb.VideoShowComponent do
             <% end %>
           </div>
         </div>
+        <.modal
+          :if={@show_share_modal}
+          show
+          id="share-video-modal"
+          size="large"
+          on_cancel={JS.push("close_share_modal", target: @myself)}
+        >
+          <div class="space-y-4">
+            <.h3 class="text-xl font-semibold">Share Video with Your Students</.h3>
+
+            <div class="bg-base-200 rounded-lg p-3">
+              <.p class="text-sm text-base-content/70">Sharing:</.p>
+              <.p class="font-medium">{@video.title}</.p>
+            </div>
+
+            <.form
+              for={@share_form}
+              id="share-video-form"
+              phx-change="update_share_message"
+              phx-submit="share_video"
+              phx-target={@myself}
+              class="space-y-4"
+            >
+              <.textarea_field
+                id={"#{@id}-share-message"}
+                field={@share_form[:message]}
+                label="Add a message (optional)"
+                placeholder="Add a note about this video..."
+                rows="3"
+                class="w-full"
+              />
+
+              <div class="flex justify-end gap-2">
+                <.button
+                  type="button"
+                  phx-click="close_share_modal"
+                  phx-target={@myself}
+                  variant="transparent"
+                  color="base"
+                >
+                  Cancel
+                </.button>
+                <.button
+                  type="submit"
+                  variant="default"
+                  color="primary"
+                  icon="hero-paper-airplane"
+                  icon_class="w-4 h-4"
+                >
+                  Share with Students
+                </.button>
+              </div>
+            </.form>
+          </div>
+        </.modal>
       <% else %>
         <div class="flex items-center justify-center h-64">
-          <span class="loading loading-spinner loading-lg"></span>
+          <.spinner size="large" color="primary" />
         </div>
       <% end %>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".YouTubeSeeker">

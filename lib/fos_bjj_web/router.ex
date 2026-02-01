@@ -4,6 +4,7 @@ defmodule FosBjjWeb.Router do
   use AshAuthentication.Phoenix.Router
 
   import AshAuthentication.Plug.Helpers
+  import Phoenix.LiveDashboard.Router
 
   pipeline :browser do
     plug(:accepts, ["html"])
@@ -16,10 +17,20 @@ defmodule FosBjjWeb.Router do
     plug(FosBjjWeb.Plugs.DevAutoLogin)
   end
 
+  pipeline :admin do
+    plug(FosBjjWeb.Plugs.RequireAdmin)
+  end
+
   pipeline :api do
     plug(:accepts, ["json"])
     plug(:load_from_bearer)
     plug(:set_actor, :user)
+  end
+
+  scope "/" do
+    pipe_through([:browser, :admin])
+
+    live_dashboard("/dashboard", metrics: FosBjjWeb.Telemetry)
   end
 
   scope "/", FosBjjWeb do
@@ -99,12 +110,9 @@ defmodule FosBjjWeb.Router do
     # If your application does not have an admins-only section yet,
     # you can use Plug.BasicAuth to set up some basic authentication
     # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
-
     scope "/dev" do
       pipe_through(:browser)
 
-      live_dashboard("/dashboard", metrics: FosBjjWeb.Telemetry)
       forward("/mailbox", Plug.Swoosh.MailboxPreview)
     end
   end

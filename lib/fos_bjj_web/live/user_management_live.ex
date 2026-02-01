@@ -95,10 +95,144 @@ defmodule FosBjjWeb.UserManagementLive do
      |> assign(:coach_applications, coach_applications)}
   end
 
+  defp role_badge_class(:admin), do: "badge-secondary"
+  defp role_badge_class(:coach), do: "badge-primary"
+  defp role_badge_class("admin"), do: "badge-secondary"
+  defp role_badge_class("coach"), do: "badge-primary"
+  defp role_badge_class(_), do: "badge-ghost"
+
+  defp list_users(actor, role_filter) do
+    query = User
+
+    query =
+      if role_filter != "all", do: Ash.Query.filter(query, role_name == ^role_filter), else: query
+
+    Ash.read!(query, actor: actor)
+  end
+
+  defp role_change_warning(current_role, new_role) do
+    cond do
+      current_role != "admin" && new_role == "admin" ->
+        "Are you sure? This user will be granted full administrator privileges."
+
+      current_role == "admin" && new_role != "admin" ->
+        "Are you sure? Administrator privileges will be removed from this user."
+
+      true ->
+        nil
+    end
+  end
+
+  defp list_coach_applications(actor, status_filter) do
+    query =
+      CoachApplication
+      |> Ash.Query.load(:user)
+      |> Ash.Query.sort(inserted_at: :desc)
+
+    query =
+      if status_filter != "all" do
+        Ash.Query.filter(query, status == ^status_filter)
+      else
+        query
+      end
+
+    Ash.read!(query, actor: actor)
+  end
+
+  defp update_coach_application_status(socket, id, status) do
+    current_user = socket.assigns.current_user
+
+    coach_application =
+      Ash.get!(CoachApplication, id, actor: current_user, load: [:user])
+
+    case coach_application
+         |> Ash.Changeset.for_update(:set_status, %{status: status}, actor: current_user)
+         |> Ash.update() do
+      {:ok, updated_application} ->
+        socket =
+          if status == :approved do
+            grant_coach_role(socket, updated_application.user)
+          else
+            socket
+          end
+
+        socket = send_coach_application_message(socket, updated_application, status)
+
+        coach_applications =
+          list_coach_applications(current_user, socket.assigns.application_status_filter)
+
+        users = list_users(current_user, socket.assigns.role_filter)
+
+        {:noreply,
+         socket
+         |> assign(:coach_applications, coach_applications)
+         |> assign(:users, users)
+         |> put_flash(:info, "Coach application #{status} successfully.")}
+
+      {:error, _error} ->
+        {:noreply, put_flash(socket, :error, "Failed to update coach application.")}
+    end
+  end
+
+  defp send_coach_application_message(socket, application, status) do
+    message_body = coach_application_message(status)
+
+    case UserMessage
+         |> Ash.Changeset.for_create(
+           :send_system_message,
+           %{body: message_body, recipient_id: application.user_id},
+           actor: socket.assigns.current_user
+         )
+         |> Ash.create() do
+      {:ok, _message} ->
+        socket
+
+      {:error, _error} ->
+        put_flash(socket, :error, "Coach application updated, but message delivery failed.")
+    end
+  end
+
+  defp coach_application_message(:approved),
+    do:
+      "Parabens!  You have been approved to become a coach on OSSBJJ! Please help contribute to the community by helping to make this resouce the best that it can be."
+
+  defp coach_application_message(:denied),
+    do:
+      "Unfortunately, your applicationt o OSSBJJ has been denied.  We thank you for your interest in contributing, but at this time we either have enough coaches or your qualifications were found to be insufficient.  Please do not take this decision personally, as it was not made lightly. Thank you for using OSSBJJ."
+
+  defp grant_coach_role(socket, user) do
+    case user
+         |> Ash.Changeset.for_update(:update_role, %{role: "coach"},
+           actor: socket.assigns.current_user
+         )
+         |> Ash.update() do
+      {:ok, _user} ->
+        socket
+
+      {:error, _error} ->
+        put_flash(socket, :error, "Coach application approved, but role update failed.")
+    end
+  end
+
+  # I don't love this but it is necessary here
+  defp coach_application_status_label(status) do
+    status
+    |> to_string()
+    |> String.capitalize()
+  end
+
+  defp coach_application_pending?("pending"), do: true
+  defp coach_application_pending?(_), do: false
+
+  defp coach_application_badge_class("pending"), do: "badge-warning"
+  defp coach_application_badge_class("approved"), do: "badge-success"
+  defp coach_application_badge_class("denied"), do: "badge-error"
+  defp coach_application_badge_class(_), do: "badge-ghost"
+
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]}>
+    <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]} socket={@socket}>
       <div class="space-y-6">
         <header>
           <.h1 class="text-3xl font-extrabold tracking-tight text-base-content">
@@ -256,145 +390,4 @@ defmodule FosBjjWeb.UserManagementLive do
     </Layouts.app>
     """
   end
-
-  defp role_badge_class(:admin), do: "badge-secondary"
-  defp role_badge_class(:coach), do: "badge-primary"
-  defp role_badge_class("admin"), do: "badge-secondary"
-  defp role_badge_class("coach"), do: "badge-primary"
-  defp role_badge_class(_), do: "badge-ghost"
-
-  defp list_users(actor, role_filter) do
-    query = User
-
-    query =
-      if role_filter != "all", do: Ash.Query.filter(query, role_name == ^role_filter), else: query
-
-    Ash.read!(query, actor: actor)
-  end
-
-  defp role_change_warning(current_role, new_role) do
-    cond do
-      current_role != "admin" && new_role == "admin" ->
-        "Are you sure? This user will be granted full administrator privileges."
-
-      current_role == "admin" && new_role != "admin" ->
-        "Are you sure? Administrator privileges will be removed from this user."
-
-      true ->
-        nil
-    end
-  end
-
-  defp list_coach_applications(actor, status_filter) do
-    query =
-      CoachApplication
-      |> Ash.Query.load(:user)
-      |> Ash.Query.sort(inserted_at: :desc)
-
-    query =
-      if status_filter != "all" do
-        Ash.Query.filter(query, status == ^status_filter)
-      else
-        query
-      end
-
-    Ash.read!(query, actor: actor)
-  end
-
-  defp update_coach_application_status(socket, id, status) do
-    current_user = socket.assigns.current_user
-
-    coach_application =
-      Ash.get!(CoachApplication, id, actor: current_user, load: [:user])
-
-    case coach_application
-         |> Ash.Changeset.for_update(:set_status, %{status: status}, actor: current_user)
-         |> Ash.update() do
-      {:ok, updated_application} ->
-        socket =
-          if status == :approved do
-            maybe_grant_coach_role(socket, updated_application.user)
-          else
-            socket
-          end
-
-        socket = maybe_send_coach_application_message(socket, updated_application, status)
-
-        coach_applications =
-          list_coach_applications(current_user, socket.assigns.application_status_filter)
-
-        users = list_users(current_user, socket.assigns.role_filter)
-
-        {:noreply,
-         socket
-         |> assign(:coach_applications, coach_applications)
-         |> assign(:users, users)
-         |> put_flash(:info, "Coach application #{status} successfully.")}
-
-      {:error, _error} ->
-        {:noreply, put_flash(socket, :error, "Failed to update coach application.")}
-    end
-  end
-
-  defp maybe_send_coach_application_message(socket, application, status) do
-    message_body = coach_application_message(status)
-
-    if message_body do
-      case UserMessage
-           |> Ash.Changeset.for_create(
-             :send_system_message,
-             %{body: message_body, recipient_id: application.user_id},
-             actor: socket.assigns.current_user
-           )
-           |> Ash.create() do
-        {:ok, _message} ->
-          socket
-
-        {:error, _error} ->
-          put_flash(socket, :error, "Coach application updated, but message delivery failed.")
-      end
-    else
-      socket
-    end
-  end
-
-  defp coach_application_message(:approved),
-    do:
-      "Parabens!  You have been approved to become a coach on OSSBJJ! Please help contribute to the community by helping to make this resouce the best that it can be."
-
-  defp coach_application_message(:denied),
-    do:
-      "Unfortunately, your applicationt o OSSBJJ has been denied.  We thank you for your interest in contributing, but at this time we either have enough coaches or your qualifications were found to be insufficient.  Please do not take this decision personally, as it was not made lightly. Thank you for using OSSBJJ."
-
-  defp maybe_grant_coach_role(socket, user) do
-    if user.role_name == "student" do
-      case user
-           |> Ash.Changeset.for_update(:update_role, %{role: "coach"},
-             actor: socket.assigns.current_user
-           )
-           |> Ash.update() do
-        {:ok, _user} ->
-          socket
-
-        {:error, _error} ->
-          put_flash(socket, :error, "Coach application approved, but role update failed.")
-      end
-    else
-      socket
-    end
-  end
-
-  defp coach_application_status_label(status) do
-    status
-    |> to_string()
-    |> String.capitalize()
-  end
-
-  defp coach_application_pending?("pending"), do: true
-  defp coach_application_pending?(_), do: false
-
-  defp coach_application_badge_class("pending"), do: "badge-warning"
-  defp coach_application_badge_class("approved"), do: "badge-success"
-  defp coach_application_badge_class("denied"), do: "badge-error"
-  defp coach_application_badge_class(_), do: "badge-ghost"
 end

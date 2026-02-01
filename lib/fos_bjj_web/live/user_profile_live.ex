@@ -7,6 +7,8 @@ defmodule FosBjjWeb.UserProfileLive do
   alias FosBjjWeb.VideoLive.VideoFormComponent
   alias FosBjjWeb.Components.MessagesTableComponent
   alias FosBjjWeb.Components.NotesTableComponent
+  alias FosBjjWeb.Components.CoachesTableComponent
+  alias FosBjjWeb.Components.FollowersTableComponent
   import FosBjjWeb.Components.SearchField
   import FosBjjWeb.Components.Pagination
   require Ash.Query
@@ -242,7 +244,7 @@ defmodule FosBjjWeb.UserProfileLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]}>
+    <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]} socket={@socket}>
       <div class="space-y-8">
         <header class="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -312,9 +314,21 @@ defmodule FosBjjWeb.UserProfileLive do
             id="messages-table"
             current_user={@current_user}
           />
+
+          <.live_component
+            module={CoachesTableComponent}
+            id="coaches-table"
+            current_user={@current_user}
+          />
         <% end %>
 
         <%= if @current_user.role_name in ["coach", "admin"] do %>
+          <.live_component
+            module={FollowersTableComponent}
+            id="followers-table"
+            current_user={@current_user}
+          />
+
           <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
             <h3 class="text-lg font-medium mb-4">Coach Options</h3>
             <div>

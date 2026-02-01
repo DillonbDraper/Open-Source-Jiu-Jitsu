@@ -58,7 +58,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
+    <Layouts.app flash={@flash} current_user={assigns[:current_user]} socket={@socket}>
       <div class="max-w-2xl mx-auto" id="video-form-container">
         <.flash kind={:info} title="Sweet!" flash={@flash} />
         <.flash kind={:error} title="Oops!" flash={@flash} />
