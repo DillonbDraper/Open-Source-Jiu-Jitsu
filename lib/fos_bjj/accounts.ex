@@ -6,6 +6,8 @@ defmodule FosBjj.Accounts do
   end
 
   resources do
+    resource(FosBjj.Accounts.Academy)
+    resource(FosBjj.Accounts.AcademyUser)
     resource(FosBjj.Accounts.CoachApplication)
     resource(FosBjj.Accounts.Token)
     resource(FosBjj.Accounts.User)

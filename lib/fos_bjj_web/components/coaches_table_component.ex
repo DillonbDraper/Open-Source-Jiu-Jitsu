@@ -7,6 +7,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
   alias FosBjj.Accounts.StudentCoachRelationship
   alias FosBjj.Accounts.UserMessage
   alias FosBjj.Accounts.User
+  alias FosBjj.Accounts.AcademyUser
   import FosBjjWeb.Components.SearchField
   require Ash.Query
 
@@ -39,11 +40,14 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
 
   @impl true
   def handle_event("open_follow_modal", _, socket) do
+    user = socket.assigns.current_user
+    results = search_unfollowed_coaches(user, "")
+
     {:noreply,
      socket
      |> assign(:show_follow_modal, true)
      |> assign(:coach_search_query, "")
-     |> assign(:search_results, [])
+     |> assign(:search_results, results)
      |> assign(:selected_coach, nil)
      |> assign(:show_confirm, false)}
   end
@@ -64,10 +68,10 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
     user = socket.assigns.current_user
 
     results =
-      if String.length(query) >= 2 do
-        search_unfollowed_coaches(user, query)
-      else
-        []
+      cond do
+        query == "" -> search_unfollowed_coaches(user, "")
+        String.length(query) >= 2 -> search_unfollowed_coaches(user, query)
+        true -> search_unfollowed_coaches(user, "")
       end
 
     {:noreply,
@@ -155,15 +159,72 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
       |> Ash.read!(actor: user)
       |> Enum.map(& &1.coach_id)
 
-    query_string = "%#{query}%"
+    academy_ids = list_user_academy_ids(user)
+    shared_coach_ids = list_shared_coach_ids(user, academy_ids)
 
-    User
-    |> Ash.Query.filter(role_name in ["coach", "admin"])
-    |> Ash.Query.filter(id != ^user.id)
-    |> Ash.Query.filter(id not in ^followed_ids)
-    |> Ash.Query.filter(ilike(user_name, ^query_string))
-    |> Ash.Query.limit(10)
+    base_query =
+      User
+      |> Ash.Query.filter(role_name in ["coach", "admin"])
+      |> Ash.Query.filter(id != ^user.id)
+      |> Ash.Query.filter(id not in ^followed_ids)
+      |> maybe_apply_query(query)
+
+    shared_coaches =
+      if shared_coach_ids == [] do
+        []
+      else
+        base_query
+        |> Ash.Query.filter(id in ^shared_coach_ids)
+        |> Ash.Query.limit(10)
+        |> Ash.read!(actor: user)
+      end
+
+    remaining = max(10 - length(shared_coaches), 0)
+
+    other_coaches =
+      if remaining > 0 do
+        base_query
+        |> maybe_filter_excluding(shared_coach_ids)
+        |> Ash.Query.limit(remaining)
+        |> Ash.read!(actor: user)
+      else
+        []
+      end
+
+    shared_coaches ++ other_coaches
+  end
+
+  defp list_user_academy_ids(user) do
+    AcademyUser
+    |> Ash.Query.filter(user_id == ^user.id)
+    |> Ash.Query.select([:academy_id])
     |> Ash.read!(actor: user)
+    |> Enum.map(& &1.academy_id)
+    |> Enum.uniq()
+  end
+
+  defp list_shared_coach_ids(_user, []), do: []
+
+  defp list_shared_coach_ids(user, academy_ids) do
+    AcademyUser
+    |> Ash.Query.filter(academy_id in ^academy_ids)
+    |> Ash.Query.select([:user_id])
+    |> Ash.read!(actor: user)
+    |> Enum.map(& &1.user_id)
+    |> Enum.uniq()
+  end
+
+  defp maybe_apply_query(ash_query, ""), do: ash_query
+
+  defp maybe_apply_query(ash_query, term) do
+    query_string = "%#{term}%"
+    Ash.Query.filter(ash_query, ilike(user_name, ^query_string))
+  end
+
+  defp maybe_filter_excluding(ash_query, []), do: ash_query
+
+  defp maybe_filter_excluding(ash_query, ids) do
+    Ash.Query.filter(ash_query, id not in ^ids)
   end
 
   defp send_follow_notification(learner, coach) do
@@ -267,7 +328,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
               <.search_field
                 name="query"
                 value={@coach_search_query}
-                placeholder="Search coaches by username (min 2 characters)..."
+                placeholder="Search coaches by username..."
                 phx-debounce="300"
               />
             </form>
@@ -294,7 +355,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
                 </p>
               <% else %>
                 <p class="text-sm text-base-content/70 text-center py-4">
-                  Start typing to search for coaches (min 2 characters)
+                  Start typing to search for coaches
                 </p>
               <% end %>
             <% end %>

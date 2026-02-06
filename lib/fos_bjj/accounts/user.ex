@@ -268,6 +268,14 @@ defmodule FosBjj.Accounts.User do
       argument(:role, :string, allow_nil?: false)
       change(set_attribute(:role_name, arg(:role)))
     end
+
+    update :update_profile do
+      require_atomic?(false)
+      accept([:bjj_belt, :other_high_level_experience])
+      argument(:academy_ids, {:array, :integer})
+
+      change manage_relationship(:academy_ids, :academies, type: :append_and_remove)
+    end
   end
 
   policies do
@@ -315,6 +323,18 @@ defmodule FosBjj.Accounts.User do
       default("student")
       public?(true)
     end
+
+    attribute :bjj_belt, :atom do
+      allow_nil?(true)
+      public?(true)
+      constraints(one_of: [:white, :blue, :purple, :brown, :black])
+    end
+
+    attribute :other_high_level_experience, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+    end
   end
 
   relationships do
@@ -345,6 +365,15 @@ defmodule FosBjj.Accounts.User do
       destination_attribute_on_join_resource(:learner_id)
       public?(true)
     end
+
+    many_to_many :academies, FosBjj.Accounts.Academy do
+      through(FosBjj.Accounts.AcademyUser)
+      source_attribute(:id)
+      source_attribute_on_join_resource(:user_id)
+      destination_attribute(:id)
+      destination_attribute_on_join_resource(:academy_id)
+      public?(true)
+    end
   end
 
   identities do
@@ -369,4 +398,16 @@ defmodule FosBjj.Accounts.User do
     do: verified?(user)
 
   def coach_or_admin?(_), do: false
+
+  @doc "Eligibility for coach application based on belt and other experience."
+  def coach_application_eligible?(%{
+        bjj_belt: :black,
+        other_high_level_experience: _other
+      }),
+      do: true
+
+  def coach_application_eligible?(%{bjj_belt: "black"}), do: true
+
+  def coach_application_eligible?(%{other_high_level_experience: true}), do: true
+  def coach_application_eligible?(_), do: false
 end
