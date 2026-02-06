@@ -288,8 +288,9 @@ defmodule FosBjj.Accounts.User do
     end
 
     policy action_type(:read) do
-      description("Users can read their own record and coaches, but not other students'")
+      description("Users can read their own record, coaches, and students when they are a coach")
       authorize_if(expr(id == ^actor(:id)))
+      authorize_if(expr(^actor(:role_name) == "coach" and role_name == "student"))
       authorize_if(expr(role_name in ["coach", "admin"]))
     end
 

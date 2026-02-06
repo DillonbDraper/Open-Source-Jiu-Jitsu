@@ -20,19 +20,11 @@ defmodule FosBjjWeb.Components.UserProfilePanel do
             Welcome, {@current_user.user_name}
           </.h1>
           <p class="mt-2 text-lg text-base-content/70">
-            Keep your training details current to personalize your experience.
+            Personal/Training details to guide your experience
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          <.button
-            id="edit-profile"
-            phx-click="open_profile_modal"
-            class="btn btn-ghost"
-          >
-            Edit Profile
-          </.button>
-
+        <div class="flex flex-col items-start gap-3">
           <%= if @current_user.role_name == "student" &&
                 @coach_application_status != :denied &&
                 User.coach_application_eligible?(@current_user) do %>
@@ -77,6 +69,14 @@ defmodule FosBjjWeb.Components.UserProfilePanel do
               </.button>
             <% end %>
           <% end %>
+
+          <.button
+            id="edit-profile"
+            phx-click="open_profile_modal"
+            class="btn btn-ghost"
+          >
+            Edit Profile
+          </.button>
         </div>
       </div>
 

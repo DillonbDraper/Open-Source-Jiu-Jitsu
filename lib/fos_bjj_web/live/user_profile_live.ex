@@ -606,9 +606,6 @@ defmodule FosBjjWeb.UserProfileLive do
             <.h3 class="text-2xl font-semibold text-base-content">
               Update Profile Details
             </.h3>
-            <p class="mt-2 text-sm text-base-content/70">
-              Share your belt rank and academies to tailor coach recommendations.
-            </p>
           </div>
 
           <.form

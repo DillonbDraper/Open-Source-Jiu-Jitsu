@@ -100,6 +100,15 @@ defmodule FosBjjWeb.InboxLive do
     {:noreply, assign(socket, :selected_message, nil)}
   end
 
+  @impl true
+  def handle_event("open_shared_video", %{"id" => id}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_modal, false)
+     |> assign(:selected_message, nil)
+     |> push_navigate(to: ~p"/videos/#{id}")}
+  end
+
   defp get_unread_count(user) do
     UserMessage
     |> Ash.Query.for_read(:unread_count, %{user_id: user.id})
@@ -121,10 +130,6 @@ defmodule FosBjjWeb.InboxLive do
     end
   end
 
-  defp shared_video_message?(message) do
-    UserMessage.type_value(message.type) == :video_shared_by_coach
-  end
-
   defp message_body_present?(message) do
     case message.body do
       body when is_binary(body) -> String.trim(body) != ""
@@ -132,15 +137,34 @@ defmodule FosBjjWeb.InboxLive do
     end
   end
 
-  defp shared_video_summary(message) do
-    "Video shared by #{sender_name(message)}"
+  defp shared_video_message?(message) do
+    case message.shared_video do
+      %Ash.NotLoaded{} -> UserMessage.type_value(message.type) == :video_shared_by_coach
+      nil -> UserMessage.type_value(message.type) == :video_shared_by_coach
+      _ -> true
+    end
+  end
+
+  defp shared_video_title(message) do
+    case message.shared_video do
+      %{title: title} when is_binary(title) and title != "" -> title
+      _ -> "Shared video"
+    end
   end
 
   defp message_preview(message) do
     cond do
-      message_body_present?(message) -> message.body
-      shared_video_message?(message) -> shared_video_summary(message)
-      true -> "System notification"
+      shared_video_message?(message) && message_body_present?(message) ->
+        "#{shared_video_title(message)} - #{message.body}"
+
+      shared_video_message?(message) ->
+        shared_video_title(message)
+
+      message_body_present?(message) ->
+        message.body
+
+      true ->
+        "System notification"
     end
   end
 
@@ -207,6 +231,15 @@ defmodule FosBjjWeb.InboxLive do
                 {Calendar.strftime(@selected_message.inserted_at, "%b %d, %Y at %I:%M %p")}
               </.small>
 
+              <%= if shared_video_message?(@selected_message) do %>
+                <.p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  Video: {shared_video_title(@selected_message)}
+                </.p>
+                <%= if message_body_present?(@selected_message) do %>
+                  <.hr class="my-2 border-gray-200 dark:border-gray-700" />
+                <% end %>
+              <% end %>
+
               <%= if message_body_present?(@selected_message) do %>
                 <.p class="text-gray-900 dark:text-gray-100 whitespace-pre-line">
                   {@selected_message.body}
@@ -215,9 +248,15 @@ defmodule FosBjjWeb.InboxLive do
 
               <%= if @selected_message.shared_video do %>
                 <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <.button_link
+                  <.button
                     id={"inbox-shared-video-#{@selected_message.shared_video.id}"}
-                    navigate={~p"/videos/#{@selected_message.shared_video.id}"}
+                    type="button"
+                    phx-click={
+                      JS.remove_class("overflow-hidden", to: "body")
+                      |> JS.push("open_shared_video",
+                        value: %{id: @selected_message.shared_video.id}
+                      )
+                    }
                     variant="default"
                     color="primary"
                     size="small"
@@ -225,7 +264,7 @@ defmodule FosBjjWeb.InboxLive do
                   >
                     <.icon name="hero-play-circle" class="w-5 h-5" />
                     Watch: {@selected_message.shared_video.title}
-                  </.button_link>
+                  </.button>
                 </div>
               <% end %>
             </div>
