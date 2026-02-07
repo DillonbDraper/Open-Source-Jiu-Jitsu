@@ -200,7 +200,7 @@ defmodule FosBjjWeb.TechniqueLive.NewTechniqueForm do
     ~H"""
     <div>
       <div class="mb-6">
-        <h2 class="text-2xl font-bold">Add New Technique</h2>
+        <.h2 size="text-2xl" font_weight="font-bold">Add New Technique</.h2>
       </div>
 
       <.form_wrapper

@@ -51,6 +51,7 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:profile_form, profile_form)
      |> assign(:academy_options, academy_options)
      |> assign(:selected_academy_ids, selected_academy_ids)
+     |> assign(:academy_combobox_version, 0)
      |> assign(:show_coach_application_modal, false)
      |> assign(:coach_application_status, coach_application_status)}
   end
@@ -326,6 +327,7 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:selected_academy_ids, updated_academy_ids)
      |> assign(:profile_form, form)
      |> assign(:show_academy_drawer, false)
+     |> assign(:academy_combobox_version, socket.assigns.academy_combobox_version + 1)
      |> put_flash(:info, "Academy created successfully")}
   end
 
@@ -469,7 +471,9 @@ defmodule FosBjjWeb.UserProfileLive do
           />
 
           <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-            <h3 class="text-lg font-medium mb-4">Coach Options</h3>
+            <.h3 size="text-lg" font_weight="font-medium" class="mb-4">
+              Coach Options
+            </.h3>
             <div>
               <.button phx-click="toggle_videos" class="btn-primary">
                 {if @show_videos, do: "Hide My Videos", else: "Show My Videos"}
@@ -539,7 +543,9 @@ defmodule FosBjjWeb.UserProfileLive do
 
         <%= if @current_user.role_name == "admin" do %>
           <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-            <h3 class="text-lg font-medium mb-4">Admin Options</h3>
+            <.h3 size="text-lg" font_weight="font-medium" class="mb-4">
+              Admin Options
+            </.h3>
             <div>
               <.link navigate={~p"/admin/users"} class="btn btn-secondary">
                 Manage Users
@@ -599,6 +605,8 @@ defmodule FosBjjWeb.UserProfileLive do
         show
         id="profile-modal"
         size="large"
+        close_on_click_away={!@show_academy_drawer}
+        close_on_escape={!@show_academy_drawer}
         on_cancel={JS.push("close_profile_modal")}
       >
         <div class="space-y-6">
@@ -630,17 +638,24 @@ defmodule FosBjjWeb.UserProfileLive do
               />
 
               <div>
-                <.input
-                  type="select"
-                  multiple={true}
+                <.combobox
+                  id={"academy-select-#{@academy_combobox_version}"}
                   field={@profile_form[:academy_ids]}
                   label="Academies"
-                  options={@academy_options}
-                />
+                  value={@selected_academy_ids}
+                  placeholder="Search academies..."
+                  searchable={true}
+                  multiple={true}
+                  size="extra_large"
+                >
+                  <:option :for={{name, id} <- @academy_options} value={id}>
+                    {name}
+                  </:option>
+                </.combobox>
                 <div class="mt-2 flex flex-wrap items-center gap-3">
-                  <p class="text-xs text-base-content/60">
-                    Hold Ctrl (Windows) or Command (Mac) to select multiple academies.
-                  </p>
+                  <.p size="text-xs" class="text-base-content/60">
+                    Search and select multiple academies.
+                  </.p>
                   <.button
                     id="open-academy-drawer"
                     type="button"

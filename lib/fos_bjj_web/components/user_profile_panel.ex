@@ -19,9 +19,9 @@ defmodule FosBjjWeb.Components.UserProfilePanel do
           <.h1 class="text-3xl font-extrabold tracking-tight text-base-content">
             Welcome, {@current_user.user_name}
           </.h1>
-          <p class="mt-2 text-lg text-base-content/70">
+          <.p size="text-lg" class="mt-2 text-base-content/70">
             Personal/Training details to guide your experience
-          </p>
+          </.p>
         </div>
 
         <div class="flex flex-col items-start gap-3">
@@ -82,36 +82,52 @@ defmodule FosBjjWeb.Components.UserProfilePanel do
 
       <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-2xl border border-base-200 bg-base-50 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+          <.p
+            size="text-xs"
+            font_weight="font-semibold"
+            class="uppercase tracking-wide text-base-content/60"
+          >
             Username
-          </p>
-          <p class="mt-2 text-lg font-semibold text-base-content">
+          </.p>
+          <.p size="text-lg" font_weight="font-semibold" class="mt-2 text-base-content">
             {@current_user.user_name}
-          </p>
+          </.p>
         </div>
 
         <div class="rounded-2xl border border-base-200 bg-base-50 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+          <.p
+            size="text-xs"
+            font_weight="font-semibold"
+            class="uppercase tracking-wide text-base-content/60"
+          >
             Belt Rank
-          </p>
-          <p class="mt-2 text-lg font-semibold text-base-content">
+          </.p>
+          <.p size="text-lg" font_weight="font-semibold" class="mt-2 text-base-content">
             {belt_label(@current_user.bjj_belt)}
-          </p>
+          </.p>
         </div>
 
         <div class="rounded-2xl border border-base-200 bg-base-50 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">
-            High Level Experience
-          </p>
-          <p class="mt-2 text-lg font-semibold text-base-content">
+          <.p
+            size="text-xs"
+            font_weight="font-semibold"
+            class="uppercase tracking-wide text-base-content/60"
+          >
+            Other High Level Experience
+          </.p>
+          <.p size="text-lg" font_weight="font-semibold" class="mt-2 text-base-content">
             {if @current_user.other_high_level_experience, do: "Yes", else: "No"}
-          </p>
+          </.p>
         </div>
 
         <div class="rounded-2xl border border-base-200 bg-base-50 px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+          <.p
+            size="text-xs"
+            font_weight="font-semibold"
+            class="uppercase tracking-wide text-base-content/60"
+          >
             Academies
-          </p>
+          </.p>
           <div class="mt-2 flex flex-wrap gap-2">
             <%= if @current_user.academies == [] do %>
               <span class="text-sm text-base-content/70">Not set</span>

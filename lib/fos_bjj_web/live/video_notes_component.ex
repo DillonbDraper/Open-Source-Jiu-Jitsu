@@ -167,20 +167,24 @@ defmodule FosBjjWeb.VideoNotesComponent do
                 <div class="whitespace-pre-wrap flex-1">{note.body}</div>
                 <div class="flex items-center gap-2">
                   <%= if note.video_timestamp do %>
-                    <button
+                    <.button
+                      type="button"
+                      variant="transparent"
                       class="font-mono text-sm text-blue-600 hover:underline whitespace-nowrap cursor-pointer"
                       phx-click="seek_video"
                       phx-target={@myself}
                       phx-value-seconds={note.video_timestamp}
                     >
                       {format_timestamp(note.video_timestamp)}
-                    </button>
+                    </.button>
                   <% else %>
                     <div class="font-mono text-sm text-base-content/70 whitespace-nowrap">
                       {format_timestamp(note.video_timestamp)}
                     </div>
                   <% end %>
-                  <button
+                  <.button
+                    type="button"
+                    variant="transparent"
                     phx-click="delete_note"
                     phx-target={@myself}
                     phx-value-id={note.id}
@@ -189,7 +193,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
                     aria-label="Delete note"
                   >
                     <.icon name="hero-trash" class="w-4 h-4" />
-                  </button>
+                  </.button>
                 </div>
               </div>
             </.card_content>

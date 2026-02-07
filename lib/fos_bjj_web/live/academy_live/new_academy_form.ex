@@ -51,10 +51,10 @@ defmodule FosBjjWeb.AcademyLive.NewAcademyForm do
     ~H"""
     <div>
       <div class="mb-6">
-        <h2 class="text-2xl font-bold">Add a New Academy</h2>
-        <p class="mt-2 text-sm text-base-content/70">
+        <.h2 size="text-2xl" font_weight="font-bold">Add a New Academy</.h2>
+        <.p size="text-sm" class="mt-2 text-base-content/70">
           Can't find your gym? Create it here and we'll add it to your profile.
-        </p>
+        </.p>
       </div>
 
       <.form

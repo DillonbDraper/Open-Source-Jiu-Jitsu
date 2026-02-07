@@ -271,8 +271,9 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
             {Calendar.strftime(relationship.inserted_at, "%b %d, %Y")}
           </:col>
           <:action :let={relationship}>
-            <button
+            <.button
               type="button"
+              variant="transparent"
               phx-click="unfollow_coach"
               phx-value-id={relationship.id}
               phx-target={@myself}
@@ -280,7 +281,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
               class="p-1 text-error cursor-pointer hover:bg-error/10 rounded-full transition-colors"
             >
               <.icon name="hero-user-minus" class="w-5 h-5" />
-            </button>
+            </.button>
           </:action>
         </.table>
       <% end %>
@@ -299,12 +300,12 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
             <div class="alert alert-warning">
               <.icon name="hero-exclamation-triangle" class="w-5 h-5" />
               <div>
-                <p class="font-medium">
+                <.p font_weight="font-medium">
                   Are you sure you wish to follow coach {@selected_coach.user_name}?
-                </p>
-                <p class="text-sm opacity-80 mt-1">
+                </.p>
+                <.p size="text-sm" class="opacity-80 mt-1">
                   OSSBJJ takes no responsibility for any messages broadcast alongside videos to watch.
-                </p>
+                </.p>
               </div>
             </div>
             <div class="flex justify-end gap-2 mt-4">
@@ -336,27 +337,29 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
             <%= if @search_results != [] do %>
               <div class="space-y-2 max-h-60 overflow-y-auto">
                 <%= for coach <- @search_results do %>
-                  <button
+                  <.button
                     type="button"
+                    variant="transparent"
+                    content_class="flex w-full items-center justify-between"
                     phx-click="select_coach"
                     phx-value-id={coach.id}
                     phx-target={@myself}
-                    class="w-full p-3 text-left rounded-lg border border-base-200 hover:bg-base-200 transition-colors flex items-center justify-between"
+                    class="w-full p-3 text-left rounded-lg border border-base-200 hover:bg-base-200 transition-colors"
                   >
                     <span>{coach.user_name}</span>
                     <span class="badge badge-sm">{String.capitalize(coach.role_name)}</span>
-                  </button>
+                  </.button>
                 <% end %>
               </div>
             <% else %>
               <%= if String.length(@coach_search_query) >= 2 do %>
-                <p class="text-sm text-base-content/70 text-center py-4">
+                <.p size="text-sm" class="text-base-content/70 text-center py-4">
                   No coaches found matching "{@coach_search_query}"
-                </p>
+                </.p>
               <% else %>
-                <p class="text-sm text-base-content/70 text-center py-4">
+                <.p size="text-sm" class="text-base-content/70 text-center py-4">
                   Start typing to search for coaches
-                </p>
+                </.p>
               <% end %>
             <% end %>
           <% end %>

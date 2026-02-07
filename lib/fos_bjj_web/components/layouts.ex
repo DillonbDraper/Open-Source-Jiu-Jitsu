@@ -82,13 +82,21 @@ defmodule FosBjjWeb.Layouts do
               width="medium"
             >
               <:trigger class="flex items-center">
-                <button class="text-white hover:text-white/80 cursor-pointer transition-colors">
+                <.button
+                  type="button"
+                  variant="transparent"
+                  size="extra_large"
+                  circle
+                  class="text-white hover:text-white/80 cursor-pointer transition-colors"
+                >
                   <.icon name="hero-user-circle" class="w-10 h-10" />
-                </button>
+                </.button>
               </:trigger>
               <:content class="flex flex-col text-left">
                 <div class="px-4 py-3 border-b border-gray-100">
-                  <p class="text-base font-medium truncate">{@current_user.email}</p>
+                  <.p size="text-base" font_weight="font-medium" class="truncate">
+                    {@current_user.email}
+                  </.p>
                 </div>
                 <div class="py-1">
                   <.link navigate={~p"/profile"} class="block px-4 py-2 text-base hover:bg-gray-100">
@@ -182,29 +190,35 @@ defmodule FosBjjWeb.Layouts do
     <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
       <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 transition-[left]" />
 
-      <button
+      <.button
+        type="button"
+        variant="transparent"
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="system"
       >
         <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
+      </.button>
 
-      <button
+      <.button
+        type="button"
+        variant="transparent"
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
       >
         <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
+      </.button>
 
-      <button
+      <.button
+        type="button"
+        variant="transparent"
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
       >
         <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
+      </.button>
     </div>
     """
   end

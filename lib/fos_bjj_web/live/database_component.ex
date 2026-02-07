@@ -132,7 +132,9 @@ defmodule FosBjjWeb.DatabaseComponent do
                 <div class="contents">
                   <%= if assigns[:current_user] && FosBjj.Accounts.User.admin?(@current_user) do %>
                     <div class="absolute top-3 right-3 z-10">
-                      <button
+                      <.button
+                        type="button"
+                        variant="transparent"
                         phx-click="edit_video"
                         phx-target={@myself}
                         phx-value-video-id={video.id}
@@ -140,7 +142,7 @@ defmodule FosBjjWeb.DatabaseComponent do
                         title="Edit video"
                       >
                         <.icon name="hero-pencil-solid" class="w-4 h-4" />
-                      </button>
+                      </.button>
                     </div>
                   <% end %>
 

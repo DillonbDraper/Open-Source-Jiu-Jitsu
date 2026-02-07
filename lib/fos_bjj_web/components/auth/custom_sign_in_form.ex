@@ -18,6 +18,7 @@ defmodule FosBjjWeb.Components.Auth.CustomSignInForm do
     only: [auth_path: 5, auth_path: 6, debug_form_errors: 1]
 
   import Slug
+  import FosBjjWeb.Components.TextField, only: [text_field: 1]
 
   @impl true
   def update(assigns, socket) do
@@ -89,27 +90,11 @@ defmodule FosBjjWeb.Components.Auth.CustomSignInForm do
       >
         <%!-- Custom identity field with "Email or Username" label --%>
         <div class="mt-2 mb-2 dark:text-white">
-          <label
-            for={form[@strategy.identity_field].id}
-            class="block text-sm font-medium text-gray-700 mb-1 dark:text-white"
-          >
-            Email or Username
-          </label>
-          <input
-            type="text"
-            id={form[@strategy.identity_field].id}
-            name={form[@strategy.identity_field].name}
-            value={Phoenix.HTML.Form.normalize_value("text", form[@strategy.identity_field].value)}
-            class="appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm dark:text-white border-gray-300 focus:ring-blue-400 focus:border-blue-500"
-            autofocus="true"
+          <.text_field
+            field={form[@strategy.identity_field]}
+            label="Email or Username"
+            autofocus
           />
-          <%= if form[@strategy.identity_field].errors != [] do %>
-            <ul class="text-red-400 font-light my-3 italic text-sm">
-              <%= for {msg, _opts} <- form[@strategy.identity_field].errors do %>
-                <li>{msg}</li>
-              <% end %>
-            </ul>
-          <% end %>
         </div>
 
         <Password.Input.password_field

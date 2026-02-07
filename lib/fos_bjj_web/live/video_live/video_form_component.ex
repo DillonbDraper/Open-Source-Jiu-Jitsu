@@ -197,31 +197,19 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
           />
 
           <div class="space-y-2">
-            <label class="text-sm font-semibold">Attire *</label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={@form[:attire].name}
-                  value="gi"
-                  checked={to_string(@form[:attire].value) == "gi"}
-                  class="radio"
-                  required
-                />
-                <span>Gi</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={@form[:attire].name}
-                  value="no_gi"
-                  checked={to_string(@form[:attire].value) == "no_gi"}
-                  class="radio"
-                  required
-                />
-                <span>No-Gi</span>
-              </label>
-            </div>
+            <.p size="text-sm" font_weight="font-semibold">Attire *</.p>
+            <.group_radio
+              field={@form[:attire]}
+              variation="horizontal"
+              space="medium"
+              class="flex gap-4"
+              required
+            >
+              <:radio value="gi" checked={to_string(@form[:attire].value) == "gi"}>Gi</:radio>
+              <:radio value="no_gi" checked={to_string(@form[:attire].value) == "no_gi"}>
+                No-Gi
+              </:radio>
+            </.group_radio>
           </div>
 
           <div class="grid grid-cols-3 gap-2 items-end">

@@ -60,27 +60,7 @@ defmodule FosBjjWeb.Live.Auth.SignInLive do
       >
         <:register_extra :let={form}>
           <div class="mt-2 mb-2 dark:text-white">
-            <label
-              for={form[:user_name].id}
-              class="block text-sm font-medium text-gray-700 mb-1 dark:text-white"
-            >
-              Username
-            </label>
-            <input
-              type="text"
-              id={form[:user_name].id}
-              name={form[:user_name].name}
-              value={Phoenix.HTML.Form.normalize_value("text", form[:user_name].value)}
-              class="appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm dark:text-white border-gray-300 focus:ring-blue-400 focus:border-blue-500"
-              required
-            />
-            <%= if form[:user_name].errors != [] do %>
-              <ul class="text-red-400 font-light my-3 italic text-sm">
-                <%= for {msg, _opts} <- form[:user_name].errors do %>
-                  <li>{msg}</li>
-                <% end %>
-              </ul>
-            <% end %>
+            <.input field={form[:user_name]} type="text" label="Username" required />
           </div>
         </:register_extra>
       </.live_component>

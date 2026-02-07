@@ -278,22 +278,24 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
                   color="dark"
                 >
                   <:trigger>
-                    <button
+                    <.button
                       type="button"
+                      variant="transparent"
                       phx-click="mark_message_read"
                       phx-value-id={message.id}
                       phx-target={@myself}
                       class="text-gray-500 hover:text-green-600 transition-colors p-1"
                     >
                       <.icon name="hero-check-badge" class="w-5 h-5" />
-                    </button>
+                    </.button>
                   </:trigger>
                   <:content>Mark as read</:content>
                 </.tooltip>
               <% end %>
-              <button
+              <.button
                 id={"message-delete-#{message.id}"}
                 type="button"
+                variant="transparent"
                 phx-click="delete_message"
                 phx-value-id={message.id}
                 phx-target={@myself}
@@ -301,7 +303,7 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
                 class="p-1 text-error cursor-pointer hover:bg-error/10 rounded-full transition-colors"
               >
                 <.icon name="hero-trash" class="w-5 h-5" />
-              </button>
+              </.button>
             </div>
           </:action>
         </.table>
