@@ -7,6 +7,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
   alias FosBjj.Accounts.StudentCoachRelationship
   alias FosBjj.Accounts.UserMessage
   alias FosBjj.Accounts.User
+  alias FosBjj.Accounts.AcademyUser
   import FosBjjWeb.Components.SearchField
   require Ash.Query
 
@@ -39,11 +40,14 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
 
   @impl true
   def handle_event("open_follow_modal", _, socket) do
+    user = socket.assigns.current_user
+    results = search_unfollowed_coaches(user, "")
+
     {:noreply,
      socket
      |> assign(:show_follow_modal, true)
      |> assign(:coach_search_query, "")
-     |> assign(:search_results, [])
+     |> assign(:search_results, results)
      |> assign(:selected_coach, nil)
      |> assign(:show_confirm, false)}
   end
@@ -64,10 +68,10 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
     user = socket.assigns.current_user
 
     results =
-      if String.length(query) >= 2 do
-        search_unfollowed_coaches(user, query)
-      else
-        []
+      cond do
+        query == "" -> search_unfollowed_coaches(user, "")
+        String.length(query) >= 2 -> search_unfollowed_coaches(user, query)
+        true -> search_unfollowed_coaches(user, "")
       end
 
     {:noreply,
@@ -142,7 +146,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
   defp list_followed_coaches(user) do
     StudentCoachRelationship
     |> Ash.Query.filter(learner_id == ^user.id)
-    |> Ash.Query.load(:coach)
+    |> Ash.Query.load(coach: [:academies])
     |> Ash.Query.sort(inserted_at: :desc)
     |> Ash.read!(actor: user)
   end
@@ -155,15 +159,73 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
       |> Ash.read!(actor: user)
       |> Enum.map(& &1.coach_id)
 
-    query_string = "%#{query}%"
+    academy_ids = list_user_academy_ids(user)
+    shared_coach_ids = list_shared_coach_ids(user, academy_ids)
 
-    User
-    |> Ash.Query.filter(role_name in ["coach", "admin"])
-    |> Ash.Query.filter(id != ^user.id)
-    |> Ash.Query.filter(id not in ^followed_ids)
-    |> Ash.Query.filter(ilike(user_name, ^query_string))
-    |> Ash.Query.limit(10)
+    base_query =
+      User
+      |> Ash.Query.filter(role_name in ["coach", "admin"])
+      |> Ash.Query.filter(id != ^user.id)
+      |> Ash.Query.filter(id not in ^followed_ids)
+      |> maybe_apply_query(query)
+      |> Ash.Query.load(:academies)
+
+    shared_coaches =
+      if shared_coach_ids == [] do
+        []
+      else
+        base_query
+        |> Ash.Query.filter(id in ^shared_coach_ids)
+        |> Ash.Query.limit(10)
+        |> Ash.read!(actor: user)
+      end
+
+    remaining = max(10 - length(shared_coaches), 0)
+
+    other_coaches =
+      if remaining > 0 do
+        base_query
+        |> maybe_filter_excluding(shared_coach_ids)
+        |> Ash.Query.limit(remaining)
+        |> Ash.read!(actor: user)
+      else
+        []
+      end
+
+    shared_coaches ++ other_coaches
+  end
+
+  defp list_user_academy_ids(user) do
+    AcademyUser
+    |> Ash.Query.filter(user_id == ^user.id)
+    |> Ash.Query.select([:academy_id])
     |> Ash.read!(actor: user)
+    |> Enum.map(& &1.academy_id)
+    |> Enum.uniq()
+  end
+
+  defp list_shared_coach_ids(_user, []), do: []
+
+  defp list_shared_coach_ids(user, academy_ids) do
+    AcademyUser
+    |> Ash.Query.filter(academy_id in ^academy_ids)
+    |> Ash.Query.select([:user_id])
+    |> Ash.read!(actor: user)
+    |> Enum.map(& &1.user_id)
+    |> Enum.uniq()
+  end
+
+  defp maybe_apply_query(ash_query, ""), do: ash_query
+
+  defp maybe_apply_query(ash_query, term) do
+    query_string = "%#{term}%"
+    Ash.Query.filter(ash_query, ilike(user_name, ^query_string))
+  end
+
+  defp maybe_filter_excluding(ash_query, []), do: ash_query
+
+  defp maybe_filter_excluding(ash_query, ids) do
+    Ash.Query.filter(ash_query, id not in ^ids)
   end
 
   defp send_follow_notification(learner, coach) do
@@ -176,6 +238,46 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
     })
     |> Ash.create!()
   end
+
+  defp academy_display(coach) do
+    academy = primary_academy(coach)
+
+    if academy do
+      %{name: academy.name, location: format_location(academy)}
+    else
+      %{name: "Gym not set", location: nil}
+    end
+  end
+
+  defp primary_academy(%{academies: academies}) when is_list(academies) do
+    academies
+    |> Enum.reject(&is_nil(&1.name))
+    |> Enum.sort_by(&String.downcase(&1.name))
+    |> List.first()
+  end
+
+  defp primary_academy(_coach), do: nil
+
+  defp format_location(academy) do
+    city = normalize_blank(academy.city)
+    state = normalize_blank(academy.state)
+    zip = normalize_blank(academy.zip)
+
+    cond do
+      city && state && zip -> "#{city}, #{state} #{zip}"
+      city && state -> "#{city}, #{state}"
+      city && zip -> "#{city} #{zip}"
+      state && zip -> "#{state} #{zip}"
+      city -> city
+      state -> state
+      zip -> zip
+      true -> nil
+    end
+  end
+
+  defp normalize_blank(nil), do: nil
+  defp normalize_blank(""), do: nil
+  defp normalize_blank(value), do: value
 
   @impl true
   def render(assigns) do
@@ -201,17 +303,22 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
           <:col :let={relationship} label="Username">
             {relationship.coach.user_name}
           </:col>
-          <:col :let={relationship} label="Role">
-            <span class="badge badge-sm">
-              {String.capitalize(relationship.coach.role_name)}
-            </span>
+          <:col :let={relationship} label="Gym" label_class="text-right">
+            <% display = academy_display(relationship.coach) %>
+            <div class="text-right">
+              <div class="text-sm font-medium text-base-content">{display.name}</div>
+              <div class="text-xs text-base-content/60">
+                {display.location || "Location not set"}
+              </div>
+            </div>
           </:col>
           <:col :let={relationship} label="Since">
             {Calendar.strftime(relationship.inserted_at, "%b %d, %Y")}
           </:col>
           <:action :let={relationship}>
-            <button
+            <.button
               type="button"
+              variant="transparent"
               phx-click="unfollow_coach"
               phx-value-id={relationship.id}
               phx-target={@myself}
@@ -219,7 +326,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
               class="p-1 text-error cursor-pointer hover:bg-error/10 rounded-full transition-colors"
             >
               <.icon name="hero-user-minus" class="w-5 h-5" />
-            </button>
+            </.button>
           </:action>
         </.table>
       <% end %>
@@ -238,12 +345,12 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
             <div class="alert alert-warning">
               <.icon name="hero-exclamation-triangle" class="w-5 h-5" />
               <div>
-                <p class="font-medium">
+                <.p font_weight="font-medium">
                   Are you sure you wish to follow coach {@selected_coach.user_name}?
-                </p>
-                <p class="text-sm opacity-80 mt-1">
+                </.p>
+                <.p size="text-sm" class="opacity-80 mt-1">
                   OSSBJJ takes no responsibility for any messages broadcast alongside videos to watch.
-                </p>
+                </.p>
               </div>
             </div>
             <div class="flex justify-end gap-2 mt-4">
@@ -267,7 +374,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
               <.search_field
                 name="query"
                 value={@coach_search_query}
-                placeholder="Search coaches by username (min 2 characters)..."
+                placeholder="Search coaches by username..."
                 phx-debounce="300"
               />
             </form>
@@ -275,27 +382,38 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
             <%= if @search_results != [] do %>
               <div class="space-y-2 max-h-60 overflow-y-auto">
                 <%= for coach <- @search_results do %>
-                  <button
+                  <% display = academy_display(coach) %>
+                  <.button
                     type="button"
+                    variant="transparent"
+                    content_class="flex w-full items-center justify-between"
                     phx-click="select_coach"
                     phx-value-id={coach.id}
                     phx-target={@myself}
-                    class="w-full p-3 text-left rounded-lg border border-base-200 hover:bg-base-200 transition-colors flex items-center justify-between"
+                    class="w-full p-3 text-left rounded-lg border border-base-200 hover:bg-base-200 transition-colors"
                   >
-                    <span>{coach.user_name}</span>
-                    <span class="badge badge-sm">{String.capitalize(coach.role_name)}</span>
-                  </button>
+                    <div class="flex items-center gap-3">
+                      <span>{coach.user_name}</span>
+                      <span class="badge badge-sm">{String.capitalize(coach.role_name)}</span>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xs font-medium text-base-content">{display.name}</div>
+                      <div class="text-xs text-base-content/60">
+                        {display.location || "Location not set"}
+                      </div>
+                    </div>
+                  </.button>
                 <% end %>
               </div>
             <% else %>
               <%= if String.length(@coach_search_query) >= 2 do %>
-                <p class="text-sm text-base-content/70 text-center py-4">
+                <.p size="text-sm" class="text-base-content/70 text-center py-4">
                   No coaches found matching "{@coach_search_query}"
-                </p>
+                </.p>
               <% else %>
-                <p class="text-sm text-base-content/70 text-center py-4">
-                  Start typing to search for coaches (min 2 characters)
-                </p>
+                <.p size="text-sm" class="text-base-content/70 text-center py-4">
+                  Start typing to search for coaches
+                </.p>
               <% end %>
             <% end %>
           <% end %>

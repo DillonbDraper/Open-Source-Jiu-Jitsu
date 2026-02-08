@@ -116,7 +116,7 @@ defmodule FosBjjWeb.TechniquePathComponent do
         <div class="4 border-b border-base-200 bg-base-200/50">
           <div class="flex items-center gap-2">
             <.h2 class="flex items-center gap-2">
-              Recent Videos
+              Recently Added
             </.h2>
           </div>
         </div>

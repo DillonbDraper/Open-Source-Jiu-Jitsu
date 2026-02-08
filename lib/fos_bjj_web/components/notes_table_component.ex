@@ -213,9 +213,10 @@ defmodule FosBjjWeb.Components.NotesTableComponent do
             {Calendar.strftime(note.inserted_at, "%b %d, %Y %H:%M %p")}
           </:col>
           <:action :let={note}>
-            <button
+            <.button
               id={"#{@id}-delete-note-#{note.id}"}
               type="button"
+              variant="transparent"
               phx-click="delete_note"
               phx-value-id={note.id}
               phx-target={@myself}
@@ -224,7 +225,7 @@ defmodule FosBjjWeb.Components.NotesTableComponent do
               aria-label="Delete note"
             >
               <.icon name="hero-trash" class="w-5 h-5" />
-            </button>
+            </.button>
           </:action>
         </.table>
 

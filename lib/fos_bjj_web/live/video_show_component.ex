@@ -256,9 +256,13 @@ defmodule FosBjjWeb.VideoShowComponent do
                 phx-click="toggle_notes"
                 phx-target={@myself}
               >
-                <h2 class="font-bold text-sm uppercase tracking-wide text-base-content/70">
+                <.h2
+                  size="text-sm"
+                  font_weight="font-bold"
+                  class="uppercase tracking-wide text-base-content/70"
+                >
                   My Notes
-                </h2>
+                </.h2>
                 <.icon
                   name={if @show_notes, do: "hero-chevron-up", else: "hero-chevron-down"}
                   class="w-5 h-5 text-base-content/50"
@@ -284,9 +288,13 @@ defmodule FosBjjWeb.VideoShowComponent do
               phx-click="toggle_info"
               phx-target={@myself}
             >
-              <h2 class="font-bold text-sm uppercase tracking-wide text-base-content/70">
+              <.h2
+                size="text-sm"
+                font_weight="font-bold"
+                class="uppercase tracking-wide text-base-content/70"
+              >
                 Video Information
-              </h2>
+              </.h2>
               <.icon
                 name={if @show_info, do: "hero-chevron-up", else: "hero-chevron-down"}
                 class="w-5 h-5 text-base-content/50"
@@ -295,7 +303,9 @@ defmodule FosBjjWeb.VideoShowComponent do
 
             <%= if @show_info do %>
               <div class="p-4">
-                <h1 class="text-xl font-bold mb-4">{@video.title}</h1>
+                <.h1 size="text-xl" font_weight="font-bold" class="mb-4">
+                  {@video.title}
+                </.h1>
 
                 <%= if @video.description do %>
                   <div class="prose prose-sm max-w-none mb-6">

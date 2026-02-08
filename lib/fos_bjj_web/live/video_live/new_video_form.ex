@@ -63,7 +63,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
         <.flash kind={:info} title="Sweet!" flash={@flash} />
         <.flash kind={:error} title="Oops!" flash={@flash} />
         <div class="flex justify-between items-center mb-6">
-          <h1 class="text-3xl font-bold">Add a Video</h1>
+          <.h1 size="text-3xl" font_weight="font-bold">Add a Video</.h1>
           <.link navigate={~p"/database"} class="btn btn-ghost">
             ← Back
           </.link>

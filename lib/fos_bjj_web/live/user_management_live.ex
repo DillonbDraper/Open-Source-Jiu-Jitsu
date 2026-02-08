@@ -248,12 +248,12 @@ defmodule FosBjjWeb.UserManagementLive do
           <div class="flex justify-end mb-4">
             <form phx-change="filter_role" class="flex items-center gap-2">
               <label class="text-sm font-medium">Filter by Role:</label>
-              <select name="role" class="select select-bordered select-sm">
-                <option value="all" selected={@role_filter == "all"}>All Roles</option>
-                <option value="user" selected={@role_filter == "user"}>User</option>
-                <option value="coach" selected={@role_filter == "coach"}>Coach</option>
-                <option value="admin" selected={@role_filter == "admin"}>Admin</option>
-              </select>
+              <.native_select name="role" size="small" class="min-w-[8rem]">
+                <:option value="all" selected={@role_filter == "all"}>All Roles</:option>
+                <:option value="user" selected={@role_filter == "user"}>User</:option>
+                <:option value="coach" selected={@role_filter == "coach"}>Coach</:option>
+                <:option value="admin" selected={@role_filter == "admin"}>Admin</:option>
+              </.native_select>
             </form>
           </div>
 
@@ -267,11 +267,13 @@ defmodule FosBjjWeb.UserManagementLive do
                   phx-change="validate_role"
                   class="flex items-center gap-2"
                 >
-                  <select name="role" class="select select-bordered select-xs">
-                    <option value="student" selected={@target_role == "student"}>Student</option>
-                    <option value="coach" selected={@target_role == "coach"}>Coach</option>
-                    <option value="admin" selected={@target_role == "admin"}>Admin</option>
-                  </select>
+                  <.native_select name="role" size="extra_small" class="min-w-[7rem]">
+                    <:option value="student" selected={@target_role == "student"}>
+                      Student
+                    </:option>
+                    <:option value="coach" selected={@target_role == "coach"}>Coach</:option>
+                    <:option value="admin" selected={@target_role == "admin"}>Admin</:option>
+                  </.native_select>
                   <.button
                     type="submit"
                     class="btn btn-primary btn-xs"
@@ -318,18 +320,18 @@ defmodule FosBjjWeb.UserManagementLive do
           <div class="flex justify-end mb-4">
             <form phx-change="filter_application_status" class="flex items-center gap-2">
               <label class="text-sm font-medium">Filter by Status:</label>
-              <select name="status" class="select select-bordered select-sm">
-                <option value="pending" selected={@application_status_filter == "pending"}>
+              <.native_select name="status" size="small" class="min-w-[8rem]">
+                <:option value="pending" selected={@application_status_filter == "pending"}>
                   Pending
-                </option>
-                <option value="approved" selected={@application_status_filter == "approved"}>
+                </:option>
+                <:option value="approved" selected={@application_status_filter == "approved"}>
                   Approved
-                </option>
-                <option value="denied" selected={@application_status_filter == "denied"}>
+                </:option>
+                <:option value="denied" selected={@application_status_filter == "denied"}>
                   Denied
-                </option>
-                <option value="all" selected={@application_status_filter == "all"}>All</option>
-              </select>
+                </:option>
+                <:option value="all" selected={@application_status_filter == "all"}>All</:option>
+              </.native_select>
             </form>
           </div>
 

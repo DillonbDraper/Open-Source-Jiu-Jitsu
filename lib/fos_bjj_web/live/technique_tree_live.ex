@@ -185,12 +185,14 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
     ~H"""
     <div class="h-[calc(70vh-4rem)] flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
       <div class="p-4 border-b border-base-200 bg-base-200/50 flex-shrink-0 flex justify-between items-center">
-        <h2 class="text-xl font-bold flex items-center gap-2">
+        <.h2 size="text-xl" font_weight="font-bold" class="flex items-center gap-2">
           <.icon name="hero-book-open" class="w-6 h-6" /> Techniques
-        </h2>
+        </.h2>
         <.popover variant="shadow" color="danger" id="clear-tree-popover">
           <:trigger>
-            <button
+            <.button
+              type="button"
+              variant="transparent"
               phx-click="clear_all"
               phx-target={@myself}
               class="hover:bg-base-300 p-1 rounded-md transition-colors"
@@ -200,7 +202,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                 name="hero-x-circle"
                 class="w-6 h-6 text-red-600 cursor-pointer hover: shadow"
               />
-            </button>
+            </.button>
           </:trigger>
           <:content class="text-s">
             Click to clear all selections
@@ -365,7 +367,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   def tree_node(assigns) do
     ~H"""
     <div class="flex flex-col">
-      <button
+      <.button
+        type="button"
+        variant="transparent"
+        content_class="flex items-center gap-2 w-full text-left"
         phx-click="toggle"
         phx-target={@myself}
         phx-value-level={@click_params["level"]}
@@ -373,10 +378,14 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         phx-value-ori={@click_params["ori"]}
         phx-value-sub={@click_params["sub"]}
         phx-value-action={@click_params["action"]}
-        class={[
-          "flex items-center gap-2 hover:bg-base-200 p-2 rounded-lg transition-colors w-full text-left group",
-          @expanded && "bg-base-200 font-medium"
-        ]}
+        class={
+          [
+            "hover:bg-base-200 p-2 rounded-lg transition-colors w-full text-left group",
+            @expanded && "bg-base-200 font-medium"
+          ]
+          |> Enum.filter(& &1)
+          |> Enum.join(" ")
+        }
         style={"padding-left: #{@level * 0.75 + 0.5}rem"}
       >
         <%= if @expanded do %>
@@ -394,7 +403,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
           {@label}
           <span class="text-xs opacity-60 ml-1">({@count})</span>
         </span>
-      </button>
+      </.button>
       <%= if @expanded do %>
         <div class="flex flex-col animate-in fade-in slide-in-from-top-1 duration-200">
           {render_slot(@inner_block)}

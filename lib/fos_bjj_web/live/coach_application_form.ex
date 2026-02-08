@@ -109,10 +109,10 @@ defmodule FosBjjWeb.CoachApplicationForm do
               <.h3 class="text-2xl font-semibold text-base-content">
                 Apply to Become a Coach
               </.h3>
-              <p class="mt-2 text-sm text-base-content/70">
+              <.p size="text-sm" class="mt-2 text-base-content/70">
                 We review every application manually. Please share your background and include
                 proof if you can.
-              </p>
+              </.p>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
@@ -174,9 +174,9 @@ defmodule FosBjjWeb.CoachApplicationForm do
               </div>
 
               <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-xs text-base-content/60">
+                <.p size="text-xs" class="text-base-content/60">
                   By applying, you agree to use coach tools responsibly as outlined
-                </p>
+                </.p>
                 <div class="flex gap-2">
                   <.button
                     type="button"
