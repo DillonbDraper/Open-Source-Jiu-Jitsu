@@ -108,5 +108,7 @@ config :phoenix_live_view,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
 
-# Disable swoosh api client as it is only required for production adapters.
-config :swoosh, :api_client, false
+# Use Resend in development when configured.
+# config :fos_bjj, FosBjj.Mailer, adapter: Resend.Swoosh.Adapter
+# config :swoosh, api_client: Swoosh.ApiClient.Req
+config :swoosh, local: false

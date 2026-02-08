@@ -56,7 +56,8 @@ defmodule FosBjjWeb.CoachApplicationForm do
             {:ok,
              Swoosh.Attachment.new({:data, data},
                filename: entry.client_name,
-               content_type: entry.client_type
+               content_type: entry.client_type,
+               cid: entry.uuid
              )}
           end)
 
