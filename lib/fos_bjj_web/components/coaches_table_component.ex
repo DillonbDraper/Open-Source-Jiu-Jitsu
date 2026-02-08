@@ -146,7 +146,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
   defp list_followed_coaches(user) do
     StudentCoachRelationship
     |> Ash.Query.filter(learner_id == ^user.id)
-    |> Ash.Query.load(:coach)
+    |> Ash.Query.load(coach: [:academies])
     |> Ash.Query.sort(inserted_at: :desc)
     |> Ash.read!(actor: user)
   end
@@ -168,6 +168,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
       |> Ash.Query.filter(id != ^user.id)
       |> Ash.Query.filter(id not in ^followed_ids)
       |> maybe_apply_query(query)
+      |> Ash.Query.load(:academies)
 
     shared_coaches =
       if shared_coach_ids == [] do
@@ -238,6 +239,46 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
     |> Ash.create!()
   end
 
+  defp academy_display(coach) do
+    academy = primary_academy(coach)
+
+    if academy do
+      %{name: academy.name, location: format_location(academy)}
+    else
+      %{name: "Gym not set", location: nil}
+    end
+  end
+
+  defp primary_academy(%{academies: academies}) when is_list(academies) do
+    academies
+    |> Enum.reject(&is_nil(&1.name))
+    |> Enum.sort_by(&String.downcase(&1.name))
+    |> List.first()
+  end
+
+  defp primary_academy(_coach), do: nil
+
+  defp format_location(academy) do
+    city = normalize_blank(academy.city)
+    state = normalize_blank(academy.state)
+    zip = normalize_blank(academy.zip)
+
+    cond do
+      city && state && zip -> "#{city}, #{state} #{zip}"
+      city && state -> "#{city}, #{state}"
+      city && zip -> "#{city} #{zip}"
+      state && zip -> "#{state} #{zip}"
+      city -> city
+      state -> state
+      zip -> zip
+      true -> nil
+    end
+  end
+
+  defp normalize_blank(nil), do: nil
+  defp normalize_blank(""), do: nil
+  defp normalize_blank(value), do: value
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -262,10 +303,14 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
           <:col :let={relationship} label="Username">
             {relationship.coach.user_name}
           </:col>
-          <:col :let={relationship} label="Role">
-            <span class="badge badge-sm">
-              {String.capitalize(relationship.coach.role_name)}
-            </span>
+          <:col :let={relationship} label="Gym" label_class="text-right">
+            <% display = academy_display(relationship.coach) %>
+            <div class="text-right">
+              <div class="text-sm font-medium text-base-content">{display.name}</div>
+              <div class="text-xs text-base-content/60">
+                {display.location || "Location not set"}
+              </div>
+            </div>
           </:col>
           <:col :let={relationship} label="Since">
             {Calendar.strftime(relationship.inserted_at, "%b %d, %Y")}
@@ -337,6 +382,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
             <%= if @search_results != [] do %>
               <div class="space-y-2 max-h-60 overflow-y-auto">
                 <%= for coach <- @search_results do %>
+                  <% display = academy_display(coach) %>
                   <.button
                     type="button"
                     variant="transparent"
@@ -346,8 +392,16 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
                     phx-target={@myself}
                     class="w-full p-3 text-left rounded-lg border border-base-200 hover:bg-base-200 transition-colors"
                   >
-                    <span>{coach.user_name}</span>
-                    <span class="badge badge-sm">{String.capitalize(coach.role_name)}</span>
+                    <div class="flex items-center gap-3">
+                      <span>{coach.user_name}</span>
+                      <span class="badge badge-sm">{String.capitalize(coach.role_name)}</span>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xs font-medium text-base-content">{display.name}</div>
+                      <div class="text-xs text-base-content/60">
+                        {display.location || "Location not set"}
+                      </div>
+                    </div>
                   </.button>
                 <% end %>
               </div>

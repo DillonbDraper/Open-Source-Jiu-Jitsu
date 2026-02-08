@@ -71,6 +71,46 @@ defmodule FosBjjWeb.AcademyLive.NewAcademyForm do
             placeholder="Enter academy name"
           />
 
+          <.input
+            field={@form[:address_line_1]}
+            label="Address Line 1"
+            placeholder="Street address"
+          />
+
+          <.input
+            field={@form[:address_line_2]}
+            label="Address Line 2"
+            placeholder="Apt, suite, unit, etc."
+          />
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <.input
+              field={@form[:city]}
+              label="City"
+              placeholder="City"
+            />
+
+            <.input
+              field={@form[:state]}
+              label="State"
+              placeholder="State"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <.input
+              field={@form[:zip]}
+              label="ZIP"
+              placeholder="Postal code"
+            />
+
+            <.input
+              field={@form[:country]}
+              label="Country"
+              placeholder="Country"
+            />
+          </div>
+
           <div class="flex gap-4">
             <.button type="submit" class="btn btn-primary">
               Create Academy

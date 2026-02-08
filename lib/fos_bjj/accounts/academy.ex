@@ -21,6 +21,36 @@ defmodule FosBjj.Accounts.Academy do
       public?(true)
     end
 
+    attribute :address_line_1, :string do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :address_line_2, :string do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :city, :string do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :state, :string do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :zip, :string do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :country, :string do
+      allow_nil?(true)
+      public?(true)
+    end
+
     timestamps()
   end
 

@@ -73,6 +73,7 @@ defmodule FosBjjWeb.Layouts do
 
             <.popover
               id="user-menu"
+              phx-update="ignore"
               clickable
               position="bottom"
               color="white"

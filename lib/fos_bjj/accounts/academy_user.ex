@@ -11,10 +11,20 @@ defmodule FosBjj.Accounts.AcademyUser do
 
   actions do
     defaults([:read, :destroy, create: :*])
+
+    update :set_primary do
+      accept([:primary])
+    end
   end
 
   attributes do
     integer_primary_key(:id)
+
+    attribute :primary, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+    end
 
     timestamps()
   end

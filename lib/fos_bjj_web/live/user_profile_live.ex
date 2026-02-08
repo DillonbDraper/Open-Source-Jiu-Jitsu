@@ -3,6 +3,7 @@ defmodule FosBjjWeb.UserProfileLive do
 
   alias FosBjj.JiuJitsu.Video
   alias FosBjj.Accounts.Academy
+  alias FosBjj.Accounts.AcademyUser
   alias FosBjj.Accounts.CoachApplication
   alias FosBjj.Accounts.User
   alias FosBjjWeb.AcademyLive.NewAcademyForm
@@ -29,10 +30,10 @@ defmodule FosBjjWeb.UserProfileLive do
       socket.assigns.current_user
       |> Ash.load!([:academies], actor: socket.assigns.current_user)
 
-    academies = list_academies(user)
-    academy_options = Enum.map(academies, &{&1.name, to_string(&1.id)})
-    selected_academy_ids = Enum.map(user.academies, &to_string(&1.id))
-    profile_form = build_profile_form(user, selected_academy_ids)
+    {selected_academy_ids, academy_lookup, primary_academy_id, academy_memberships} =
+      academy_state(user)
+
+    profile_form = build_profile_form(user, selected_academy_ids, %{})
     coach_application_status = coach_application_status(user)
 
     {:ok,
@@ -49,9 +50,13 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:show_profile_modal, false)
      |> assign(:show_academy_drawer, false)
      |> assign(:profile_form, profile_form)
-     |> assign(:academy_options, academy_options)
      |> assign(:selected_academy_ids, selected_academy_ids)
-     |> assign(:academy_combobox_version, 0)
+     |> assign(:academy_lookup, academy_lookup)
+     |> assign(:primary_academy_id, primary_academy_id)
+     |> assign(:academy_memberships, academy_memberships)
+     |> assign(:show_academy_search, false)
+     |> assign(:academy_search_query, "")
+     |> assign(:academy_search_results, [])
      |> assign(:show_coach_application_modal, false)
      |> assign(:coach_application_status, coach_application_status)}
   end
@@ -201,12 +206,125 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   @impl true
+  def handle_event("add_academy_selector", _, socket) do
+    results =
+      search_academies(
+        socket.assigns.current_user,
+        "",
+        socket.assigns.selected_academy_ids
+      )
+
+    {:noreply,
+     socket
+     |> assign(:show_academy_search, true)
+     |> assign(:academy_search_query, "")
+     |> assign(:academy_search_results, results)}
+  end
+
+  @impl true
+  def handle_event("close_academy_selector", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_academy_search, false)
+     |> assign(:academy_search_query, "")
+     |> assign(:academy_search_results, [])}
+  end
+
+  @impl true
+  def handle_event("search_academies", %{"query" => query}, socket) do
+    results =
+      search_academies(
+        socket.assigns.current_user,
+        query,
+        socket.assigns.selected_academy_ids
+      )
+
+    {:noreply,
+     socket
+     |> assign(:academy_search_query, query)
+     |> assign(:academy_search_results, results)}
+  end
+
+  @impl true
+  def handle_event("select_academy", %{"id" => id}, socket) do
+    academy_id = String.to_integer(id)
+    selected_ids = socket.assigns.selected_academy_ids
+
+    if academy_id in selected_ids do
+      {:noreply, socket}
+    else
+      academy =
+        Enum.find(socket.assigns.academy_search_results, &(&1.id == academy_id)) ||
+          Ash.get!(Academy, academy_id, actor: socket.assigns.current_user)
+
+      updated_ids = [academy_id | selected_ids] |> Enum.uniq()
+      updated_primary_id = socket.assigns.primary_academy_id || academy_id
+      updated_lookup = Map.put(socket.assigns.academy_lookup, academy_id, academy)
+
+      form =
+        build_profile_form(
+          socket.assigns.current_user,
+          updated_ids,
+          socket.assigns.profile_form.params || %{}
+        )
+
+      {:noreply,
+       socket
+       |> assign(:selected_academy_ids, updated_ids)
+       |> assign(:academy_lookup, updated_lookup)
+       |> assign(:primary_academy_id, updated_primary_id)
+       |> assign(:show_academy_search, false)
+       |> assign(:academy_search_query, "")
+       |> assign(:academy_search_results, [])
+       |> assign(:profile_form, form)}
+    end
+  end
+
+  @impl true
+  def handle_event("remove_academy", %{"id" => id}, socket) do
+    academy_id = String.to_integer(id)
+    selected_ids = socket.assigns.selected_academy_ids
+
+    updated_ids = Enum.reject(selected_ids, &(&1 == academy_id))
+
+    updated_primary_id =
+      if socket.assigns.primary_academy_id == academy_id do
+        List.first(updated_ids)
+      else
+        socket.assigns.primary_academy_id
+      end
+
+    updated_lookup = Map.delete(socket.assigns.academy_lookup, academy_id)
+
+    form =
+      build_profile_form(
+        socket.assigns.current_user,
+        updated_ids,
+        socket.assigns.profile_form.params || %{}
+      )
+
+    {:noreply,
+     socket
+     |> assign(:selected_academy_ids, updated_ids)
+     |> assign(:academy_lookup, updated_lookup)
+     |> assign(:primary_academy_id, updated_primary_id)
+     |> assign(:profile_form, form)}
+  end
+
+  @impl true
+  def handle_event("set_primary_academy", %{"id" => id}, socket) do
+    academy_id = String.to_integer(id)
+
+    if academy_id in socket.assigns.selected_academy_ids do
+      {:noreply, assign(socket, :primary_academy_id, academy_id)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event("validate_profile", %{"profile" => params}, socket) do
-    academy_ids =
-      params
-      |> Map.get("academy_ids", [])
-      |> List.wrap()
-      |> Enum.reject(&(&1 == ""))
+    academy_ids = socket.assigns.selected_academy_ids
 
     cleaned_params =
       params
@@ -218,19 +336,13 @@ defmodule FosBjjWeb.UserProfileLive do
         actor: socket.assigns.current_user
       )
 
-    {:noreply,
-     socket
-     |> assign(:profile_form, form)
-     |> assign(:selected_academy_ids, academy_ids)}
+    {:noreply, assign(socket, :profile_form, form)}
   end
 
   @impl true
   def handle_event("save_profile", %{"profile" => params}, socket) do
-    academy_ids =
-      params
-      |> Map.get("academy_ids", [])
-      |> List.wrap()
-      |> Enum.reject(&(&1 == ""))
+    academy_ids = socket.assigns.selected_academy_ids
+    primary_academy_id = ensure_primary_id(academy_ids, socket.assigns.primary_academy_id)
 
     cleaned_params =
       params
@@ -242,19 +354,25 @@ defmodule FosBjjWeb.UserProfileLive do
            actor: socket.assigns.current_user
          ) do
       {:ok, updated_user} ->
+        _ = persist_primary_academy(updated_user, primary_academy_id)
         updated_user = Ash.load!(updated_user, [:academies], actor: updated_user)
-        academies = list_academies(updated_user)
 
-        academy_options = Enum.map(academies, &{&1.name, to_string(&1.id)})
-        selected_academy_ids = Enum.map(updated_user.academies, &to_string(&1.id))
-        profile_form = build_profile_form(updated_user, selected_academy_ids)
+        {selected_academy_ids, academy_lookup, updated_primary_academy_id, academy_memberships} =
+          academy_state(updated_user)
+
+        profile_form = build_profile_form(updated_user, selected_academy_ids, %{})
 
         {:noreply,
          socket
          |> assign(:current_user, updated_user)
          |> assign(:show_profile_modal, false)
-         |> assign(:academy_options, academy_options)
          |> assign(:selected_academy_ids, selected_academy_ids)
+         |> assign(:academy_lookup, academy_lookup)
+         |> assign(:primary_academy_id, updated_primary_academy_id)
+         |> assign(:academy_memberships, academy_memberships)
+         |> assign(:show_academy_search, false)
+         |> assign(:academy_search_query, "")
+         |> assign(:academy_search_results, [])
          |> assign(:profile_form, profile_form)
          |> put_flash(:info, "Profile updated successfully")}
 
@@ -295,39 +413,27 @@ defmodule FosBjjWeb.UserProfileLive do
   @impl true
   def handle_info({NewAcademyForm, {:academy_created, academy}}, socket) do
     params = socket.assigns.profile_form.params || %{}
-
-    academy_ids =
-      params
-      |> Map.get("academy_ids", socket.assigns.selected_academy_ids)
-      |> List.wrap()
-      |> Enum.reject(&(&1 == ""))
-
-    updated_academy_ids =
-      [to_string(academy.id) | academy_ids]
-      |> Enum.uniq()
-
-    academy_options =
-      [{academy.name, to_string(academy.id)} | socket.assigns.academy_options]
-      |> Enum.uniq_by(fn {_name, id} -> id end)
-      |> Enum.sort_by(fn {name, _id} -> String.downcase(name) end)
-
-    updated_params =
-      params
-      |> Map.put("academy_ids", updated_academy_ids)
-      |> Map.put("bjj_belt", normalize_blank(params["bjj_belt"]))
+    updated_academy_ids = [academy.id | socket.assigns.selected_academy_ids] |> Enum.uniq()
+    updated_primary_id = socket.assigns.primary_academy_id || academy.id
+    updated_lookup = Map.put(socket.assigns.academy_lookup, academy.id, academy)
 
     form =
-      AshPhoenix.Form.validate(socket.assigns.profile_form, updated_params,
-        actor: socket.assigns.current_user
+      build_profile_form(
+        socket.assigns.current_user,
+        updated_academy_ids,
+        Map.put(params, "bjj_belt", normalize_blank(params["bjj_belt"]))
       )
 
     {:noreply,
      socket
-     |> assign(:academy_options, academy_options)
      |> assign(:selected_academy_ids, updated_academy_ids)
+     |> assign(:academy_lookup, updated_lookup)
+     |> assign(:primary_academy_id, updated_primary_id)
      |> assign(:profile_form, form)
      |> assign(:show_academy_drawer, false)
-     |> assign(:academy_combobox_version, socket.assigns.academy_combobox_version + 1)
+     |> assign(:show_academy_search, false)
+     |> assign(:academy_search_query, "")
+     |> assign(:academy_search_results, [])
      |> put_flash(:info, "Academy created successfully")}
   end
 
@@ -399,16 +505,54 @@ defmodule FosBjjWeb.UserProfileLive do
     |> Enum.any?()
   end
 
-  defp list_academies(user) do
-    Academy
-    |> Ash.Query.sort(name: :asc)
+  defp list_user_academy_memberships(user) do
+    AcademyUser
+    |> Ash.Query.filter(user_id == ^user.id)
+    |> Ash.Query.load(:academy)
+    |> Ash.Query.sort(inserted_at: :asc)
     |> Ash.read!(actor: user)
   end
 
-  defp build_profile_form(user, academy_ids) do
+  defp academy_state(user) do
+    memberships = list_user_academy_memberships(user)
+    selected_academy_ids = Enum.map(memberships, & &1.academy_id)
+
+    academy_lookup =
+      Enum.reduce(memberships, %{}, fn membership, acc ->
+        if membership.academy do
+          Map.put(acc, membership.academy_id, membership.academy)
+        else
+          acc
+        end
+      end)
+
+    primary_academy_id =
+      memberships
+      |> Enum.find(& &1.primary)
+      |> case do
+        %{academy_id: academy_id} -> academy_id
+        _ -> List.first(selected_academy_ids)
+      end
+
+    ordered_memberships = order_memberships_by_primary(memberships, primary_academy_id)
+    ordered_academy_ids = Enum.map(ordered_memberships, & &1.academy_id)
+
+    {ordered_academy_ids, academy_lookup, primary_academy_id, ordered_memberships}
+  end
+
+  defp order_memberships_by_primary(memberships, nil), do: memberships
+
+  defp order_memberships_by_primary(memberships, primary_id) do
+    {primary, rest} =
+      Enum.split_with(memberships, fn membership -> membership.academy_id == primary_id end)
+
+    primary ++ rest
+  end
+
+  defp build_profile_form(user, academy_ids, params) do
     user
     |> AshPhoenix.Form.for_update(:update_profile, as: "profile", actor: user)
-    |> AshPhoenix.Form.validate(%{"academy_ids" => academy_ids}, actor: user)
+    |> AshPhoenix.Form.validate(Map.put(params, "academy_ids", academy_ids), actor: user)
     |> to_form()
   end
 
@@ -417,16 +561,93 @@ defmodule FosBjjWeb.UserProfileLive do
       socket.assigns.current_user
       |> Ash.load!([:academies], actor: socket.assigns.current_user)
 
-    academies = list_academies(user)
-    academy_options = Enum.map(academies, &{&1.name, to_string(&1.id)})
-    selected_academy_ids = Enum.map(user.academies, &to_string(&1.id))
-    profile_form = build_profile_form(user, selected_academy_ids)
+    {selected_academy_ids, academy_lookup, primary_academy_id, academy_memberships} =
+      academy_state(user)
+
+    profile_form = build_profile_form(user, selected_academy_ids, %{})
 
     socket
     |> assign(:current_user, user)
-    |> assign(:academy_options, academy_options)
     |> assign(:selected_academy_ids, selected_academy_ids)
+    |> assign(:academy_lookup, academy_lookup)
+    |> assign(:primary_academy_id, primary_academy_id)
+    |> assign(:academy_memberships, academy_memberships)
+    |> assign(:show_academy_search, false)
+    |> assign(:academy_search_query, "")
+    |> assign(:academy_search_results, [])
     |> assign(:profile_form, profile_form)
+  end
+
+  defp search_academies(user, query, excluded_ids) do
+    Academy
+    |> maybe_apply_academy_query(query)
+    |> maybe_exclude_academies(excluded_ids)
+    |> Ash.Query.sort(name: :asc)
+    |> Ash.Query.limit(10)
+    |> Ash.read!(actor: user)
+  end
+
+  defp maybe_apply_academy_query(ash_query, ""), do: ash_query
+
+  defp maybe_apply_academy_query(ash_query, term) do
+    query_string = "%#{term}%"
+
+    Ash.Query.filter(
+      ash_query,
+      ilike(name, ^query_string) or
+        ilike(address_line_1, ^query_string) or
+        ilike(address_line_2, ^query_string) or
+        ilike(city, ^query_string) or
+        ilike(state, ^query_string) or
+        ilike(zip, ^query_string) or
+        ilike(country, ^query_string)
+    )
+  end
+
+  defp maybe_exclude_academies(ash_query, []), do: ash_query
+
+  defp maybe_exclude_academies(ash_query, ids) do
+    Ash.Query.filter(ash_query, id not in ^ids)
+  end
+
+  defp academy_location(academy) do
+    city = normalize_blank(academy.city)
+    state = normalize_blank(academy.state)
+    zip = normalize_blank(academy.zip)
+
+    cond do
+      city && state && zip -> "#{city}, #{state} #{zip}"
+      city && state -> "#{city}, #{state}"
+      city && zip -> "#{city} #{zip}"
+      state && zip -> "#{state} #{zip}"
+      city -> city
+      state -> state
+      zip -> zip
+      true -> nil
+    end
+  end
+
+  defp ensure_primary_id([], _primary_id), do: nil
+
+  defp ensure_primary_id(academy_ids, nil), do: List.first(academy_ids)
+
+  defp ensure_primary_id(academy_ids, primary_id) do
+    if primary_id in academy_ids, do: primary_id, else: List.first(academy_ids)
+  end
+
+  defp persist_primary_academy(_user, nil), do: :ok
+
+  defp persist_primary_academy(user, primary_id) do
+    list_user_academy_memberships(user)
+    |> Enum.each(fn membership ->
+      desired = membership.academy_id == primary_id
+
+      if membership.primary != desired do
+        membership
+        |> Ash.Changeset.for_update(:set_primary, %{primary: desired}, actor: user)
+        |> Ash.update!()
+      end
+    end)
   end
 
   defp normalize_blank(nil), do: nil
@@ -438,9 +659,54 @@ defmodule FosBjjWeb.UserProfileLive do
     ~H"""
     <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]} socket={@socket}>
       <div class="space-y-8">
+        <%= if @current_user.role_name == "student" &&
+              @coach_application_status != :denied &&
+              User.coach_application_eligible?(@current_user) do %>
+          <div class="flex flex-wrap items-center justify-end gap-3">
+            <%= if @coach_application_status == :pending do %>
+              <.tooltip
+                id="coach-application-processing-tooltip"
+                inline={true}
+                position="bottom"
+                width="triple_large"
+                trigger_class="inline-flex"
+                content_class="max-w-xs whitespace-normal text-sm"
+              >
+                <:trigger>
+                  <span class="inline-flex cursor-help">
+                    <.icon
+                      name="hero-information-circle"
+                      class="size-5 text-base-content/70"
+                    />
+                  </span>
+                </:trigger>
+                <:content>
+                  Your application to become a coach and gain the ability to upload videos, share with your students, and more is
+                  being processed. Thank you for your interest in contributing to OSSBJJ!
+                </:content>
+              </.tooltip>
+              <.button
+                id="coach-application-processing"
+                class="btn btn-primary"
+                disabled
+              >
+                Application processing...
+              </.button>
+            <% else %>
+              <.button
+                id="open-coach-application"
+                phx-click="open_coach_application_modal"
+                class="btn btn-primary"
+              >
+                Apply To Become A Coach
+              </.button>
+            <% end %>
+          </div>
+        <% end %>
+
         <.user_profile_panel
           current_user={@current_user}
-          coach_application_status={@coach_application_status}
+          academy_memberships={@academy_memberships}
         />
 
         <%= if FosBjj.Accounts.User.verified?(@current_user) do %>
@@ -637,33 +903,154 @@ defmodule FosBjjWeb.UserProfileLive do
                 label="Other high level experience (wrestling, judo, sambo, etc.)"
               />
 
-              <div>
-                <.combobox
-                  id={"academy-select-#{@academy_combobox_version}"}
-                  field={@profile_form[:academy_ids]}
-                  label="Academies"
-                  value={@selected_academy_ids}
-                  placeholder="Search academies..."
-                  searchable={true}
-                  multiple={true}
-                  size="extra_large"
-                >
-                  <:option :for={{name, id} <- @academy_options} value={id}>
-                    {name}
-                  </:option>
-                </.combobox>
-                <div class="mt-2 flex flex-wrap items-center gap-3">
-                  <.p size="text-xs" class="text-base-content/60">
-                    Search and select multiple academies.
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <.p size="text-sm" font_weight="font-semibold" class="text-base-content">
+                    Academies
                   </.p>
+                  <.button
+                    id="add-academy-selector"
+                    type="button"
+                    class="btn btn-outline btn-xs"
+                    phx-click="add_academy_selector"
+                    disabled={@show_academy_search}
+                  >
+                    Add academy
+                  </.button>
+                </div>
+
+                <div id="academy-list" class="space-y-2">
+                  <%= if @selected_academy_ids == [] do %>
+                    <div class="rounded-lg border border-dashed border-base-200 bg-base-50 px-4 py-6 text-center">
+                      <.p size="text-sm" class="text-base-content/70">
+                        No academies selected yet.
+                      </.p>
+                    </div>
+                  <% else %>
+                    <%= for academy_id <- @selected_academy_ids do %>
+                      <% academy = Map.get(@academy_lookup, academy_id) %>
+                      <div
+                        id={"academy-row-#{academy_id}"}
+                        class={[
+                          "flex items-center gap-3 rounded-lg border border-base-200 bg-base-50 px-3 py-2",
+                          @primary_academy_id == academy_id &&
+                            "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
+                        ]}
+                      >
+                        <input
+                          type="radio"
+                          id={"primary-academy-#{academy_id}"}
+                          name="primary_academy"
+                          class="h-4 w-4 text-primary border-base-300 focus:ring-primary/30"
+                          checked={@primary_academy_id == academy_id}
+                          disabled={length(@selected_academy_ids) == 1}
+                          phx-click="set_primary_academy"
+                          phx-value-id={academy_id}
+                          aria-label="Set primary academy"
+                        />
+                        <div class="flex-1 min-w-0 flex items-center justify-between gap-4">
+                          <div class="min-w-0">
+                            <div class="flex items-center gap-2 text-sm font-medium text-base-content truncate">
+                              <span class="truncate">
+                                {if academy, do: academy.name, else: "Academy"}
+                              </span>
+                              <span
+                                :if={@primary_academy_id == academy_id}
+                                class="badge badge-sm badge-primary"
+                              >
+                                Primary
+                              </span>
+                            </div>
+                          </div>
+                          <div class="text-right text-xs text-base-content/60">
+                            {if academy,
+                              do: academy_location(academy) || "Location not set",
+                              else: "Location not set"}
+                          </div>
+                        </div>
+                        <.button
+                          type="button"
+                          class="btn btn-ghost btn-xs"
+                          phx-click="remove_academy"
+                          phx-value-id={academy_id}
+                        >
+                          <.icon name="hero-x-mark" class="w-4 h-4" />
+                        </.button>
+                      </div>
+                    <% end %>
+                  <% end %>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
                   <.button
                     id="open-academy-drawer"
                     type="button"
-                    class="btn btn-outline btn-xs"
+                    class="btn btn-ghost btn-xs"
                     phx-click="open_academy_drawer"
                   >
-                    Add an academy
+                    Create academy
                   </.button>
+                  <.p size="text-xs" class="text-base-content/60">
+                    Add a new academy if you cannot find it.
+                  </.p>
+                </div>
+
+                <div
+                  :if={@show_academy_search}
+                  class="rounded-xl border border-base-200 bg-base-50 px-4 py-4"
+                >
+                  <form id="academy-search-form" phx-change="search_academies">
+                    <.search_field
+                      id="academy-search-field"
+                      name="query"
+                      value={@academy_search_query}
+                      placeholder="Search academies by name or location..."
+                      phx-debounce="300"
+                    />
+                  </form>
+
+                  <%= if @academy_search_results != [] do %>
+                    <div class="mt-3 space-y-2 max-h-56 overflow-y-auto">
+                      <%= for academy <- @academy_search_results do %>
+                        <.button
+                          type="button"
+                          variant="transparent"
+                          content_class="flex w-full items-center justify-between"
+                          phx-click="select_academy"
+                          phx-value-id={academy.id}
+                          class="w-full p-3 text-left rounded-lg border border-base-200 hover:bg-base-200 transition-colors"
+                        >
+                          <div class="text-sm font-medium text-base-content">
+                            {academy.name}
+                          </div>
+                          <div class="text-xs text-base-content/60 text-right">
+                            {academy_location(academy) || "Location not set"}
+                          </div>
+                        </.button>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <%= if String.length(@academy_search_query) >= 2 do %>
+                      <.p size="text-sm" class="text-base-content/70 text-center py-4">
+                        No academies found matching "{@academy_search_query}"
+                      </.p>
+                    <% else %>
+                      <.p size="text-sm" class="text-base-content/70 text-center py-4">
+                        Start typing to search for academies
+                      </.p>
+                    <% end %>
+                  <% end %>
+
+                  <div class="mt-3 flex justify-end">
+                    <.button
+                      id="close-academy-selector"
+                      type="button"
+                      class="btn btn-ghost btn-xs"
+                      phx-click="close_academy_selector"
+                    >
+                      Cancel
+                    </.button>
+                  </div>
                 </div>
               </div>
             </div>

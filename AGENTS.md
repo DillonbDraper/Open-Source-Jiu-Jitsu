@@ -375,4 +375,5 @@ Where the server handled it via:
 ### OSSBJJ instructions
 
 - Always prefer using MishkaChelekom components sourced from the lib/fos_bjj_web/components directory over native elements or DaisyUI ones.
+- Never create migrations for changes.  Always use the mix ash.codegen (name) command to create migrations from resource changes
 - Never attempt to commit with git.

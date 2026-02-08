@@ -1,15 +1,11 @@
 defmodule FosBjjWeb.Components.UserProfilePanel do
   @moduledoc """
   Component for displaying user profile header information.
-  The profile modal and academy drawer are rendered at the LiveView level
-  to prevent unmounting issues when drawer state changes.
   """
   use FosBjjWeb, :html
 
-  alias FosBjj.Accounts.User
-
   attr :current_user, :map, required: true
-  attr :coach_application_status, :any, required: true
+  attr :academy_memberships, :list, required: true
 
   def user_profile_panel(assigns) do
     ~H"""
@@ -25,51 +21,6 @@ defmodule FosBjjWeb.Components.UserProfilePanel do
         </div>
 
         <div class="flex flex-col items-start gap-3">
-          <%= if @current_user.role_name == "student" &&
-                @coach_application_status != :denied &&
-                User.coach_application_eligible?(@current_user) do %>
-            <%= if @coach_application_status == :pending do %>
-              <div class="flex items-center gap-2">
-                <.tooltip
-                  id="coach-application-processing-tooltip"
-                  inline={true}
-                  position="bottom"
-                  width="triple_large"
-                  trigger_class="inline-flex"
-                  content_class="max-w-xs whitespace-normal text-sm"
-                >
-                  <:trigger>
-                    <span class="inline-flex cursor-help">
-                      <.icon
-                        name="hero-information-circle"
-                        class="size-5 text-base-content/70"
-                      />
-                    </span>
-                  </:trigger>
-                  <:content>
-                    Your application to become a coach and gain the ability to upload videos, share with your students, and more is
-                    being processed. Thank you for your interest in contributing to OSSBJJ!
-                  </:content>
-                </.tooltip>
-                <.button
-                  id="coach-application-processing"
-                  class="btn btn-primary"
-                  disabled
-                >
-                  Application processing...
-                </.button>
-              </div>
-            <% else %>
-              <.button
-                id="open-coach-application"
-                phx-click="open_coach_application_modal"
-                class="btn btn-primary"
-              >
-                Become A Coach
-              </.button>
-            <% end %>
-          <% end %>
-
           <.button
             id="edit-profile"
             phx-click="open_profile_modal"
@@ -128,15 +79,20 @@ defmodule FosBjjWeb.Components.UserProfilePanel do
           >
             Academies
           </.p>
-          <div class="mt-2 flex flex-wrap gap-2">
-            <%= if @current_user.academies == [] do %>
-              <span class="text-sm text-base-content/70">Not set</span>
-            <% else %>
-              <%= for academy <- @current_user.academies do %>
-                <span class="badge badge-sm">{academy.name}</span>
+          <%= if @academy_memberships == [] do %>
+            <span class="mt-2 inline-flex text-sm text-base-content/70">Not set</span>
+          <% else %>
+            <div class="mt-3 space-y-2">
+              <%= for membership <- @academy_memberships do %>
+                <% academy = membership.academy %>
+                <div class="flex items-center justify-between gap-3 text-sm">
+                  <span class="font-medium text-base-content">
+                    {academy.name}
+                  </span>
+                </div>
               <% end %>
-            <% end %>
-          </div>
+            </div>
+          <% end %>
         </div>
       </div>
     </header>
