@@ -908,15 +908,6 @@ defmodule FosBjjWeb.UserProfileLive do
                   <.p size="text-sm" font_weight="font-semibold" class="text-base-content">
                     Academies
                   </.p>
-                  <.button
-                    id="add-academy-selector"
-                    type="button"
-                    class="btn btn-outline btn-xs"
-                    phx-click="add_academy_selector"
-                    disabled={@show_academy_search}
-                  >
-                    Add academy
-                  </.button>
                 </div>
 
                 <div id="academy-list" class="space-y-2">

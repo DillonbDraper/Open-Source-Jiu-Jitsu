@@ -394,7 +394,6 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
                   >
                     <div class="flex items-center gap-3">
                       <span>{coach.user_name}</span>
-                      <span class="badge badge-sm">{String.capitalize(coach.role_name)}</span>
                     </div>
                     <div class="text-right">
                       <div class="text-xs font-medium text-base-content">{display.name}</div>
