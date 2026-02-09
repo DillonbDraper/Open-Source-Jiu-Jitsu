@@ -31,7 +31,7 @@ defmodule FosBjjWeb.UserProfileLive do
       |> Ash.load!([:academies], actor: socket.assigns.current_user)
 
     {selected_academy_ids, academy_lookup, primary_academy_id, academy_memberships} =
-      academy_state(user)
+      get_user_academy_state(user)
 
     profile_form = build_profile_form(user, selected_academy_ids, %{})
     coach_application_status = coach_application_status(user)
