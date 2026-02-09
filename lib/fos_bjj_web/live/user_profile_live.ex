@@ -171,6 +171,7 @@ defmodule FosBjjWeb.UserProfileLive do
     if User.coach_application_eligible?(socket.assigns.current_user) do
       {:noreply, assign(socket, :show_coach_application_modal, true)}
     else
+      # Questionable if actually necessary as condition should never be hit
       {:noreply,
        put_flash(
          socket,
@@ -206,22 +207,6 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   @impl true
-  def handle_event("add_academy_selector", _, socket) do
-    results =
-      search_academies(
-        socket.assigns.current_user,
-        "",
-        socket.assigns.selected_academy_ids
-      )
-
-    {:noreply,
-     socket
-     |> assign(:show_academy_search, true)
-     |> assign(:academy_search_query, "")
-     |> assign(:academy_search_results, results)}
-  end
-
-  @impl true
   def handle_event("close_academy_selector", _, socket) do
     {:noreply,
      socket
@@ -231,7 +216,18 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   @impl true
-  def handle_event("search_academies", %{"query" => query}, socket) do
+  def handle_event("open_academy_selector", _, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_academy_search, true)
+     |> assign(:academy_search_query, "")
+     |> assign(:academy_search_results, [])}
+  end
+
+  @impl true
+  def handle_event("search_academies", params, socket) do
+    query = params["query"] || params["value"] || ""
+
     results =
       search_academies(
         socket.assigns.current_user,
@@ -257,7 +253,7 @@ defmodule FosBjjWeb.UserProfileLive do
         Enum.find(socket.assigns.academy_search_results, &(&1.id == academy_id)) ||
           Ash.get!(Academy, academy_id, actor: socket.assigns.current_user)
 
-      updated_ids = [academy_id | selected_ids] |> Enum.uniq()
+      updated_ids = [academy_id | selected_ids]
       updated_primary_id = socket.assigns.primary_academy_id || academy_id
       updated_lookup = Map.put(socket.assigns.academy_lookup, academy_id, academy)
 
@@ -358,7 +354,7 @@ defmodule FosBjjWeb.UserProfileLive do
         updated_user = Ash.load!(updated_user, [:academies], actor: updated_user)
 
         {selected_academy_ids, academy_lookup, updated_primary_academy_id, academy_memberships} =
-          academy_state(updated_user)
+          get_user_academy_state(updated_user)
 
         profile_form = build_profile_form(updated_user, selected_academy_ids, %{})
 
@@ -413,7 +409,7 @@ defmodule FosBjjWeb.UserProfileLive do
   @impl true
   def handle_info({NewAcademyForm, {:academy_created, academy}}, socket) do
     params = socket.assigns.profile_form.params || %{}
-    updated_academy_ids = [academy.id | socket.assigns.selected_academy_ids] |> Enum.uniq()
+    updated_academy_ids = [academy.id | socket.assigns.selected_academy_ids]
     updated_primary_id = socket.assigns.primary_academy_id || academy.id
     updated_lookup = Map.put(socket.assigns.academy_lookup, academy.id, academy)
 
@@ -513,17 +509,13 @@ defmodule FosBjjWeb.UserProfileLive do
     |> Ash.read!(actor: user)
   end
 
-  defp academy_state(user) do
+  defp get_user_academy_state(user) do
     memberships = list_user_academy_memberships(user)
     selected_academy_ids = Enum.map(memberships, & &1.academy_id)
 
     academy_lookup =
       Enum.reduce(memberships, %{}, fn membership, acc ->
-        if membership.academy do
-          Map.put(acc, membership.academy_id, membership.academy)
-        else
-          acc
-        end
+        Map.put(acc, membership.academy_id, membership.academy)
       end)
 
     primary_academy_id =
@@ -562,7 +554,7 @@ defmodule FosBjjWeb.UserProfileLive do
       |> Ash.load!([:academies], actor: socket.assigns.current_user)
 
     {selected_academy_ids, academy_lookup, primary_academy_id, academy_memberships} =
-      academy_state(user)
+      get_user_academy_state(user)
 
     profile_form = build_profile_form(user, selected_academy_ids, %{})
 
@@ -908,6 +900,16 @@ defmodule FosBjjWeb.UserProfileLive do
                   <.p size="text-sm" font_weight="font-semibold" class="text-base-content">
                     Academies
                   </.p>
+                  <.button
+                    id="open-academy-selector"
+                    type="button"
+                    class="btn btn-ghost btn-xs"
+                    phx-click="open_academy_selector"
+                    aria-label="Search academies"
+                    title="Add an Academy"
+                  >
+                    <.icon name="hero-plus" class="w-4 h-4" />
+                  </.button>
                 </div>
 
                 <div id="academy-list" class="space-y-2">
@@ -964,6 +966,7 @@ defmodule FosBjjWeb.UserProfileLive do
                           class="btn btn-ghost btn-xs"
                           phx-click="remove_academy"
                           phx-value-id={academy_id}
+                          title="Remove Academy"
                         >
                           <.icon name="hero-x-mark" class="w-4 h-4" />
                         </.button>
@@ -990,15 +993,14 @@ defmodule FosBjjWeb.UserProfileLive do
                   :if={@show_academy_search}
                   class="rounded-xl border border-base-200 bg-base-50 px-4 py-4"
                 >
-                  <form id="academy-search-form" phx-change="search_academies">
-                    <.search_field
-                      id="academy-search-field"
-                      name="query"
-                      value={@academy_search_query}
-                      placeholder="Search academies by name or location..."
-                      phx-debounce="300"
-                    />
-                  </form>
+                  <.search_field
+                    id="academy-search-field"
+                    name="query"
+                    value={@academy_search_query}
+                    placeholder="Search academies by name or location..."
+                    phx-debounce="300"
+                    phx-keyup="search_academies"
+                  />
 
                   <%= if @academy_search_results != [] do %>
                     <div class="mt-3 space-y-2 max-h-56 overflow-y-auto">

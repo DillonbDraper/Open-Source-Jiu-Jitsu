@@ -1,9 +1,0 @@
-* This is a list of features/enhancements necessary for MVP
-- Polish/expand note system
-  - Even denser table?
-- Application to become a coach/system to submit videos (can be post-live)
-
-** This is a list of features/enhancements not strictly *necessary* for MVP, but would be helpful.
-- Adequate seed database of techniques/videos
-- User notes/favoriting system for videos
-- General styling enhancements.

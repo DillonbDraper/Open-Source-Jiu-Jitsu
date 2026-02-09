@@ -322,6 +322,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
               phx-click="unfollow_coach"
               phx-value-id={relationship.id}
               phx-target={@myself}
+              title="Unfollow Coach"
               data-confirm="Are you sure you want to unfollow this coach?"
               class="p-1 text-error cursor-pointer hover:bg-error/10 rounded-full transition-colors"
             >
@@ -407,7 +408,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
             <% else %>
               <%= if String.length(@coach_search_query) >= 2 do %>
                 <.p size="text-sm" class="text-base-content/70 text-center py-4">
-                  No coaches found matching "{@coach_search_query}"
+                  No unfollowed coaches found matching "{@coach_search_query}"
                 </.p>
               <% else %>
                 <.p size="text-sm" class="text-base-content/70 text-center py-4">
