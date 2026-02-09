@@ -40,7 +40,8 @@ defmodule FosBjj.MixProject do
   #
   # Type `mix help deps` for examples and options.
   defp deps do
-    [
+    deps = [
+      {:error_tracker, "~> 0.7"},
       {:bcrypt_elixir, "~> 3.0"},
       {:picosat_elixir, "~> 0.2"},
       {:sourceror, "~> 1.8", only: [:dev, :test]},
@@ -82,7 +83,9 @@ defmodule FosBjj.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:video_link_helper, "~> 0.3.0"}
-    ] ++ tailwind_dep()
+    ]
+
+    deps ++ tailwind_dep()
   end
 
   # Aliases are shortcuts or tasks specific to the current project.

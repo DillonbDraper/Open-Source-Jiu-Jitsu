@@ -7,6 +7,8 @@
 # General application configuration
 import Config
 
+config :error_tracker, repo: FosBjj.Repo, otp_app: :fos_bjj, enabled: true
+
 config :ash,
   allow_forbidden_field_for_relationships_by_default?: true,
   include_embedded_source_by_default?: false,

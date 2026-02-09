@@ -1,6 +1,6 @@
 defmodule FosBjjWeb.Router do
   use FosBjjWeb, :router
-
+  use ErrorTracker.Web, :router
   use AshAuthentication.Phoenix.Router
 
   import AshAuthentication.Plug.Helpers
@@ -31,6 +31,7 @@ defmodule FosBjjWeb.Router do
     pipe_through([:browser, :admin])
 
     live_dashboard("/dashboard", metrics: FosBjjWeb.Telemetry)
+    error_tracker_dashboard "/errors"
   end
 
   scope "/", FosBjjWeb do
@@ -124,6 +125,14 @@ defmodule FosBjjWeb.Router do
       pipe_through(:browser)
 
       ash_admin("/")
+    end
+  end
+
+  if Application.compile_env(:fos_bjj, :dev_routes) do
+    use ErrorTracker.Web, :router
+
+    scope "/dev" do
+      pipe_through :browser
     end
   end
 end
