@@ -45,6 +45,7 @@ defmodule FosBjj.Accounts.Role do
   def data do
     [
       %{name: "admin", label: "Administrator"},
+      %{name: "contributor", label: "Contributor"},
       %{name: "coach", label: "Coach"},
       %{name: "student", label: "Student"}
     ]

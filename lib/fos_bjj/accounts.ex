@@ -8,7 +8,7 @@ defmodule FosBjj.Accounts do
   resources do
     resource(FosBjj.Accounts.Academy)
     resource(FosBjj.Accounts.AcademyUser)
-    resource(FosBjj.Accounts.CoachApplication)
+    resource(FosBjj.Accounts.ContributorApplication)
     resource(FosBjj.Accounts.Token)
     resource(FosBjj.Accounts.User)
     resource(FosBjj.Accounts.Role)

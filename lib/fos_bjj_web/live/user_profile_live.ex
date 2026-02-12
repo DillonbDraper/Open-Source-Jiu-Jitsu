@@ -4,10 +4,10 @@ defmodule FosBjjWeb.UserProfileLive do
   alias FosBjj.JiuJitsu.Video
   alias FosBjj.Accounts.Academy
   alias FosBjj.Accounts.AcademyUser
-  alias FosBjj.Accounts.CoachApplication
+  alias FosBjj.Accounts.ContributorApplication
   alias FosBjj.Accounts.User
   alias FosBjjWeb.AcademyLive.NewAcademyForm
-  alias FosBjjWeb.CoachApplicationForm
+  alias FosBjjWeb.ContributorApplicationForm
   alias FosBjjWeb.VideoLive.VideoFormComponent
   alias FosBjjWeb.Components.MessagesTableComponent
   alias FosBjjWeb.Components.NotesTableComponent
@@ -34,7 +34,7 @@ defmodule FosBjjWeb.UserProfileLive do
       get_user_academy_state(user)
 
     profile_form = build_profile_form(user, selected_academy_ids, %{})
-    coach_application_status = coach_application_status(user)
+    contributor_application_status = contributor_application_status(user)
 
     {:ok,
      socket
@@ -57,8 +57,8 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:show_academy_search, false)
      |> assign(:academy_search_query, "")
      |> assign(:academy_search_results, [])
-     |> assign(:show_coach_application_modal, false)
-     |> assign(:coach_application_status, coach_application_status)}
+     |> assign(:show_contributor_application_modal, false)
+     |> assign(:contributor_application_status, contributor_application_status)}
   end
 
   @impl true
@@ -167,16 +167,16 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   @impl true
-  def handle_event("open_coach_application_modal", _, socket) do
-    if User.coach_application_eligible?(socket.assigns.current_user) do
-      {:noreply, assign(socket, :show_coach_application_modal, true)}
+  def handle_event("open_contributor_application_modal", _, socket) do
+    if User.contributor_application_eligible?(socket.assigns.current_user) do
+      {:noreply, assign(socket, :show_contributor_application_modal, true)}
     else
       # Questionable if actually necessary as condition should never be hit
       {:noreply,
        put_flash(
          socket,
          :error,
-         "Coach applications are limited to black belts or practitioners with other high level experience."
+         "Contributor applications are limited to black belts or practitioners with other high level experience."
        )}
     end
   end
@@ -326,6 +326,7 @@ defmodule FosBjjWeb.UserProfileLive do
       params
       |> Map.put("academy_ids", academy_ids)
       |> Map.put("bjj_belt", normalize_blank(params["bjj_belt"]))
+      |> Map.put("role", params["role"] || socket.assigns.current_user.role_name)
 
     form =
       AshPhoenix.Form.validate(socket.assigns.profile_form, cleaned_params,
@@ -344,6 +345,7 @@ defmodule FosBjjWeb.UserProfileLive do
       params
       |> Map.put("academy_ids", academy_ids)
       |> Map.put("bjj_belt", normalize_blank(params["bjj_belt"]))
+      |> Map.put("role", params["role"] || socket.assigns.current_user.role_name)
 
     case AshPhoenix.Form.submit(socket.assigns.profile_form,
            params: cleaned_params,
@@ -378,32 +380,32 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   @impl true
-  def handle_info({:coach_application_closed}, socket) do
-    {:noreply, assign(socket, :show_coach_application_modal, false)}
+  def handle_info({:contributor_application_closed}, socket) do
+    {:noreply, assign(socket, :show_contributor_application_modal, false)}
   end
 
   @impl true
-  def handle_info({:coach_application_submitted, {:ok, _}}, socket) do
+  def handle_info({:contributor_application_submitted, {:ok, _}}, socket) do
     {:noreply,
      socket
-     |> assign(:show_coach_application_modal, false)
-     |> assign(:coach_application_status, :pending)
-     |> put_flash(:info, "Coach application submitted successfully.")}
+     |> assign(:show_contributor_application_modal, false)
+     |> assign(:contributor_application_status, :pending)
+     |> put_flash(:info, "Contributor application submitted successfully.")}
   end
 
   @impl true
-  def handle_info({:coach_application_submitted, {:error, :missing_recipient}}, socket) do
+  def handle_info({:contributor_application_submitted, {:error, :missing_recipient}}, socket) do
     {:noreply,
      put_flash(
        socket,
        :error,
-       "Coach application recipient is not configured. Please contact support."
+       "Contributor application recipient is not configured. Please contact support."
      )}
   end
 
   @impl true
-  def handle_info({:coach_application_submitted, {:error, _}}, socket) do
-    {:noreply, put_flash(socket, :error, "Failed to deliver coach application email.")}
+  def handle_info({:contributor_application_submitted, {:error, _}}, socket) do
+    {:noreply, put_flash(socket, :error, "Failed to deliver contributor application email.")}
   end
 
   @impl true
@@ -475,9 +477,9 @@ defmodule FosBjjWeb.UserProfileLive do
     |> Ash.read!(actor: user, page: [limit: 5, offset: offset, count: true])
   end
 
-  defp coach_application_status(user) do
+  defp contributor_application_status(user) do
     has_denied? =
-      CoachApplication
+      ContributorApplication
       |> Ash.Query.filter(user_id == ^user.id and status == :denied)
       |> Ash.read!(actor: user)
       |> Enum.any?()
@@ -486,7 +488,7 @@ defmodule FosBjjWeb.UserProfileLive do
       has_denied? ->
         :denied
 
-      coach_application_pending?(user) ->
+      contributor_application_pending?(user) ->
         :pending
 
       true ->
@@ -494,8 +496,8 @@ defmodule FosBjjWeb.UserProfileLive do
     end
   end
 
-  defp coach_application_pending?(user) do
-    CoachApplication
+  defp contributor_application_pending?(user) do
+    ContributorApplication
     |> Ash.Query.filter(user_id == ^user.id and status == :pending)
     |> Ash.read!(actor: user)
     |> Enum.any?()
@@ -542,9 +544,14 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   defp build_profile_form(user, academy_ids, params) do
+    form_params =
+      params
+      |> Map.put_new("role", user.role_name)
+      |> Map.put("academy_ids", academy_ids)
+
     user
     |> AshPhoenix.Form.for_update(:update_profile, as: "profile", actor: user)
-    |> AshPhoenix.Form.validate(Map.put(params, "academy_ids", academy_ids), actor: user)
+    |> AshPhoenix.Form.validate(form_params, actor: user)
     |> to_form()
   end
 
@@ -646,18 +653,25 @@ defmodule FosBjjWeb.UserProfileLive do
   defp normalize_blank(""), do: nil
   defp normalize_blank(value), do: value
 
+  defp role_options do
+    [
+      {"Student", "student"},
+      {"Coach", "coach"}
+    ]
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]} socket={@socket}>
       <div class="space-y-8">
-        <%= if @current_user.role_name == "student" &&
-              @coach_application_status != :denied &&
-              User.coach_application_eligible?(@current_user) do %>
+        <%= if @current_user.role_name in ["student", "coach"] &&
+              @contributor_application_status != :denied &&
+              User.contributor_application_eligible?(@current_user) do %>
           <div class="flex flex-wrap items-center justify-end gap-3">
-            <%= if @coach_application_status == :pending do %>
+            <%= if @contributor_application_status == :pending do %>
               <.tooltip
-                id="coach-application-processing-tooltip"
+                id="contributor-application-processing-tooltip"
                 inline={true}
                 position="bottom"
                 width="triple_large"
@@ -673,12 +687,12 @@ defmodule FosBjjWeb.UserProfileLive do
                   </span>
                 </:trigger>
                 <:content>
-                  Your application to become a coach and gain the ability to upload videos, share with your students, and more is
+                  Your application to become a contributor and gain the ability to upload videos, share with your students, and more is
                   being processed. Thank you for your interest in contributing to OSSBJJ!
                 </:content>
               </.tooltip>
               <.button
-                id="coach-application-processing"
+                id="contributor-application-processing"
                 class="btn btn-primary"
                 disabled
               >
@@ -686,11 +700,11 @@ defmodule FosBjjWeb.UserProfileLive do
               </.button>
             <% else %>
               <.button
-                id="open-coach-application"
-                phx-click="open_coach_application_modal"
+                id="open-contributor-application"
+                phx-click="open_contributor_application_modal"
                 class="btn btn-primary"
               >
-                Apply To Become A Coach
+                Apply To Become A Contributor
               </.button>
             <% end %>
           </div>
@@ -721,16 +735,18 @@ defmodule FosBjjWeb.UserProfileLive do
           />
         <% end %>
 
-        <%= if @current_user.role_name in ["coach", "admin"] do %>
+        <%= if @current_user.role_name in ["coach", "contributor", "admin"] do %>
           <.live_component
             module={FollowersTableComponent}
             id="followers-table"
             current_user={@current_user}
           />
+        <% end %>
 
+        <%= if @current_user.role_name in ["contributor", "admin"] do %>
           <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
             <.h3 size="text-lg" font_weight="font-medium" class="mb-4">
-              Coach Options
+              Contributor Options
             </.h3>
             <div>
               <.button phx-click="toggle_videos" class="btn-primary">
@@ -850,10 +866,10 @@ defmodule FosBjjWeb.UserProfileLive do
         </.modal>
 
         <.live_component
-          module={CoachApplicationForm}
-          id="coach-application-form"
+          module={ContributorApplicationForm}
+          id="contributor-application-form"
           current_user={@current_user}
-          show={@show_coach_application_modal}
+          show={@show_contributor_application_modal}
         />
       </div>
 
@@ -887,6 +903,13 @@ defmodule FosBjjWeb.UserProfileLive do
                 label="BJJ Belt"
                 prompt="Select your belt"
                 options={UserProfilePanel.belt_options()}
+              />
+
+              <.input
+                type="select"
+                field={@profile_form[:role]}
+                label="Role"
+                options={role_options()}
               />
 
               <.input

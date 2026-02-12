@@ -60,7 +60,7 @@ defmodule FosBjjWeb.Layouts do
       <:list>
         <%= if @current_user do %>
           <div class="flex items-center gap-4">
-            <.coach_or_admin_only current_user={@current_user}>
+            <.contributor_or_admin_only current_user={@current_user}>
               <div class="flex items-center gap-4">
                 <.link
                   navigate={~p"/videos/new"}
@@ -69,7 +69,7 @@ defmodule FosBjjWeb.Layouts do
                   Add Video
                 </.link>
               </div>
-            </.coach_or_admin_only>
+            </.contributor_or_admin_only>
 
             <.popover
               id="user-menu"

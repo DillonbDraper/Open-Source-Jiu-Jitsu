@@ -10,10 +10,10 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   def mount(_params, _session, socket) do
     current_user = socket.assigns[:current_user]
 
-    unless FosBjj.Accounts.User.coach_or_admin?(current_user) do
+    unless FosBjj.Accounts.User.contributor_or_admin?(current_user) do
       {:ok,
        socket
-       |> put_flash(:error, "You must be a coach or admin to add videos")
+       |> put_flash(:error, "You must be a contributor or admin to add videos")
        |> push_navigate(to: ~p"/")}
     else
       {:ok,

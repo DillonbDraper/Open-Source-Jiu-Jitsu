@@ -1,13 +1,13 @@
-defmodule FosBjjWeb.CoachApplicationForm do
+defmodule FosBjjWeb.ContributorApplicationForm do
   use FosBjjWeb, :live_component
 
-  alias FosBjj.Accounts.CoachApplication
-  alias FosBjj.Accounts.CoachApplicationEmail
+  alias FosBjj.Accounts.ContributorApplication
+  alias FosBjj.Accounts.ContributorApplicationEmail
 
   @impl true
   def mount(socket) do
     {:ok,
-     allow_upload(socket, :coach_proof,
+     allow_upload(socket, :contributor_proof,
        accept: ~w(.jpg .jpeg .png .gif .webp .pdf),
        max_entries: 1,
        max_file_size: 8_000_000
@@ -35,7 +35,7 @@ defmodule FosBjjWeb.CoachApplicationForm do
   end
 
   @impl true
-  def handle_event("validate", %{"coach_application" => params}, socket) do
+  def handle_event("validate", %{"contributor_application" => params}, socket) do
     form =
       AshPhoenix.Form.validate(socket.assigns.form, params, actor: socket.assigns.current_user)
 
@@ -43,14 +43,14 @@ defmodule FosBjjWeb.CoachApplicationForm do
   end
 
   @impl true
-  def handle_event("submit", %{"coach_application" => params}, socket) do
+  def handle_event("submit", %{"contributor_application" => params}, socket) do
     case AshPhoenix.Form.submit(socket.assigns.form,
            params: params,
            actor: socket.assigns.current_user
          ) do
       {:ok, application} ->
         attachments =
-          consume_uploaded_entries(socket, :coach_proof, fn %{path: path}, entry ->
+          consume_uploaded_entries(socket, :contributor_proof, fn %{path: path}, entry ->
             data = File.read!(path)
 
             {:ok,
@@ -62,13 +62,13 @@ defmodule FosBjjWeb.CoachApplicationForm do
           end)
 
         result =
-          CoachApplicationEmail.deliver_application(
+          ContributorApplicationEmail.deliver_application(
             socket.assigns.current_user,
             application.body,
             attachments
           )
 
-        send(self(), {:coach_application_submitted, result})
+        send(self(), {:contributor_application_submitted, result})
 
         {:noreply, socket}
 
@@ -79,18 +79,18 @@ defmodule FosBjjWeb.CoachApplicationForm do
 
   @impl true
   def handle_event("close", _, socket) do
-    send(self(), {:coach_application_closed})
+    send(self(), {:contributor_application_closed})
     {:noreply, socket}
   end
 
   @impl true
   def handle_event("cancel-upload", %{"ref" => ref}, socket) do
-    {:noreply, cancel_upload(socket, :coach_proof, ref)}
+    {:noreply, cancel_upload(socket, :contributor_proof, ref)}
   end
 
   defp build_form(user) do
-    CoachApplication
-    |> AshPhoenix.Form.for_create(:submit, as: "coach_application", actor: user)
+    ContributorApplication
+    |> AshPhoenix.Form.for_create(:submit, as: "contributor_application", actor: user)
     |> to_form()
   end
 
@@ -108,7 +108,7 @@ defmodule FosBjjWeb.CoachApplicationForm do
           <div class="space-y-6">
             <div>
               <.h3 class="text-2xl font-semibold text-base-content">
-                Apply to Become a Coach
+                Apply to Become a Contributor
               </.h3>
               <.p size="text-sm" class="mt-2 text-base-content/70">
                 We review every application manually. Please share your background and include
@@ -163,7 +163,7 @@ defmodule FosBjjWeb.CoachApplicationForm do
               <div>
                 <.file_field
                   id={"#{@id}-proof"}
-                  target={:coach_proof}
+                  target={:contributor_proof}
                   uploads={@uploads}
                   dropzone
                   dropzone_type="file"
@@ -176,7 +176,7 @@ defmodule FosBjjWeb.CoachApplicationForm do
 
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <.p size="text-xs" class="text-base-content/60">
-                  By applying, you agree to use coach tools responsibly as outlined
+                  By applying, you agree to use contributor tools responsibly as outlined
                 </.p>
                 <div class="flex gap-2">
                   <.button

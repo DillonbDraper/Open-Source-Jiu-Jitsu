@@ -164,7 +164,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
 
     base_query =
       User
-      |> Ash.Query.filter(role_name in ["coach", "admin"])
+      |> Ash.Query.filter(role_name in ["coach", "contributor", "admin"])
       |> Ash.Query.filter(id != ^user.id)
       |> Ash.Query.filter(id not in ^followed_ids)
       |> maybe_apply_query(query)

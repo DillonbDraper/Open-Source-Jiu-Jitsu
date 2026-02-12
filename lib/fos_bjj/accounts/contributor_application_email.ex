@@ -1,6 +1,6 @@
-defmodule FosBjj.Accounts.CoachApplicationEmail do
+defmodule FosBjj.Accounts.ContributorApplicationEmail do
   @moduledoc """
-  Delivers coach application emails to the configured recipient.
+  Delivers contributor application emails to the configured recipient.
   """
 
   import Swoosh.Email
@@ -10,7 +10,7 @@ defmodule FosBjj.Accounts.CoachApplicationEmail do
   @spec deliver_application(FosBjj.Accounts.User.t(), String.t(), list()) ::
           {:ok, term()} | {:error, term()}
   def deliver_application(user, body, attachments) do
-    recipient = Application.get_env(:fos_bjj, :coach_application_email)
+    recipient = Application.get_env(:fos_bjj, :contributor_application_email)
 
     if is_nil(recipient) do
       {:error, :missing_recipient}
@@ -20,7 +20,7 @@ defmodule FosBjj.Accounts.CoachApplicationEmail do
         |> from({"Open Source BJJ", "noreply@ossbjj.org"})
         |> to(recipient)
         |> reply_to(to_string(user.email))
-        |> subject("OSSBJJ Coach Application")
+        |> subject("OSSBJJ Contributor Application")
         |> text_body(build_body(user, body))
         |> add_attachments(attachments)
 

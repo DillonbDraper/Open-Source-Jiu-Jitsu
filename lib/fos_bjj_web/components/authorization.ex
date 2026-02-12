@@ -55,7 +55,7 @@ defmodule FosBjjWeb.Components.Authorization do
   end
 
   @doc """
-  Renders content only if the current user is a verified coach or admin.
+  Renders content only if the current user is a verified coach, contributor, or admin.
 
   ## Examples
 
@@ -70,6 +70,27 @@ defmodule FosBjjWeb.Components.Authorization do
   def coach_or_admin_only(assigns) do
     ~H"""
     <%= if User.coach_or_admin?(@current_user) do %>
+      {render_slot(@inner_block)}
+    <% end %>
+    """
+  end
+
+  @doc """
+  Renders content only if the current user is a verified contributor or admin.
+
+  ## Examples
+
+      <.contributor_or_admin_only current_user={@current_user}>
+        <button>Add Video</button>
+      </.contributor_or_admin_only>
+
+  """
+  attr(:current_user, :map, default: nil, doc: "The current user")
+  slot(:inner_block, required: true)
+
+  def contributor_or_admin_only(assigns) do
+    ~H"""
+    <%= if User.contributor_or_admin?(@current_user) do %>
       {render_slot(@inner_block)}
     <% end %>
     """

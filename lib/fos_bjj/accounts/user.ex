@@ -274,7 +274,13 @@ defmodule FosBjj.Accounts.User do
       accept([:bjj_belt, :other_high_level_experience])
       argument(:academy_ids, {:array, :integer})
 
-      change manage_relationship(:academy_ids, :academies, type: :append_and_remove)
+      argument(:role, :string,
+        allow_nil?: false,
+        constraints: [match: ~r/^(student|coach)$/]
+      )
+
+      change(set_attribute(:role_name, arg(:role)))
+      change(manage_relationship(:academy_ids, :academies, type: :append_and_remove))
     end
   end
 
@@ -288,10 +294,17 @@ defmodule FosBjj.Accounts.User do
     end
 
     policy action_type(:read) do
-      description("Users can read their own record, coaches, and students when they are a coach")
+      description(
+        "Users can read their own record, coaches, and students when they are a coach or contributor"
+      )
+
       authorize_if(expr(id == ^actor(:id)))
-      authorize_if(expr(^actor(:role_name) == "coach" and role_name == "student"))
-      authorize_if(expr(role_name in ["coach", "admin"]))
+
+      authorize_if(
+        expr(^actor(:role_name) in ["coach", "contributor"] and role_name == "student")
+      )
+
+      authorize_if(expr(role_name in ["coach", "contributor", "admin"]))
     end
 
     policy action_type(:update) do
@@ -394,21 +407,31 @@ defmodule FosBjj.Accounts.User do
   def coach?(%{role_name: "coach"} = user), do: verified?(user)
   def coach?(_), do: false
 
-  @doc "Check if user has coach or admin role (requires verification)"
-  def coach_or_admin?(%{role_name: role} = user) when role in ["coach", "admin"],
+  @doc "Check if user has contributor role (requires verification)"
+  def contributor?(%{role_name: "contributor"} = user), do: verified?(user)
+  def contributor?(_), do: false
+
+  @doc "Check if user has coach, contributor, or admin role (requires verification)"
+  def coach_or_admin?(%{role_name: role} = user) when role in ["coach", "contributor", "admin"],
     do: verified?(user)
 
   def coach_or_admin?(_), do: false
 
-  @doc "Eligibility for coach application based on belt and other experience."
-  def coach_application_eligible?(%{
+  @doc "Check if user has contributor or admin role (requires verification)"
+  def contributor_or_admin?(%{role_name: role} = user) when role in ["contributor", "admin"],
+    do: verified?(user)
+
+  def contributor_or_admin?(_), do: false
+
+  @doc "Eligibility for contributor application based on belt and other experience."
+  def contributor_application_eligible?(%{
         bjj_belt: :black,
         other_high_level_experience: _other
       }),
       do: true
 
-  def coach_application_eligible?(%{bjj_belt: "black"}), do: true
+  def contributor_application_eligible?(%{bjj_belt: "black"}), do: true
 
-  def coach_application_eligible?(%{other_high_level_experience: true}), do: true
-  def coach_application_eligible?(_), do: false
+  def contributor_application_eligible?(%{other_high_level_experience: true}), do: true
+  def contributor_application_eligible?(_), do: false
 end

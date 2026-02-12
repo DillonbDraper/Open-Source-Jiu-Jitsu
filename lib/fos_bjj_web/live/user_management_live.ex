@@ -1,6 +1,6 @@
 defmodule FosBjjWeb.UserManagementLive do
   use FosBjjWeb, :live_view
-  alias FosBjj.Accounts.CoachApplication
+  alias FosBjj.Accounts.ContributorApplication
   alias FosBjj.Accounts.User
   alias FosBjj.Accounts.UserMessage
   require Ash.Query
@@ -12,7 +12,7 @@ defmodule FosBjjWeb.UserManagementLive do
     current_user = socket.assigns.current_user
 
     users = Ash.read!(User, actor: current_user)
-    coach_applications = list_coach_applications(current_user, "pending")
+    contributor_applications = list_contributor_applications(current_user, "pending")
 
     {:ok,
      socket
@@ -21,7 +21,7 @@ defmodule FosBjjWeb.UserManagementLive do
      |> assign(:editing_user, nil)
      |> assign(:target_role, nil)
      |> assign(:application_status_filter, "pending")
-     |> assign(:coach_applications, coach_applications)}
+     |> assign(:contributor_applications, contributor_applications)}
   end
 
   @impl true
@@ -76,29 +76,31 @@ defmodule FosBjjWeb.UserManagementLive do
   end
 
   @impl true
-  def handle_event("approve_coach_application", %{"id" => id}, socket) do
-    update_coach_application_status(socket, id, :approved)
+  def handle_event("approve_contributor_application", %{"id" => id}, socket) do
+    update_contributor_application_status(socket, id, :approved)
   end
 
   @impl true
-  def handle_event("deny_coach_application", %{"id" => id}, socket) do
-    update_coach_application_status(socket, id, :denied)
+  def handle_event("deny_contributor_application", %{"id" => id}, socket) do
+    update_contributor_application_status(socket, id, :denied)
   end
 
   @impl true
   def handle_event("filter_application_status", %{"status" => status}, socket) do
-    coach_applications = list_coach_applications(socket.assigns.current_user, status)
+    contributor_applications = list_contributor_applications(socket.assigns.current_user, status)
 
     {:noreply,
      socket
      |> assign(:application_status_filter, status)
-     |> assign(:coach_applications, coach_applications)}
+     |> assign(:contributor_applications, contributor_applications)}
   end
 
   defp role_badge_class(:admin), do: "badge-secondary"
   defp role_badge_class(:coach), do: "badge-primary"
+  defp role_badge_class(:contributor), do: "badge-accent"
   defp role_badge_class("admin"), do: "badge-secondary"
   defp role_badge_class("coach"), do: "badge-primary"
+  defp role_badge_class("contributor"), do: "badge-accent"
   defp role_badge_class(_), do: "badge-ghost"
 
   defp list_users(actor, role_filter) do
@@ -123,9 +125,9 @@ defmodule FosBjjWeb.UserManagementLive do
     end
   end
 
-  defp list_coach_applications(actor, status_filter) do
+  defp list_contributor_applications(actor, status_filter) do
     query =
-      CoachApplication
+      ContributorApplication
       |> Ash.Query.load(:user)
       |> Ash.Query.sort(inserted_at: :desc)
 
@@ -139,43 +141,43 @@ defmodule FosBjjWeb.UserManagementLive do
     Ash.read!(query, actor: actor)
   end
 
-  defp update_coach_application_status(socket, id, status) do
+  defp update_contributor_application_status(socket, id, status) do
     current_user = socket.assigns.current_user
 
-    coach_application =
-      Ash.get!(CoachApplication, id, actor: current_user, load: [:user])
+    contributor_application =
+      Ash.get!(ContributorApplication, id, actor: current_user, load: [:user])
 
-    case coach_application
+    case contributor_application
          |> Ash.Changeset.for_update(:set_status, %{status: status}, actor: current_user)
          |> Ash.update() do
       {:ok, updated_application} ->
         socket =
           if status == :approved do
-            grant_coach_role(socket, updated_application.user)
+            grant_contributor_role(socket, updated_application.user)
           else
             socket
           end
 
-        socket = send_coach_application_message(socket, updated_application, status)
+        socket = send_contributor_application_message(socket, updated_application, status)
 
-        coach_applications =
-          list_coach_applications(current_user, socket.assigns.application_status_filter)
+        contributor_applications =
+          list_contributor_applications(current_user, socket.assigns.application_status_filter)
 
         users = list_users(current_user, socket.assigns.role_filter)
 
         {:noreply,
          socket
-         |> assign(:coach_applications, coach_applications)
+         |> assign(:contributor_applications, contributor_applications)
          |> assign(:users, users)
-         |> put_flash(:info, "Coach application #{status} successfully.")}
+         |> put_flash(:info, "Contributor application #{status} successfully.")}
 
       {:error, _error} ->
-        {:noreply, put_flash(socket, :error, "Failed to update coach application.")}
+        {:noreply, put_flash(socket, :error, "Failed to update contributor application.")}
     end
   end
 
-  defp send_coach_application_message(socket, application, status) do
-    message_body = coach_application_message(status)
+  defp send_contributor_application_message(socket, application, status) do
+    message_body = contributor_application_message(status)
 
     case UserMessage
          |> Ash.Changeset.for_create(
@@ -188,21 +190,21 @@ defmodule FosBjjWeb.UserManagementLive do
         socket
 
       {:error, _error} ->
-        put_flash(socket, :error, "Coach application updated, but message delivery failed.")
+        put_flash(socket, :error, "Contributor application updated, but message delivery failed.")
     end
   end
 
-  defp coach_application_message(:approved),
+  defp contributor_application_message(:approved),
     do:
-      "Parabens!  You have been approved to become a coach on OSSBJJ! Please help contribute to the community by helping to make this resouce the best that it can be."
+      "Parabens! You have been approved to become a contributor on OSSBJJ! Please help contribute to the community by helping to make this resource the best that it can be."
 
-  defp coach_application_message(:denied),
+  defp contributor_application_message(:denied),
     do:
-      "Unfortunately, your applicationt o OSSBJJ has been denied.  We thank you for your interest in contributing, but at this time we either have enough coaches or your qualifications were found to be insufficient.  Please do not take this decision personally, as it was not made lightly. Thank you for using OSSBJJ."
+      "Unfortunately, your application to OSSBJJ has been denied. We thank you for your interest in contributing, but at this time we either have enough contributors or your qualifications were found to be insufficient. Please do not take this decision personally, as it was not made lightly. Thank you for using OSSBJJ."
 
-  defp grant_coach_role(socket, user) do
+  defp grant_contributor_role(socket, user) do
     case user
-         |> Ash.Changeset.for_update(:update_role, %{role: "coach"},
+         |> Ash.Changeset.for_update(:update_role, %{role: "contributor"},
            actor: socket.assigns.current_user
          )
          |> Ash.update() do
@@ -210,24 +212,24 @@ defmodule FosBjjWeb.UserManagementLive do
         socket
 
       {:error, _error} ->
-        put_flash(socket, :error, "Coach application approved, but role update failed.")
+        put_flash(socket, :error, "Contributor application approved, but role update failed.")
     end
   end
 
   # I don't love this but it is necessary here
-  defp coach_application_status_label(status) do
+  defp contributor_application_status_label(status) do
     status
     |> to_string()
     |> String.capitalize()
   end
 
-  defp coach_application_pending?("pending"), do: true
-  defp coach_application_pending?(_), do: false
+  defp contributor_application_pending?("pending"), do: true
+  defp contributor_application_pending?(_), do: false
 
-  defp coach_application_badge_class("pending"), do: "badge-warning"
-  defp coach_application_badge_class("approved"), do: "badge-success"
-  defp coach_application_badge_class("denied"), do: "badge-error"
-  defp coach_application_badge_class(_), do: "badge-ghost"
+  defp contributor_application_badge_class("pending"), do: "badge-warning"
+  defp contributor_application_badge_class("approved"), do: "badge-success"
+  defp contributor_application_badge_class("denied"), do: "badge-error"
+  defp contributor_application_badge_class(_), do: "badge-ghost"
 
   @impl true
   def render(assigns) do
@@ -251,6 +253,9 @@ defmodule FosBjjWeb.UserManagementLive do
               <.native_select name="role" size="small" class="min-w-[8rem]">
                 <:option value="all" selected={@role_filter == "all"}>All Roles</:option>
                 <:option value="user" selected={@role_filter == "user"}>User</:option>
+                <:option value="contributor" selected={@role_filter == "contributor"}>
+                  Contributor
+                </:option>
                 <:option value="coach" selected={@role_filter == "coach"}>Coach</:option>
                 <:option value="admin" selected={@role_filter == "admin"}>Admin</:option>
               </.native_select>
@@ -270,6 +275,9 @@ defmodule FosBjjWeb.UserManagementLive do
                   <.native_select name="role" size="extra_small" class="min-w-[7rem]">
                     <:option value="student" selected={@target_role == "student"}>
                       Student
+                    </:option>
+                    <:option value="contributor" selected={@target_role == "contributor"}>
+                      Contributor
                     </:option>
                     <:option value="coach" selected={@target_role == "coach"}>Coach</:option>
                     <:option value="admin" selected={@target_role == "admin"}>Admin</:option>
@@ -310,9 +318,9 @@ defmodule FosBjjWeb.UserManagementLive do
         <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <.h3 class="text-lg font-medium">Coach Applications</.h3>
+              <.h3 class="text-lg font-medium">Contributor Applications</.h3>
               <.p class="text-sm text-base-content/70">
-                Review and approve applications for coach access.
+                Review and approve applications for contributor access.
               </.p>
             </div>
           </div>
@@ -335,7 +343,7 @@ defmodule FosBjjWeb.UserManagementLive do
             </form>
           </div>
 
-          <.table rows={@coach_applications}>
+          <.table rows={@contributor_applications}>
             <:col :let={application} label="Applicant">
               <div class="space-y-1">
                 <div class="font-medium">{application.user.email}</div>
@@ -344,7 +352,7 @@ defmodule FosBjjWeb.UserManagementLive do
             </:col>
             <:col :let={application} label="Message">
               <.popover
-                id={"coach-app-body-#{application.id}"}
+                id={"contributor-app-body-#{application.id}"}
                 width="double_large"
                 variant="default"
                 color="dark"
@@ -359,8 +367,8 @@ defmodule FosBjjWeb.UserManagementLive do
               </.popover>
             </:col>
             <:col :let={application} label="Status">
-              <span class={"badge " <> coach_application_badge_class(application.status)}>
-                {coach_application_status_label(application.status)}
+              <span class={"badge " <> contributor_application_badge_class(application.status)}>
+                {contributor_application_status_label(application.status)}
               </span>
             </:col>
             <:col :let={application} label="Submitted">
@@ -370,17 +378,17 @@ defmodule FosBjjWeb.UserManagementLive do
               <div class="flex gap-2">
                 <.button
                   class="btn btn-success btn-xs"
-                  phx-click="approve_coach_application"
+                  phx-click="approve_contributor_application"
                   phx-value-id={application.id}
-                  disabled={!coach_application_pending?(application.status)}
+                  disabled={!contributor_application_pending?(application.status)}
                 >
                   Approve
                 </.button>
                 <.button
                   class="btn btn-error btn-xs"
-                  phx-click="deny_coach_application"
+                  phx-click="deny_contributor_application"
                   phx-value-id={application.id}
-                  disabled={!coach_application_pending?(application.status)}
+                  disabled={!contributor_application_pending?(application.status)}
                 >
                   Deny
                 </.button>

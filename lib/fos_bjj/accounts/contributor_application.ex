@@ -1,11 +1,11 @@
-defmodule FosBjj.Accounts.CoachApplication do
+defmodule FosBjj.Accounts.ContributorApplication do
   use Ash.Resource,
     otp_app: :fos_bjj,
     domain: FosBjj.Accounts,
     data_layer: AshPostgres.DataLayer
 
   postgres do
-    table("coach_applications")
+    table("contributor_applications")
     repo(FosBjj.Repo)
   end
 
