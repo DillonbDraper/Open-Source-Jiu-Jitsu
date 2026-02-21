@@ -1,20 +1,168 @@
-<Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-  <div class="hero min-h-[50vh]">
-    <div class="hero-content text-center">
-      <div class="max-w-md">
-        <.h1 size="text-5xl" font_weight="font-bold" class="mb-8">
+<Layouts.app full_width no_padding flash={@flash} current_user={assigns[:current_user]}>
+  <div class="landing-gradient min-h-screen">
+    <%!-- SECTION 1: HERO --%>
+    <.jumbotron variant="transparent" padding="p-0" class="min-h-[70vh] flex items-center justify-center">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <.h1 size="text-5xl" font_weight="font-bold" class="mb-6 text-base-content">
           Welcome to Open Source BJJ
         </.h1>
-        <.p size="text-lg" class="text-base-content/70 mb-8">
-          Curated collection of high-quality Brazilian Jiu-Jitsu instructional videos.
+        <.p size="text-xl" class="text-base-content/70 mb-12 max-w-2xl mx-auto">
+          A free, high-quality repository of Brazilian Jiu-Jitsu and grappling video instruction,
+          designed to provide real value to your Jiu-Jitsu journey.
         </.p>
-        <.link navigate={~p"/database"} class="btn btn-primary btn-lg">
-          Enter Database
-        </.link>
-        <.link navigate={~p"/mission"} class="btn btn-primary btn-lg">
-          What Is This?
-        </.link>
+
+        <%!-- Hero CTA --%>
+        <div class="my-10">
+          <.button_link
+            navigate={~p"/database"}
+            color="primary"
+            variant="default"
+            size="extra_large"
+            rounded="large"
+            class="shadow-lg"
+          >
+            Enter Database <.icon name="hero-arrow-right" class="size-5 ml-2" />
+          </.button_link>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+            <.card_content>
+              <div class="flex items-center gap-3 mb-3">
+                <.icon name="hero-map" class="size-6 text-primary" />
+                <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
+                  Intuitive Navigation
+                </.h3>
+              </div>
+              <.p class="text-base-content/70">
+                An adapted version of the famous inAction navigation system, making it easy to find
+                material on exactly what you are looking for.
+              </.p>
+            </.card_content>
+          </.card>
+
+          <.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+            <.card_content>
+              <div class="flex items-center gap-3 mb-3">
+                <.icon name="hero-shield-check" class="size-6 text-primary" />
+                <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
+                  Curated Quality
+                </.h3>
+              </div>
+              <.p class="text-base-content/70">
+                Every video is vetted by a verified BJJ black belt for quality instruction,
+                production values, and genuine educational content.
+              </.p>
+            </.card_content>
+          </.card>
+        </div>
       </div>
-    </div>
+    </.jumbotron>
+
+    <.divider color="base" class="opacity-20" />
+
+    <%!-- SECTION 2: NOTES FEATURE --%>
+    <.jumbotron variant="transparent" padding="p-0" class="py-16">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <.h2 size="text-4xl" font_weight="font-bold" class="text-center mb-12 text-base-content">
+          Take Notes While You Train
+        </.h2>
+
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+          <%!-- Placeholder image --%>
+          <div class="w-full lg:w-1/2 aspect-video rounded-xl bg-base-100/10 backdrop-blur-sm border border-base-content/10 flex items-center justify-center">
+            <.icon name="hero-pencil-square" class="size-20 text-base-content/30" />
+          </div>
+
+          <%!-- Info cards --%>
+          <div class="w-full lg:w-1/2 space-y-4">
+            <.card variant="transparent" padding="p-5" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+              <.card_content>
+                <div class="flex items-center gap-3 mb-2">
+                  <.icon name="hero-clock" class="size-5 text-primary" />
+                  <.h4 size="text-lg" font_weight="font-semibold" class="text-base-content">
+                    Take Timestamped Notes
+                  </.h4>
+                </div>
+                <.p class="text-base-content/70">
+                  Your notes are connected directly to the video with timestamps,
+                  making sure you never lose track of exactly what you were studying.
+                </.p>
+              </.card_content>
+            </.card>
+
+            <.card variant="transparent" padding="p-5" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+              <.card_content>
+                <div class="flex items-center gap-3 mb-2">
+                  <.icon name="hero-play" class="size-5 text-primary" />
+                  <.h4 size="text-lg" font_weight="font-semibold" class="text-base-content">
+                    Jump to Timestamps Later
+                  </.h4>
+                </div>
+                <.p class="text-base-content/70">
+                  Jump directly to your recorded timestamp to review the exact moment
+                  you noted down.
+                </.p>
+              </.card_content>
+            </.card>
+
+            <.card variant="transparent" padding="p-5" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+              <.card_content>
+                <div class="flex items-center gap-3 mb-2">
+                  <.icon name="hero-magnifying-glass" class="size-5 text-primary" />
+                  <.h4 size="text-lg" font_weight="font-semibold" class="text-base-content">
+                    Search Your Notes
+                  </.h4>
+                </div>
+                <.p class="text-base-content/70">
+                  Search across all your notes by either video title or note content to quickly recall what you need
+                  
+                </.p>
+              </.card_content>
+            </.card>
+          </div>
+        </div>
+      </div>
+    </.jumbotron>
+
+    <.divider color="base" class="opacity-20" />
+
+    <%!-- SECTION 3: FOR COACHES --%>
+    <.jumbotron variant="transparent" padding="p-0" class="py-16">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <.h2 size="text-4xl" font_weight="font-bold" class="text-center mb-12 text-base-content">
+          For Coaches
+        </.h2>
+
+        <div class="flex flex-col lg:flex-row-reverse gap-8 items-center">
+          <%!-- Placeholder image --%>
+          <div class="w-full lg:w-1/2 aspect-video rounded-xl bg-base-100/10 backdrop-blur-sm border border-base-content/10 flex items-center justify-center">
+            <.icon name="hero-academic-cap" class="size-20 text-base-content/30" />
+          </div>
+
+          <%!-- Description card --%>
+          <div class="w-full lg:w-1/2">
+            <.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+              <.card_content>
+                <div class="flex items-center gap-3 mb-3">
+                  <.icon name="hero-paper-airplane" class="size-6 text-primary" />
+                  <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
+                    Transmit Videos to Students
+                  </.h3>
+                </div>
+                <.p class="text-base-content/70">
+                  Send videos with personalized messages to all your students at once.
+                  Share technique breakdowns, class recaps, or supplementary material
+                  directly through the platform.
+                </.p>
+              </.card_content>
+            </.card>
+          </div>
+        </div>
+      </div>
+    </.jumbotron>
+
+    <div class="pb-40"></div>
   </div>
-</Layouts.app>
+
+  </Layouts.app>

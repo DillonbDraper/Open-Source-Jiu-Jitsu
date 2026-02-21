@@ -424,3 +424,19 @@
         --stepper-separator-completed-border-dark
     );
 }
+
+.landing-gradient {
+  background: linear-gradient(180deg,
+    oklch(30.33% 0.016 252.42) 0%,
+    oklch(24% 0.035 270) 30%,
+    oklch(20% 0.050 277) 60%,
+    oklch(17% 0.025 254.09) 100%);
+}
+
+[data-theme="light"] .landing-gradient {
+  background: linear-gradient(180deg,
+    oklch(98% 0 0) 0%,
+    oklch(95% 0.012 270) 30%,
+    oklch(92% 0.022 277) 60%,
+    oklch(89% 0.010 286.32) 100%);
+}

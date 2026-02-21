@@ -38,6 +38,10 @@ defmodule FosBjjWeb.Layouts do
     default: false,
     doc: "whether to use full width layout instead of max-w-2xl constraint"
 
+  attr :no_padding, :boolean,
+    default: false,
+    doc: "whether to remove padding from the main content area for full-bleed layouts"
+
   attr :socket, :any,
     default: nil,
     doc: "the LiveView socket, required for rendering sticky LiveViews"
@@ -125,10 +129,10 @@ defmodule FosBjjWeb.Layouts do
       <:list></:list>
     </.navbar>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
+    <main class={if(@no_padding, do: "", else: "px-4 py-20 sm:px-6 lg:px-8")}>
       <div class={[
-        "mx-auto space-y-4",
-        if(@full_width, do: "max-w-full", else: "max-w-2xl")
+        if(!@no_padding, do: "mx-auto space-y-4"),
+        if(!@no_padding, do: if(@full_width, do: "max-w-full", else: "max-w-2xl"))
       ]}>
         {render_slot(@inner_block)}
       </div>
