@@ -164,7 +164,7 @@ defmodule FosBjjWeb.Components.NotesTableComponent do
             <.search_field
               field={@search_form[:query]}
               id={"#{@id}-search"}
-              placeholder="Search notes by note or video title..."
+              placeholder="Search by note body or video title..."
               phx-debounce="400"
             />
           </.form>

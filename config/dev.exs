@@ -111,4 +111,4 @@ config :phoenix_live_view,
 # Use Resend in development when configured.
 # config :fos_bjj, FosBjj.Mailer, adapter: Resend.Swoosh.Adapter
 # config :swoosh, api_client: Swoosh.ApiClient.Req
-config :swoosh, local: false
+config :swoosh, local: true

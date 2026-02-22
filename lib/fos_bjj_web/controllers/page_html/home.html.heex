@@ -1,18 +1,16 @@
 <Layouts.app full_width no_padding flash={@flash} current_user={assigns[:current_user]}>
   <div class="landing-gradient min-h-screen">
-    <%!-- SECTION 1: HERO --%>
-    <.jumbotron variant="transparent" padding="p-0" class="min-h-[70vh] flex items-center justify-center">
+    <.jumbotron variant="transparent" padding="p-0" class="pt-12 pb-6 flex items-center justify-center">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <.h1 size="text-5xl" font_weight="font-bold" class="mb-6 text-base-content">
           Welcome to Open Source BJJ
         </.h1>
-        <.p size="text-xl" class="text-base-content/70 mb-12 max-w-2xl mx-auto">
+        <.p size="text-xl" class="text-base-content/70 mb-8 max-w-2xl mx-auto">
           A free, high-quality repository of Brazilian Jiu-Jitsu and grappling video instruction,
           designed to provide real value to your Jiu-Jitsu journey.
         </.p>
 
-        <%!-- Hero CTA --%>
-        <div class="my-10">
+        <div class="my-6">
           <.button_link
             navigate={~p"/database"}
             color="primary"
@@ -29,14 +27,15 @@
           <.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
             <.card_content>
               <div class="flex items-center gap-3 mb-3">
-                <.icon name="hero-map" class="size-6 text-primary" />
+                <.icon name="hero-heart" class="size-6 text-primary" />
                 <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
-                  Intuitive Navigation
+                  Free Forever
                 </.h3>
               </div>
               <.p class="text-base-content/70">
-                An adapted version of the famous inAction navigation system, making it easy to find
-                material on exactly what you are looking for.
+                Open Source Jiu Jitsu is a free resource for the community, by the community.  It will never cost a dime,
+		 never sell personal info, and exists only to help
+		people improve their Jiu Jitsu.
               </.p>
             </.card_content>
           </.card>
@@ -51,7 +50,7 @@
               </div>
               <.p class="text-base-content/70">
                 Every video is vetted by a verified BJJ black belt for quality instruction,
-                production values, and genuine educational content.
+                baseline production values, and legit technique.
               </.p>
             </.card_content>
           </.card>
@@ -61,20 +60,76 @@
 
     <.divider color="base" class="opacity-20" />
 
-    <%!-- SECTION 2: NOTES FEATURE --%>
-    <.jumbotron variant="transparent" padding="p-0" class="py-16">
+    <.jumbotron variant="transparent" padding="p-0" class="py-12">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <.h2 size="text-4xl" font_weight="font-bold" class="text-center mb-12 text-base-content">
-          Take Notes While You Train
+          Flexible Navigation 
         </.h2>
 
         <div class="flex flex-col lg:flex-row gap-8 items-center">
-          <%!-- Placeholder image --%>
-          <div class="w-full lg:w-1/2 aspect-video rounded-xl bg-base-100/10 backdrop-blur-sm border border-base-content/10 flex items-center justify-center">
-            <.icon name="hero-pencil-square" class="size-20 text-base-content/30" />
+          <div class="w-full lg:w-1/2 flex justify-center">
+            <img
+              src={~p"/images/technique_tree_screenshot.png"}
+              alt="Technique navigation menu"
+              class="rounded-xl border border-base-content/10 shadow-lg max-h-[500px] w-auto"
+            />
           </div>
 
-          <%!-- Info cards --%>
+          <div class="w-full lg:w-1/2 space-y-4">
+            <.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+              <.card_content>
+                <div class="flex items-center gap-3 mb-3">
+                  <.icon name="hero-map" class="size-6 text-primary" />
+                  <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
+                    Find What You Need
+                  </.h3>
+                </div>
+                <.p class="text-base-content/70">
+                  Browse videos in an elegant, logical tree structure to find exactly what you're looking for, or search by title.
+                </.p>
+              </.card_content>
+            </.card>
+	    <.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+              <.card_content>
+                <div class="flex items-center gap-3 mb-3">
+                  <.icon name="hero-magnifying-glass" class="size-6 text-primary" />
+                  <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
+                   Tailor Your Search 
+                  </.h3>
+                </div>
+                <.p class="text-base-content/70">
+                  Get even more specific by filtering by Gi, No Gi,
+		    or both to narrow things down to exactly what you're looking for.
+                </.p>
+              </.card_content>
+            </.card>
+          </div>
+        </div>
+      </div>
+    </.jumbotron>
+
+    <.divider color="base" class="opacity-20" />
+
+    <.jumbotron variant="transparent" padding="p-0" class="py-12">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <.h2 size="text-4xl" font_weight="font-bold" class="text-center mb-12 text-base-content">
+         Keep Track Of Your Studies With Timestamped Notes 
+        </.h2>
+
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+          <div class="w-full lg:w-1/2 flex flex-col gap-4 items-center">
+            <img
+              src={~p"/images/take_note_screenshot.png"}
+              alt="Add new note dialog"
+              class="rounded-xl border border-base-content/10 shadow-lg max-w-full"
+            />
+            <img
+              src={~p"/images/note_table_screenshot.png"}
+              alt="Notes list with timestamps"
+              class="rounded-xl border border-base-content/10 shadow-lg max-w-full"
+            />
+          </div>
+
           <div class="w-full lg:w-1/2 space-y-4">
             <.card variant="transparent" padding="p-5" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
               <.card_content>
@@ -85,7 +140,7 @@
                   </.h4>
                 </div>
                 <.p class="text-base-content/70">
-                  Your notes are connected directly to the video with timestamps,
+                  Your notes are connected directly to video and have accompanying timestamps,
                   making sure you never lose track of exactly what you were studying.
                 </.p>
               </.card_content>
@@ -127,33 +182,50 @@
 
     <.divider color="base" class="opacity-20" />
 
-    <%!-- SECTION 3: FOR COACHES --%>
-    <.jumbotron variant="transparent" padding="p-0" class="py-16">
+    <.jumbotron variant="transparent" padding="p-0" class="py-12">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <.h2 size="text-4xl" font_weight="font-bold" class="text-center mb-12 text-base-content">
-          For Coaches
+          Coach-Guided Video Sharing 
         </.h2>
 
         <div class="flex flex-col lg:flex-row-reverse gap-8 items-center">
-          <%!-- Placeholder image --%>
-          <div class="w-full lg:w-1/2 aspect-video rounded-xl bg-base-100/10 backdrop-blur-sm border border-base-content/10 flex items-center justify-center">
-            <.icon name="hero-academic-cap" class="size-20 text-base-content/30" />
+          <div class="w-full lg:w-1/2 flex flex-col gap-4 items-center">
+            <img
+              src={~p"/images/transmit_video_screenshot.png"}
+              alt="Share video button"
+              class="rounded-xl border border-base-content/10 shadow-lg max-w-full"
+            />
+            <img
+              src={~p"/images/share_video_with_students_screenshot.png"}
+              alt="Share video with students dialog"
+              class="rounded-xl border border-base-content/10 shadow-lg max-w-full"
+            />
           </div>
 
-          <%!-- Description card --%>
-          <div class="w-full lg:w-1/2">
+          <div class="w-full lg:w-1/2 space-y-4">
             <.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
               <.card_content>
                 <div class="flex items-center gap-3 mb-3">
                   <.icon name="hero-paper-airplane" class="size-6 text-primary" />
                   <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
-                    Transmit Videos to Students
+                   For Coaches: Share Videos With All of Your Students 
                   </.h3>
                 </div>
                 <.p class="text-base-content/70">
-                  Send videos with personalized messages to all your students at once.
-                  Share technique breakdowns, class recaps, or supplementary material
-                  directly through the platform.
+                  Send videos with guiding messages to all your students at once.
+                  Avoid academy cliques, and guide study better than the standard tiktok doomscrolling! 
+                </.p>
+              </.card_content>
+            </.card><.card variant="transparent" padding="p-6" rounded="large" class="bg-base-100/10 backdrop-blur-sm border border-base-content/10">
+              <.card_content>
+                <div class="flex items-center gap-3 mb-3">
+                  <.icon name="hero-paper-clip" class="size-6 text-primary" />
+                  <.h3 size="text-xl" font_weight="font-semibold" class="text-base-content">
+                   For Students: Follow Coaches To See Videos They Send Out 
+                  </.h3>
+                </div>
+                <.p class="text-base-content/70">
+                  Follow coaches from both your gym and others to see the content your mentors value most 
                 </.p>
               </.card_content>
             </.card>

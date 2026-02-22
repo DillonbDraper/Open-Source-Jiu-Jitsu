@@ -16,7 +16,7 @@ defmodule FosBjjWeb.Components.UserProfilePanel do
             Welcome, {@current_user.user_name}
           </.h1>
           <.p size="text-lg" class="mt-2 text-base-content/70">
-            Personal/Training details to guide your experience
+            Personal Profile Information
           </.p>
         </div>
 
