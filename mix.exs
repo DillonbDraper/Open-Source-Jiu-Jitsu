@@ -48,6 +48,7 @@ defmodule FosBjj.MixProject do
       {:usage_rules, "~> 0.1", only: [:dev]},
       {:mishka_chelekom, "~> 0.0", only: [:dev]},
       {:live_debugger, "~> 0.5", only: [:dev]},
+      {:tidewave, "~> 0.5", only: :dev},
       {:ash_admin, "~> 0.13"},
       {:ash_authentication_phoenix, "~> 2.0"},
       {:ash_authentication, "~> 4.0"},

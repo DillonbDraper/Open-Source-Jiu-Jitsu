@@ -4,6 +4,8 @@ defmodule FosBjj.JiuJitsu.Orientation do
     domain: FosBjj.JiuJitsu,
     data_layer: AshPostgres.DataLayer
 
+  use FosBjj.ConfigData.Schema
+
   postgres do
     table("orientations")
     repo(FosBjj.Repo)
@@ -44,4 +46,16 @@ defmodule FosBjj.JiuJitsu.Orientation do
       public?(true)
     end
   end
+
+  @config_values [
+    %{name: "top", label: "Top"},
+    %{name: "bottom", label: "Bottom"},
+    %{name: "superior", label: "Superior"},
+    %{name: "inferior", label: "Inferior"},
+    %{name: "offense", label: "Offense"},
+    %{name: "defense", label: "Defense"}
+  ]
+
+  @impl true
+  def config_values, do: @config_values
 end

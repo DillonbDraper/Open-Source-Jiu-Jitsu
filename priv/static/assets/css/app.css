@@ -3041,9 +3041,6 @@
   .my-6 {
     margin-block: calc(var(--spacing) * 6);
   }
-  .my-10 {
-    margin-block: calc(var(--spacing) * 10);
-  }
   .label {
     display: inline-flex;
     align-items: center;
@@ -3415,17 +3412,6 @@
     --hero-bookmark: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M17.593%203.322c1.1.128%201.907%201.077%201.907%202.185V21L12%2017.25%204.5%2021V5.507c0-1.108.806-2.057%201.907-2.185a48.507%2048.507%200%200%201%2011.186%200Z%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-bookmark);
     mask: var(--hero-bookmark);
-    mask-repeat: no-repeat;
-    background-color: currentColor;
-    vertical-align: middle;
-    display: inline-block;
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  .hero-bookmark-square {
-    --hero-bookmark-square: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M16.5%203.75V16.5L12%2014.25%207.5%2016.5V3.75m9%200H18A2.25%202.25%200%200%201%2020.25%206v12A2.25%202.25%200%200%201%2018%2020.25H6A2.25%202.25%200%200%201%203.75%2018V6A2.25%202.25%200%200%201%206%203.75h1.5m9%200h-9%22%2F%3E%3C%2Fsvg%3E');
-    -webkit-mask: var(--hero-bookmark-square);
-    mask: var(--hero-bookmark-square);
     mask-repeat: no-repeat;
     background-color: currentColor;
     vertical-align: middle;
@@ -3932,17 +3918,6 @@
     --hero-pencil-solid: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20d%3D%22M21.731%202.269a2.625%202.625%200%200%200-3.712%200l-1.157%201.157%203.712%203.712%201.157-1.157a2.625%202.625%200%200%200%200-3.712ZM19.513%208.199l-3.712-3.712-12.15%2012.15a5.25%205.25%200%200%200-1.32%202.214l-.8%202.685a.75.75%200%200%200%20.933.933l2.685-.8a5.25%205.25%200%200%200%202.214-1.32L19.513%208.2Z%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-pencil-solid);
     mask: var(--hero-pencil-solid);
-    mask-repeat: no-repeat;
-    background-color: currentColor;
-    vertical-align: middle;
-    display: inline-block;
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  .hero-pencil-square {
-    --hero-pencil-square: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m16.862%204.487%201.687-1.688a1.875%201.875%200%201%201%202.652%202.652L10.582%2016.07a4.5%204.5%200%200%201-1.897%201.13L6%2018l.8-2.685a4.5%204.5%200%200%201%201.13-1.897l8.932-8.931Zm0%200L19.5%207.125M18%2014v4.75A2.25%202.25%200%200%201%2015.75%2021H5.25A2.25%202.25%200%200%201%203%2018.75V8.25A2.25%202.25%200%200%201%205.25%206H10%22%2F%3E%3C%2Fsvg%3E');
-    -webkit-mask: var(--hero-pencil-square);
-    mask: var(--hero-pencil-square);
     mask-repeat: no-repeat;
     background-color: currentColor;
     vertical-align: middle;
@@ -4512,10 +4487,6 @@
     width: calc(var(--spacing) * 14);
     height: calc(var(--spacing) * 14);
   }
-  .size-20 {
-    width: calc(var(--spacing) * 20);
-    height: calc(var(--spacing) * 20);
-  }
   .size-\[8px\] {
     width: 8px;
     height: 8px;
@@ -4730,9 +4701,6 @@
   }
   .min-h-\[6rem\] {
     min-height: 6rem;
-  }
-  .min-h-\[70vh\] {
-    min-height: 70vh;
   }
   .min-h-full {
     min-height: 100%;
@@ -6819,9 +6787,6 @@
   .py-12 {
     padding-block: calc(var(--spacing) * 12);
   }
-  .py-16 {
-    padding-block: calc(var(--spacing) * 16);
-  }
   .py-20 {
     padding-block: calc(var(--spacing) * 20);
   }
@@ -7104,12 +7069,6 @@
   }
   .text-base-content {
     color: var(--color-base-content);
-  }
-  .text-base-content\/30 {
-    color: var(--color-base-content);
-    @supports (color: color-mix(in lab, red, red)) {
-      color: color-mix(in oklab, var(--color-base-content) 30%, transparent);
-    }
   }
   .text-base-content\/50 {
     color: var(--color-base-content);

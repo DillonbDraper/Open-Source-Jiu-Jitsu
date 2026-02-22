@@ -4,6 +4,8 @@ defmodule FosBjj.JiuJitsu.PositionOrientation do
     domain: FosBjj.JiuJitsu,
     data_layer: AshPostgres.DataLayer
 
+  use FosBjj.ConfigData.Schema
+
   postgres do
     table("position_orientations")
     repo(FosBjj.Repo)
@@ -38,4 +40,24 @@ defmodule FosBjj.JiuJitsu.PositionOrientation do
       destination_attribute(:name)
     end
   end
+
+  @config_values [
+    %{position_name: "standing", orientation_name: "offense"},
+    %{position_name: "standing", orientation_name: "defense"},
+    %{position_name: "guard", orientation_name: "top"},
+    %{position_name: "guard", orientation_name: "bottom"},
+    %{position_name: "mount", orientation_name: "top"},
+    %{position_name: "mount", orientation_name: "bottom"},
+    %{position_name: "side_control", orientation_name: "top"},
+    %{position_name: "side_control", orientation_name: "bottom"},
+    %{position_name: "turtle", orientation_name: "top"},
+    %{position_name: "turtle", orientation_name: "bottom"},
+    %{position_name: "back", orientation_name: "superior"},
+    %{position_name: "back", orientation_name: "inferior"},
+    %{position_name: "leg_entanglement", orientation_name: "superior"},
+    %{position_name: "leg_entanglement", orientation_name: "inferior"}
+  ]
+
+  @impl true
+  def config_values, do: @config_values
 end
