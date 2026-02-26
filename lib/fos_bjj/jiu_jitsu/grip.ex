@@ -47,7 +47,10 @@ defmodule FosBjj.JiuJitsu.Grip do
     %{name: "cross_collar", label: "Cross Collar"},
     %{name: "ankle_grip", label: "Ankle Grip"},
     %{name: "ankle_lock_grip", label: "Ankle Lock Grip"},
-    %{name: "kimura_grip", label: "Kimura Grip/Double Wristlock"}
+    %{name: "kimura_grip", label: "Kimura Grip/Double Wristlock"},
+    %{name: "half_nelson", label: "Half Nelson"},
+    %{name: "three_quarter_nelson", label: "Three Quarter Nelson"},
+    %{name: "rear_cross_collar", label: "Rear Cross Collar"}
   ]
 
   @impl true
