@@ -83,6 +83,10 @@ defmodule FosBjjWeb.Components.Alert do
     default: "hero-chat-bubble-bottom-center-text",
     doc: "Icon displayed alongside of an item"
 
+  attr :auto_dismiss_ms, :integer,
+    default: nil,
+    doc: "Automatically dismisses the flash after this duration in milliseconds"
+
   attr :class, :string, default: nil, doc: "Custom CSS class for additional styling"
 
   attr :content_class, :string,
@@ -107,6 +111,9 @@ defmodule FosBjjWeb.Components.Alert do
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide_alert("##{@id}")}
+      phx-hook={if @auto_dismiss_ms, do: "AutoDismissFlash"}
+      data-auto-dismiss-ms={@auto_dismiss_ms}
+      data-flash-key={@kind}
       role="alert"
       aria-live="assertive"
       aria-labelledby={@title && @id && "#{@id}-title"}
@@ -173,22 +180,24 @@ defmodule FosBjjWeb.Components.Alert do
       {@rest}
     >
       <.flash
-        kind={:info}
+        kind={:success}
         title={gettext("Success!")}
         flash={@flash}
         variant={@variant}
         width="medium"
+        auto_dismiss_ms={3500}
       />
       <.flash
-        kind={:error}
+        kind={:danger}
         title={gettext("Error!")}
         flash={@flash}
         variant={@variant}
         width="medium"
+        auto_dismiss_ms={3500}
       />
       <.flash
         id="client-error"
-        kind={:error}
+        kind={:danger}
         variant={@variant}
         title={gettext("We can't find the internet")}
         phx-disconnected={show_alert(".phx-client-error #client-error")}
@@ -202,7 +211,7 @@ defmodule FosBjjWeb.Components.Alert do
 
       <.flash
         id="server-error"
-        kind={:error}
+        kind={:danger}
         variant={@variant}
         title={gettext("Something went wrong!")}
         phx-disconnected={show_alert(".phx-server-error #server-error")}

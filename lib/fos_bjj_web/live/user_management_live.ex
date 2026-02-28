@@ -68,10 +68,10 @@ defmodule FosBjjWeb.UserManagementLive do
          socket
          |> assign(:users, users)
          |> assign(:editing_user, nil)
-         |> put_flash(:info, "User role updated successfully.")}
+         |> put_flash(:success, "User role updated successfully.")}
 
       {:error, _error} ->
-        {:noreply, put_flash(socket, :error, "Failed to update role.")}
+        {:noreply, put_flash(socket, :danger, "Failed to update role.")}
     end
   end
 
@@ -169,10 +169,10 @@ defmodule FosBjjWeb.UserManagementLive do
          socket
          |> assign(:contributor_applications, contributor_applications)
          |> assign(:users, users)
-         |> put_flash(:info, "Contributor application #{status} successfully.")}
+         |> put_flash(:success, "Contributor application #{status} successfully.")}
 
       {:error, _error} ->
-        {:noreply, put_flash(socket, :error, "Failed to update contributor application.")}
+        {:noreply, put_flash(socket, :danger, "Failed to update contributor application.")}
     end
   end
 
@@ -190,7 +190,11 @@ defmodule FosBjjWeb.UserManagementLive do
         socket
 
       {:error, _error} ->
-        put_flash(socket, :error, "Contributor application updated, but message delivery failed.")
+        put_flash(
+          socket,
+          :danger,
+          "Contributor application updated, but message delivery failed."
+        )
     end
   end
 
@@ -212,7 +216,7 @@ defmodule FosBjjWeb.UserManagementLive do
         socket
 
       {:error, _error} ->
-        put_flash(socket, :error, "Contributor application approved, but role update failed.")
+        put_flash(socket, :danger, "Contributor application approved, but role update failed.")
     end
   end
 

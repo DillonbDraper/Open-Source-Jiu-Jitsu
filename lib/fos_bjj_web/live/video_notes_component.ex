@@ -103,12 +103,12 @@ defmodule FosBjjWeb.VideoNotesComponent do
           |> assign(:show_modal, false)
           |> assign(:form, to_form(%{"body" => "", "minutes" => 0, "seconds" => 0}))
           |> load_notes()
-          |> put_flash(:info, "Note added successfully")
+          |> put_flash(:success, "Note added successfully")
 
         {:noreply, socket}
 
       {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Could not save note")}
+        {:noreply, put_flash(socket, :danger, "Could not save note")}
     end
   end
 
@@ -127,10 +127,10 @@ defmodule FosBjjWeb.VideoNotesComponent do
         {:noreply,
          socket
          |> load_notes()
-         |> put_flash(:info, "Note deleted")}
+         |> put_flash(:success, "Note deleted")}
 
       {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete note")}
+        {:noreply, put_flash(socket, :danger, "Could not delete note")}
     end
   end
 

@@ -135,7 +135,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
      socket
      |> assign(:show_edit_modal, false)
      |> assign(:editing_video, nil)
-     |> put_flash(:info, "Video updated successfully")}
+     |> put_flash(:success, "Video updated successfully")}
   end
 
   @impl true
@@ -149,7 +149,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
 
     {:noreply,
      socket
-     |> put_flash(:info, "Technique created successfully")
+     |> put_flash(:success, "Technique created successfully")
      |> assign(:show_technique_drawer, false)}
   end
 

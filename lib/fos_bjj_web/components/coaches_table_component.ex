@@ -119,10 +119,10 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
          |> assign(:show_follow_modal, false)
          |> assign(:selected_coach, nil)
          |> assign(:show_confirm, false)
-         |> put_flash(:info, "You are now following #{coach.user_name}")}
+         |> put_flash(:success, "You are now following #{coach.user_name}")}
 
       {:error, _changeset} ->
-        {:noreply, put_flash(socket, :error, "Failed to follow coach")}
+        {:noreply, put_flash(socket, :danger, "Failed to follow coach")}
     end
   end
 
@@ -140,7 +140,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
     {:noreply,
      socket
      |> assign(:coaches, coaches)
-     |> put_flash(:info, "Unfollowed coach")}
+     |> put_flash(:success, "Unfollowed coach")}
   end
 
   defp list_followed_coaches(user) do

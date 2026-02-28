@@ -13,7 +13,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     unless FosBjj.Accounts.User.contributor_or_admin?(current_user) do
       {:ok,
        socket
-       |> put_flash(:error, "You must be a contributor or admin to add videos")
+       |> put_flash(:danger, "You must be a contributor or admin to add videos")
        |> push_navigate(to: ~p"/")}
     else
       {:ok,
@@ -36,7 +36,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   def handle_info({:video_saved, _video}, socket) do
     {:noreply,
      socket
-     |> put_flash(:info, "Video added successfully")
+     |> put_flash(:success, "Video added successfully")
      |> push_navigate(to: ~p"/database")}
   end
 
@@ -51,7 +51,7 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
 
     {:noreply,
      socket
-     |> put_flash(:info, "Technique created successfully")
+     |> put_flash(:success, "Technique created successfully")
      |> assign(:show_technique_drawer, false)}
   end
 
@@ -60,8 +60,6 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
     ~H"""
     <Layouts.app flash={@flash} current_user={assigns[:current_user]} socket={@socket}>
       <div class="max-w-2xl mx-auto" id="video-form-container">
-        <.flash kind={:info} title="Sweet!" flash={@flash} />
-        <.flash kind={:error} title="Oops!" flash={@flash} />
         <div class="flex justify-between items-center mb-6">
           <.h1 size="text-3xl" font_weight="font-bold">Add a Video</.h1>
           <.link navigate={~p"/database"} class="btn btn-ghost">

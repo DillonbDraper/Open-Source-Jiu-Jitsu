@@ -121,7 +121,7 @@ defmodule FosBjjWeb.VideoShowComponent do
        socket
        |> assign(:show_share_modal, false)
        |> assign(:share_form, to_form(%{"message" => ""}))
-       |> put_flash(:info, "Video shared with #{count} student(s)")}
+       |> put_flash(:success, "Video shared with #{count} student(s)")}
     end
   end
 
@@ -140,6 +140,8 @@ defmodule FosBjjWeb.VideoShowComponent do
       |> Ash.read!(actor: coach)
       |> Enum.map(& &1.learner)
 
+    message_group_id = Ecto.UUID.generate()
+
     message =
       case optional_message do
         text when is_binary(text) ->
@@ -156,7 +158,8 @@ defmodule FosBjjWeb.VideoShowComponent do
         %{
           body: message,
           recipient_id: student.id,
-          shared_video_id: video.id
+          shared_video_id: video.id,
+          message_group_id: message_group_id
         },
         actor: coach
       )
@@ -176,7 +179,7 @@ defmodule FosBjjWeb.VideoShowComponent do
     case video do
       nil ->
         socket
-        |> put_flash(:error, "Video not found")
+        |> put_flash(:danger, "Video not found")
         |> push_patch(to: ~p"/database")
 
       video ->

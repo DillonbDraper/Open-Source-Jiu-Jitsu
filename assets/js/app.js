@@ -24,6 +24,23 @@ import { hooks as colocatedHooks } from "phoenix-colocated/fos_bjj";
 import topbar from "../vendor/topbar";
 import MishkaComponents from "../vendor/mishka_components.js";
 
+const AutoDismissFlash = {
+  mounted()   { this.schedule(); },
+  updated()   { this.schedule(); },
+  destroyed() { clearTimeout(this.timer); },
+  schedule() {
+    clearTimeout(this.timer);
+    const ms = parseInt(this.el.dataset.autoDismissMs);
+    if (ms > 0) this.timer = setTimeout(() => this.el.click(), ms);
+  },
+};
+
+const hooks = {
+  AutoDismissFlash,
+  ...colocatedHooks,
+  ...MishkaComponents,
+};
+
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");
@@ -32,10 +49,7 @@ const liveSocket = new LiveSocket("/live", Socket, {
   params: {
     _csrf_token: csrfToken,
   },
-  hooks: {
-    ...colocatedHooks,
-    ...MishkaComponents,
-  },
+  hooks,
 });
 // Show progress bar on live navigation and form submits
 topbar.config({

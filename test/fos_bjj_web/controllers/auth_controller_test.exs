@@ -14,7 +14,7 @@ defmodule FosBjjWeb.AuthControllerTest do
       |> fetch_flash()
       |> AuthController.success({:confirm_new_user, :confirm}, user, "token")
 
-    assert Phoenix.Flash.get(conn.assigns.flash, :info) ==
+    assert Phoenix.Flash.get(conn.assigns.flash, :success) ==
              "Your email address has now been confirmed"
 
     assert redirected_to(conn) == "/database"
@@ -30,7 +30,7 @@ defmodule FosBjjWeb.AuthControllerTest do
       |> put_session(:return_to, "/special")
       |> AuthController.success({:password, :reset}, user, "token")
 
-    assert Phoenix.Flash.get(conn.assigns.flash, :info) ==
+    assert Phoenix.Flash.get(conn.assigns.flash, :success) ==
              "Your password has successfully been reset"
 
     assert redirected_to(conn) == "/special"
@@ -50,7 +50,7 @@ defmodule FosBjjWeb.AuthControllerTest do
       |> fetch_flash()
       |> AuthController.failure(:password, reason)
 
-    assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "have not confirmed your account"
+    assert Phoenix.Flash.get(conn.assigns.flash, :danger) =~ "have not confirmed your account"
     assert redirected_to(conn) == "/sign-in"
   end
 
@@ -63,7 +63,7 @@ defmodule FosBjjWeb.AuthControllerTest do
       |> put_session(:extra, "value")
       |> AuthController.sign_out(%{})
 
-    assert Phoenix.Flash.get(conn.assigns.flash, :info) == "You are now signed out"
+    assert Phoenix.Flash.get(conn.assigns.flash, :success) == "You are now signed out"
     assert redirected_to(conn) == "/bye"
     assert get_session(conn, :extra) == nil
   end

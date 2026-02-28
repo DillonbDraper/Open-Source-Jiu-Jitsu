@@ -9,7 +9,8 @@ defmodule FosBjjWeb.UserProfileLive do
   alias FosBjjWeb.AcademyLive.NewAcademyForm
   alias FosBjjWeb.ContributorApplicationForm
   alias FosBjjWeb.VideoLive.VideoFormComponent
-  alias FosBjjWeb.Components.MessagesTableComponent
+  alias FosBjjWeb.Components.ReceivedMessagesTable
+  alias FosBjjWeb.Components.SentMessagesTable
   alias FosBjjWeb.Components.NotesTableComponent
   alias FosBjjWeb.Components.CoachesTableComponent
   alias FosBjjWeb.Components.FollowersTableComponent
@@ -162,7 +163,7 @@ defmodule FosBjjWeb.UserProfileLive do
 
       {:noreply, assign(socket, videos: videos, total_videos: videos.count, current_page: page)}
     else
-      {:noreply, put_flash(socket, :error, "Unauthorized")}
+      {:noreply, put_flash(socket, :danger, "Unauthorized")}
     end
   end
 
@@ -175,7 +176,7 @@ defmodule FosBjjWeb.UserProfileLive do
       {:noreply,
        put_flash(
          socket,
-         :error,
+         :danger,
          "Contributor applications are limited to black belts or practitioners with other high level experience."
        )}
     end
@@ -372,7 +373,7 @@ defmodule FosBjjWeb.UserProfileLive do
          |> assign(:academy_search_query, "")
          |> assign(:academy_search_results, [])
          |> assign(:profile_form, profile_form)
-         |> put_flash(:info, "Profile updated successfully")}
+         |> put_flash(:success, "Profile updated successfully")}
 
       {:error, form} ->
         {:noreply, assign(socket, :profile_form, form)}
@@ -390,7 +391,7 @@ defmodule FosBjjWeb.UserProfileLive do
      socket
      |> assign(:show_contributor_application_modal, false)
      |> assign(:contributor_application_status, :pending)
-     |> put_flash(:info, "Contributor application submitted successfully.")}
+     |> put_flash(:success, "Contributor application submitted successfully.")}
   end
 
   @impl true
@@ -398,14 +399,14 @@ defmodule FosBjjWeb.UserProfileLive do
     {:noreply,
      put_flash(
        socket,
-       :error,
+       :danger,
        "Contributor application recipient is not configured. Please contact support."
      )}
   end
 
   @impl true
   def handle_info({:contributor_application_submitted, {:error, _}}, socket) do
-    {:noreply, put_flash(socket, :error, "Failed to deliver contributor application email.")}
+    {:noreply, put_flash(socket, :danger, "Failed to deliver contributor application email.")}
   end
 
   @impl true
@@ -432,7 +433,7 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:show_academy_search, false)
      |> assign(:academy_search_query, "")
      |> assign(:academy_search_results, [])
-     |> put_flash(:info, "Academy created successfully")}
+     |> put_flash(:success, "Academy created successfully")}
   end
 
   @impl true
@@ -458,7 +459,7 @@ defmodule FosBjjWeb.UserProfileLive do
      |> assign(:total_videos, videos.count)
      |> assign(:show_edit_modal, false)
      |> assign(:video_to_edit, nil)
-     |> put_flash(:info, "Video updated successfully")}
+     |> put_flash(:success, "Video updated successfully")}
   end
 
   defp list_user_videos(user, query, page) do
@@ -722,11 +723,40 @@ defmodule FosBjjWeb.UserProfileLive do
             current_user={@current_user}
           />
 
-          <.live_component
-            module={MessagesTableComponent}
-            id="messages-table"
-            current_user={@current_user}
-          />
+          <.tabs
+            id="profile-messages-tabs"
+            variant="nav_pills"
+            color="primary"
+            rounded="large"
+            size="medium"
+            padding="small"
+            gap="small"
+            content_padding="none"
+            class="bg-base-200/70 rounded-xl p-1"
+          >
+            <:tab active>Received Messages</:tab>
+            <:tab :if={@current_user.role_name in ["coach", "contributor", "admin"]}>
+              Sent Messages
+            </:tab>
+
+            <:panel class="pt-4">
+              <.live_component
+                module={ReceivedMessagesTable}
+                id="received-messages-table"
+                current_user={@current_user}
+              />
+            </:panel>
+            <:panel
+              :if={@current_user.role_name in ["coach", "contributor", "admin"]}
+              class="pt-4"
+            >
+              <.live_component
+                module={SentMessagesTable}
+                id="sent-messages-table"
+                current_user={@current_user}
+              />
+            </:panel>
+          </.tabs>
 
           <.live_component
             module={CoachesTableComponent}

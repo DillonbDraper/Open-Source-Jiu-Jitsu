@@ -17,7 +17,7 @@ defmodule FosBjjWeb.AuthController do
     |> store_in_session(user)
     # If your resource has a different name, update the assign name here (i.e :current_admin)
     |> assign(:current_user, user)
-    |> put_flash(:info, message)
+    |> put_flash(:success, message)
     |> redirect(to: return_to)
   end
 
@@ -40,7 +40,7 @@ defmodule FosBjjWeb.AuthController do
       end
 
     conn
-    |> put_flash(:error, message)
+    |> put_flash(:danger, message)
     |> redirect(to: ~p"/sign-in")
   end
 
@@ -49,7 +49,7 @@ defmodule FosBjjWeb.AuthController do
 
     conn
     |> clear_session(:fos_bjj)
-    |> put_flash(:info, "You are now signed out")
+    |> put_flash(:success, "You are now signed out")
     |> redirect(to: return_to)
   end
 end

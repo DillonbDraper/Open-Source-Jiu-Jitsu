@@ -50,7 +50,8 @@ defmodule FosBjj.JiuJitsu.Grip do
     %{name: "kimura_grip", label: "Kimura Grip/Double Wristlock"},
     %{name: "half_nelson", label: "Half Nelson"},
     %{name: "three_quarter_nelson", label: "Three Quarter Nelson"},
-    %{name: "rear_cross_collar", label: "Rear Cross Collar"}
+    %{name: "rear_cross_collar", label: "Rear Cross Collar"},
+    %{name: "seatbelt", label: "Seatbelt"}
   ]
 
   @impl true

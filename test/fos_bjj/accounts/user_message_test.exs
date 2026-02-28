@@ -26,6 +26,7 @@ defmodule FosBjj.Accounts.UserMessageTest do
     assert message.sender_id == sender.id
     assert message.recipient_id == recipient.id
     assert message.shared_video_id == video.id
+    assert is_binary(message.message_group_id)
   end
 
   test "send_system_message creates a system notification" do
@@ -43,6 +44,7 @@ defmodule FosBjj.Accounts.UserMessageTest do
 
     assert message.type == :system_notification
     assert message.sender_id == nil
+    assert is_binary(message.message_group_id)
   end
 
   test "mark_as_read updates received flag" do

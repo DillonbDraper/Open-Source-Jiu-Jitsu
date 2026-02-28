@@ -1,6 +1,6 @@
-defmodule FosBjjWeb.Components.MessagesTableComponent do
+defmodule FosBjjWeb.Components.ReceivedMessagesTable do
   @moduledoc """
-  LiveComponent for displaying a paginated, searchable table of user messages.
+  LiveComponent for displaying a paginated, searchable table of received user messages.
   """
   use FosBjjWeb, :live_component
 
@@ -111,7 +111,7 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
      socket
      |> assign(:messages, messages)
      |> assign(:messages_page, page)
-     |> put_flash(:info, "Message deleted")}
+     |> put_flash(:success, "Message deleted")}
   end
 
   defp list_user_messages(user, query, page) do
@@ -185,8 +185,8 @@ defmodule FosBjjWeb.Components.MessagesTableComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
-      <.h3 class="text-lg font-medium mb-4">My Messages</.h3>
+    <div id={@id} class="card bg-base-100 shadow-sm border border-base-200 p-6">
+      <.h3 class="text-lg font-medium mb-4">Received Messages</.h3>
       <%= if @messages.results == [] do %>
         <div
           id="messages-empty-state"

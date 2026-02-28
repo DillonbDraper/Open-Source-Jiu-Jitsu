@@ -227,7 +227,7 @@ defmodule FosBjj.JiuJitsu.ActionSubPositionOrientation do
     {"back_mount", "superior", "submissions"},
     {"back_mount", "superior", "transitions"},
     {"back_mount", "superior", "maintaining"},
-    {"back_crucifix", "inferior", "submissions"},
+    {"back_crucifix", "inferior", "escapes"},
     {"back_crucifix", "inferior", "transitions"},
     {"back_crucifix", "superior", "submissions"},
     {"back_crucifix", "superior", "transitions"},

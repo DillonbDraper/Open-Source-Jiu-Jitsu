@@ -148,12 +148,12 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
 
         {:noreply,
          socket
-         |> put_flash(:info, message)}
+         |> put_flash(:success, message)}
 
       {:error, form} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Something went wrong")
+         |> put_flash(:danger, "Something went wrong")
          |> assign(form: form)}
     end
   end

@@ -40,7 +40,7 @@ defmodule FosBjjWeb.Components.FollowersTableComponent do
     ~H"""
     <div class="card bg-base-100 shadow-sm border border-base-200 p-6">
       <div class="flex justify-between items-center mb-4">
-        <.h3 class="text-lg font-medium">My Followers</.h3>
+        <.h3 class="text-lg font-medium">My Students</.h3>
         <span class="badge badge-primary badge-outline">{length(@followers)} student(s)</span>
       </div>
 

@@ -100,10 +100,10 @@ defmodule FosBjjWeb.Components.NotesTableComponent do
          socket
          |> assign(:notes, notes)
          |> assign(:notes_page, page)
-         |> put_flash(:info, "Note deleted")}
+         |> put_flash(:success, "Note deleted")}
 
       {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete note")}
+        {:noreply, put_flash(socket, :danger, "Could not delete note")}
     end
   end
 

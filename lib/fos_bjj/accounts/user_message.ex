@@ -13,7 +13,7 @@ defmodule FosBjj.Accounts.UserMessage do
     defaults([:read, :destroy])
 
     create :send do
-      accept([:body, :recipient_id, :shared_video_id])
+      accept([:body, :recipient_id, :shared_video_id, :message_group_id])
       change(relate_actor(:sender))
       change(set_attribute(:type, :video_shared_by_coach))
     end
@@ -75,6 +75,12 @@ defmodule FosBjj.Accounts.UserMessage do
       allow_nil?(false)
       constraints(one_of: [:system_notification, :video_shared_by_coach])
       default(:system_notification)
+      public?(true)
+    end
+
+    attribute :message_group_id, :uuid do
+      allow_nil?(false)
+      default(&Ecto.UUID.generate/0)
       public?(true)
     end
 
