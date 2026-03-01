@@ -83,6 +83,7 @@ defmodule FosBjj.JiuJitsu.SubPosition do
     %{name: "high_mount", label: "High Mount", position_name: "mount"},
     %{name: "low_mount", label: "Low Mount", position_name: "mount"},
     %{name: "s_mount", label: "S Mount", position_name: "mount"},
+    %{name: "technical_mount", label: "Technical Mount", position_name: "mount"},
     %{
       name: "standard_side_control",
       label: "Standard Side Control",

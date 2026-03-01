@@ -51,7 +51,9 @@ defmodule FosBjj.JiuJitsu.Grip do
     %{name: "half_nelson", label: "Half Nelson"},
     %{name: "three_quarter_nelson", label: "Three Quarter Nelson"},
     %{name: "rear_cross_collar", label: "Rear Cross Collar"},
-    %{name: "seatbelt", label: "Seatbelt"}
+    %{name: "seatbelt", label: "Seatbelt"},
+    %{name: "single_collar_grip", label: "Single Collar Grip"},
+    %{name: "single_pant_cuff", label: "Single Pant Cuff"}
   ]
 
   @impl true
