@@ -53,7 +53,10 @@ defmodule FosBjj.JiuJitsu.Grip do
     %{name: "rear_cross_collar", label: "Rear Cross Collar"},
     %{name: "seatbelt", label: "Seatbelt"},
     %{name: "single_collar_grip", label: "Single Collar Grip"},
-    %{name: "single_pant_cuff", label: "Single Pant Cuff"}
+    %{name: "single_pant_cuff", label: "Single Pant Cuff"},
+    %{name: "crossface", label: "Crossface"},
+    %{name: "russian_tie", label: "Russian Tie"},
+    %{name: "russian_tie_with_belt", label: "Russian Tie w/ Belt"}
   ]
 
   @impl true
