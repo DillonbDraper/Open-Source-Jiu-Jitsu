@@ -113,7 +113,9 @@ defmodule FosBjjWeb.DatabaseComponent do
           Video |> Ash.Query.filter(ilike(title, "%#{^title_string}%"))
       end
 
-    query |> Ash.Query.filter(attire in ^attire_query_param)
+    query
+    |> Ash.Query.filter(attire in ^attire_query_param)
+    |> Ash.Query.filter(is_nil(deleted_at))
   end
 
   @impl true

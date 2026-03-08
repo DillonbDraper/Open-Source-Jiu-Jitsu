@@ -5,7 +5,7 @@ defmodule FosBjjWeb.UserManagementLive do
   alias FosBjj.Accounts.UserMessage
   require Ash.Query
 
-  on_mount {FosBjjWeb.LiveUserAuth, :live_admin_required}
+  on_mount({FosBjjWeb.LiveUserAuth, :live_admin_required})
 
   @impl true
   def mount(_params, _session, socket) do
@@ -236,6 +236,11 @@ defmodule FosBjjWeb.UserManagementLive do
   defp contributor_application_badge_class(_), do: "badge-ghost"
 
   @impl true
+  def handle_info({:user_management_video_report_flash, kind, message}, socket) do
+    {:noreply, put_flash(socket, kind, message)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} full_width current_user={assigns[:current_user]} socket={@socket}>
@@ -400,6 +405,12 @@ defmodule FosBjjWeb.UserManagementLive do
             </:action>
           </.table>
         </div>
+
+        <.live_component
+          module={FosBjjWeb.UserManagementVideoReportsComponent}
+          id="user-management-video-reports-component"
+          current_user={@current_user}
+        />
       </div>
     </Layouts.app>
     """

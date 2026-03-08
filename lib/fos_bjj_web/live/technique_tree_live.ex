@@ -444,6 +444,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         |> Ash.Query.filter(action_name == ^action_name)
         |> Ash.Query.load(:video_count)
         |> Ash.read!()
+        |> Enum.filter(&(&1.video_count > 0))
         |> sort_by_name()
 
       assign(socket, :techniques_map, Map.put(socket.assigns.techniques_map, id, techniques))
@@ -455,9 +456,12 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       from(vt in VideoTechnique,
         join: t in assoc(vt, :techniques),
         as: :technique,
+        join: v in assoc(vt, :video),
+        as: :video,
         join: sp in assoc(t, :sub_position),
         as: :sub_position,
         where: sp.position_name == ^position_name,
+        where: is_nil(v.deleted_at),
         select: count(vt.video_id, :distinct)
       )
 

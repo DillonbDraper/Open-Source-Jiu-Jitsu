@@ -2,9 +2,11 @@ defmodule FosBjjWeb.UserProfileLive do
   use FosBjjWeb, :live_view
 
   alias FosBjj.JiuJitsu.Video
+  alias FosBjj.JiuJitsu.VideoNote
   alias FosBjj.Accounts.Academy
   alias FosBjj.Accounts.AcademyUser
   alias FosBjj.Accounts.ContributorApplication
+  alias FosBjj.Accounts.UserMessage
   alias FosBjj.Accounts.User
   alias FosBjjWeb.AcademyLive.NewAcademyForm
   alias FosBjjWeb.ContributorApplicationForm
@@ -143,12 +145,17 @@ defmodule FosBjjWeb.UserProfileLive do
   @impl true
   def handle_event("delete_video", %{"id" => id}, socket) do
     if socket.assigns.current_user.role_name == "admin" do
-      Video
-      |> Ash.get!(id, actor: socket.assigns.current_user)
-      |> Ash.destroy!(actor: socket.assigns.current_user)
+      user = socket.assigns.current_user
+
+      video =
+        Video
+        |> Ash.get!(id, actor: user)
+        |> Ash.Changeset.for_update(:update, %{deleted_at: DateTime.utc_now()}, actor: user)
+        |> Ash.update!()
+
+      notify_video_references_deleted(video, user)
 
       page = socket.assigns.current_page
-      user = socket.assigns.current_user
       query = socket.assigns.video_search_query
 
       videos = list_user_videos(user, query, page)
@@ -161,7 +168,10 @@ defmodule FosBjjWeb.UserProfileLive do
           {videos, page}
         end
 
-      {:noreply, assign(socket, videos: videos, total_videos: videos.count, current_page: page)}
+      {:noreply,
+       socket
+       |> assign(videos: videos, total_videos: videos.count, current_page: page)
+       |> put_flash(:success, "Video deleted")}
     else
       {:noreply, put_flash(socket, :danger, "Unauthorized")}
     end
@@ -467,6 +477,7 @@ defmodule FosBjjWeb.UserProfileLive do
 
     Video
     |> Ash.Query.filter(created_by.id == ^user.id)
+    |> Ash.Query.filter(is_nil(deleted_at))
     |> then(fn q ->
       if query != "" do
         Ash.Query.filter(q, contains(title, ^query))
@@ -476,6 +487,42 @@ defmodule FosBjjWeb.UserProfileLive do
     end)
     |> Ash.Query.load([:techniques, :grips])
     |> Ash.read!(actor: user, page: [limit: 5, offset: offset, count: true])
+  end
+
+  defp notify_video_references_deleted(video, actor) do
+    user_ids =
+      (video_note_user_ids(video.id, actor) ++ message_user_ids(video.id, actor))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    body =
+      "A video you referenced, \"#{video.title}\", has been removed and is no longer available.
+      We apologize for the inconvenience."
+
+    Enum.each(user_ids, fn recipient_id ->
+      UserMessage
+      |> Ash.Changeset.for_create(
+        :send_system_message,
+        %{recipient_id: recipient_id, body: body},
+        actor: actor
+      )
+      |> Ash.create!()
+    end)
+  end
+
+  defp video_note_user_ids(video_id, actor) do
+    VideoNote
+    |> Ash.Query.filter(video_id == ^video_id)
+    |> Ash.Query.for_read(:read_all)
+    |> Ash.read!(actor: actor)
+    |> Enum.map(& &1.user_id)
+  end
+
+  defp message_user_ids(video_id, actor) do
+    UserMessage
+    |> Ash.Query.filter(shared_video_id == ^video_id)
+    |> Ash.read!(actor: actor)
+    |> Enum.flat_map(fn message -> [message.sender_id, message.recipient_id] end)
   end
 
   defp contributor_application_status(user) do

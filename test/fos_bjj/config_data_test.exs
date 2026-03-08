@@ -4,6 +4,7 @@ defmodule FosBjj.ConfigDataTest do
   import Ecto.Query
 
   alias FosBjj.ConfigData
+  alias FosBjj.Accounts.VideoReportReason
   alias FosBjj.JiuJitsu.ActionSubPositionOrientation
   alias FosBjj.JiuJitsu.Action
   alias FosBjj.JiuJitsu.Grip
@@ -22,6 +23,7 @@ defmodule FosBjj.ConfigDataTest do
     assert Action in resources
     assert PositionOrientation in resources
     assert ActionSubPositionOrientation in resources
+    assert VideoReportReason in resources
   end
 
   test "sync_all is safe to run repeatedly" do
@@ -51,6 +53,11 @@ defmodule FosBjj.ConfigDataTest do
   end
 
   test "sync prunes unmanaged action_sub_position_orientation rows" do
+    assert :ok = ConfigData.sync(Position)
+    assert :ok = ConfigData.sync(SubPosition)
+    assert :ok = ConfigData.sync(Orientation)
+    assert :ok = ConfigData.sync(Action)
+
     unmanaged_key = %{
       sub_position_name: "upper_body",
       orientation_name: "offense",

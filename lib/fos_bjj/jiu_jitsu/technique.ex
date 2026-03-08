@@ -54,7 +54,9 @@ defmodule FosBjj.JiuJitsu.Technique do
   end
 
   aggregates do
-    count(:video_count, :videos)
+    count :video_count, :videos do
+      filter(expr(is_nil(deleted_at)))
+    end
   end
 
   relationships do

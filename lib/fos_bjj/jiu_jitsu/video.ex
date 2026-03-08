@@ -33,7 +33,8 @@ defmodule FosBjj.JiuJitsu.Video do
         :title,
         :description,
         :attire,
-        :thumbnail_url
+        :thumbnail_url,
+        :deleted_at
       ])
 
       argument(:url, :string)
@@ -68,6 +69,11 @@ defmodule FosBjj.JiuJitsu.Video do
     attribute :attire, :atom do
       constraints(one_of: [:gi, :no_gi])
       allow_nil?(false)
+      public?(true)
+    end
+
+    attribute :deleted_at, :utc_datetime_usec do
+      allow_nil?(true)
       public?(true)
     end
 

@@ -1,0 +1,16 @@
+* The goal of this feature is to create a system for users to be able to report videos in the library that should not be there
+
+** To accomplish this, we will create a new table called user_video_reports
+*** This new table will have reason (string), message (string, optional), resolved (bool), user_id,and video_id fields
+**** "The reason" field should have the options duplicate, low quality, broken link, or inappropriate/off topic
+** The UI for users to submit reports will exist from the video detail page, and be rendered upon clicking a red hero-flag icon. This can follow the same UI pattern as the video sharing feature that coaches and higher permission bracekts have access to, and be rendered to the left of it.
+** There should be no permission gating for this feature.
+
+** As a secondary part of this feature, we will add a user video reports component to the user management admin view.
+*** This will take the form of a table that functions much like the other tables on that page, with filter options by resolved, unresolved, and all
+**** unresolved should be the page default filter.
+*** Rendering the columns should be handled the same way as other tables in the app (with messages too long having popover full text, user name in place of their id, and clickable video name link in place of the id)
+*** There should also as the rightmost column be a "Manage report" button.  If the report is resolved, it should have a green checkmark nex to it.
+**** Upon clicking that manage report button, a modal should appear prompting the user to either delete the video or mark as resolved without deleting.
+***** If the user chooses not to delete the video, a required textfield should appear for their reason to choose not to delete it.  Upon save, the report is marked as reviewed, and a message is dispatched the user who reported with the body being the explanation of why it was not deleted.
+***** If the user chooses to delete, they should be prompted one last time confirming they are SURE they wish to delete the video.  This will be a soft delete.  Additionally, a message will be dispatched to those with messages/notes referencing the video explaining that it has been deleted and why.
