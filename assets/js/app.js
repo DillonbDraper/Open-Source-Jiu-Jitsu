@@ -31,7 +31,12 @@ const AutoDismissFlash = {
   schedule() {
     clearTimeout(this.timer);
     const ms = parseInt(this.el.dataset.autoDismissMs);
-    if (ms > 0) this.timer = setTimeout(() => this.el.click(), ms);
+    if (ms > 0) {
+      this.timer = setTimeout(() => {
+        const cmd = this.el.dataset.dismissCommand;
+          this.js().exec(cmd);
+      }, ms);
+    }
   },
 };
 

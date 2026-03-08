@@ -111,6 +111,7 @@ defmodule FosBjjWeb.Components.Alert do
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide_alert("##{@id}")}
+      data-dismiss-command={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide_alert("##{@id}")}
       phx-hook={if @auto_dismiss_ms, do: "AutoDismissFlash"}
       data-auto-dismiss-ms={@auto_dismiss_ms}
       data-flash-key={@kind}
