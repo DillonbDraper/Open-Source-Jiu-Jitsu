@@ -173,6 +173,7 @@ defmodule FosBjjWeb.VideoShowComponent do
     video =
       Video
       |> Ash.Query.filter(id == ^video_id)
+      |> Ash.Query.filter(is_nil(deleted_at))
       |> Ash.Query.load(techniques: [:video_count], grips: [])
       |> Ash.read_one!()
 
@@ -204,33 +205,42 @@ defmodule FosBjjWeb.VideoShowComponent do
             Back to Database
           </.button_link>
 
-          <%= if @current_user && User.coach_or_admin?(@current_user) do %>
-            <.tooltip id="share-video-tooltip" position="left" color="dark">
-              <:trigger>
-                <.button
-                  id="share-video-button"
-                  type="button"
-                  phx-click={if @student_count > 0, do: "open_share_modal"}
-                  phx-target={@myself}
-                  disabled={@student_count == 0}
-                  variant="default"
-                  color="primary"
-                  size="small"
-                  circle
-                  icon="hero-radio"
-                  icon_class="w-5 h-5"
-                  class={if @student_count == 0, do: "cursor-not-allowed opacity-70", else: ""}
-                />
-              </:trigger>
-              <:content>
-                <%= if @student_count > 0 do %>
-                  Share this Video To Your Students
-                <% else %>
-                  You must have students following you to broadcast videos
-                <% end %>
-              </:content>
-            </.tooltip>
-          <% end %>
+          <div class="flex items-center gap-2">
+            <.live_component
+              module={FosBjjWeb.VideoReportModalComponent}
+              id="video-report-modal-component"
+              current_user={@current_user}
+              video={@video}
+            />
+
+            <%= if @current_user && User.coach_or_admin?(@current_user) do %>
+              <.tooltip id="share-video-tooltip" position="left" color="dark">
+                <:trigger>
+                  <.button
+                    id="share-video-button"
+                    type="button"
+                    phx-click={if @student_count > 0, do: "open_share_modal"}
+                    phx-target={@myself}
+                    disabled={@student_count == 0}
+                    variant="default"
+                    color="primary"
+                    size="small"
+                    circle
+                    icon="hero-radio"
+                    icon_class="w-5 h-5"
+                    class={if @student_count == 0, do: "cursor-not-allowed opacity-70", else: ""}
+                  />
+                </:trigger>
+                <:content>
+                  <%= if @student_count > 0 do %>
+                    Share this Video To Your Students
+                  <% else %>
+                    You must have students following you to broadcast videos
+                  <% end %>
+                </:content>
+              </.tooltip>
+            <% end %>
+          </div>
         </div>
 
         <div

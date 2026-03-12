@@ -153,6 +153,24 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
     UserMessage.type_value(message.type) == :video_shared_by_coach
   end
 
+  defp shared_video_deleted?(message) do
+    case message.shared_video do
+      %{deleted_at: deleted_at} -> not is_nil(deleted_at)
+      _ -> false
+    end
+  end
+
+  defp shared_video_available?(message) do
+    not is_nil(message.shared_video) and not shared_video_deleted?(message)
+  end
+
+  defp shared_video_title(message) do
+    case message.shared_video do
+      %{title: title} -> title
+      _ -> "Video Unavailable"
+    end
+  end
+
   defp message_body_present?(message) do
     case message.body do
       body when is_binary(body) -> String.trim(body) != ""
@@ -246,16 +264,25 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
                 <%= if message_body_present?(message) do %>
                   <div class="whitespace-pre-line">{message.body}</div>
                 <% end %>
-                <%= if message.shared_video do %>
+                <%= if shared_video_available?(message) do %>
                   <div class="mt-3 pt-3 border-t border-gray-600">
                     <.link
                       navigate={~p"/videos/#{message.shared_video.id}"}
                       class="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
                     >
                       <.icon name="hero-play-circle" class="w-4 h-4" />
-                      Watch: {message.shared_video.title}
+                      Watch: {shared_video_title(message)}
                     </.link>
                   </div>
+                <% else %>
+                  <%= if shared_video_deleted?(message) do %>
+                    <div class="mt-3 pt-3 border-t border-gray-600 text-gray-400">
+                      <span class="inline-flex items-center gap-1 cursor-not-allowed">
+                        <.icon name="hero-no-symbol" class="w-4 h-4" />
+                        Video deleted by contributor: {shared_video_title(message)}
+                      </span>
+                    </div>
+                  <% end %>
                 <% end %>
               </:content>
             </.popover>

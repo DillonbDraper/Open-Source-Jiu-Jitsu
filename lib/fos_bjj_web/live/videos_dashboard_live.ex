@@ -5,7 +5,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
   alias FosBjjWeb.TechniqueLive.NewTechniqueForm
   alias Phoenix.LiveView.JS
 
-  on_mount {FosBjjWeb.LiveUserAuth, :live_user_optional}
+  on_mount({FosBjjWeb.LiveUserAuth, :live_user_optional})
 
   @impl true
   def mount(_params, _session, socket) do
@@ -136,6 +136,11 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:show_edit_modal, false)
      |> assign(:editing_video, nil)
      |> put_flash(:success, "Video updated successfully")}
+  end
+
+  @impl true
+  def handle_info({:video_report_flash, kind, message}, socket) do
+    {:noreply, put_flash(socket, kind, message)}
   end
 
   @impl true

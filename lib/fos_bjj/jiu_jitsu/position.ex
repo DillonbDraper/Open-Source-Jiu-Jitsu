@@ -31,7 +31,9 @@ defmodule FosBjj.JiuJitsu.Position do
   end
 
   aggregates do
-    count(:video_count, [:sub_positions, :techniques, :videos])
+    count :video_count, [:sub_positions, :techniques, :videos] do
+      filter(expr(is_nil(deleted_at)))
+    end
   end
 
   relationships do
