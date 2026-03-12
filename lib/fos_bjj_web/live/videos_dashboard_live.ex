@@ -19,7 +19,8 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:total_videos, 0)
      |> assign(:show_edit_modal, false)
      |> assign(:show_technique_drawer, false)
-     |> assign(:editing_video, nil)}
+     |> assign(:editing_video, nil)
+     |> assign(:current_time, 0)}
   end
 
   @impl true
@@ -144,6 +145,33 @@ defmodule FosBjjWeb.VideosDashboardLive do
   end
 
   @impl true
+  def handle_info({:player_time_update, time}, socket) do
+    {:noreply, assign(socket, :current_time, time)}
+  end
+
+  @impl true
+  def handle_info({:seek_video, seconds}, socket) do
+    send_update(FosBjjWeb.VideoShowComponent,
+      id: "video-show-component",
+      video_id: socket.assigns.video_id,
+      seek_seconds: seconds
+    )
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:request_player_status}, socket) do
+    send_update(FosBjjWeb.VideoShowComponent,
+      id: "video-show-component",
+      video_id: socket.assigns.video_id,
+      request_status: true
+    )
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({NewTechniqueForm, {:technique_created, technique}}, socket) do
     # Forward the message to the component by sending an update
     send_update(VideoFormComponent,
@@ -180,6 +208,83 @@ defmodule FosBjjWeb.VideosDashboardLive do
     [page: page] ++ url_params
   end
 
+  defp render_right_panel(
+         %{view_mode: :video_show, current_user: %{confirmed_at: confirmed_at}} = assigns
+       )
+       when not is_nil(confirmed_at) do
+    ~H"""
+    <.tabs
+      id="right-panel-tabs"
+      color="primary"
+      size="small"
+      variant="pills"
+      full_width_tab
+      content_padding="none"
+      tab_border_size="medium"
+    >
+      <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
+      <:tab icon="hero-pencil-square">My Notes</:tab>
+
+      <:panel>
+        <.live_component
+          module={FosBjjWeb.TechniqueTreeComponent}
+          id="technique-tree"
+          selected_technique_id={@selected_technique_id}
+          selected_attire={@selected_attire}
+          title_search={@title_search}
+        />
+      </:panel>
+      <:panel>
+        <.live_component
+          module={FosBjjWeb.VideoNotesComponent}
+          id="video-notes"
+          video_id={@video_id}
+          current_user={@current_user}
+          current_time={@current_time}
+        />
+      </:panel>
+    </.tabs>
+    """
+  end
+
+  defp render_right_panel(%{view_mode: :video_show} = assigns) do
+    ~H"""
+    <.tabs
+      id="right-panel-tabs"
+      color="primary"
+      variant="default"
+      size="small"
+      full_width_tab
+      content_padding="none"
+      tab_border_size="medium"
+    >
+      <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
+
+      <:panel>
+        <.live_component
+          module={FosBjjWeb.TechniqueTreeComponent}
+          id="technique-tree"
+          selected_technique_id={@selected_technique_id}
+          selected_attire={@selected_attire}
+          title_search={@title_search}
+        />
+      </:panel>
+    </.tabs>
+    """
+  end
+
+  defp render_right_panel(assigns) do
+    ~H"""
+    <.live_component
+      module={FosBjjWeb.TechniqueTreeComponent}
+      id="technique-tree"
+      selected_technique_id={@selected_technique_id}
+      selected_attire={@selected_attire}
+      title_search={@title_search}
+    />
+    """
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -198,10 +303,13 @@ defmodule FosBjjWeb.VideosDashboardLive do
       />
 
       <div class={[
-        "flex flex-col-reverse gap-4 md:grid md:grid-cols-5 md:gap-8 w-full mt-4",
-        if(@view_mode == :database, do: "md:h-[calc(100vh-12rem)]", else: "")
+        "gap-4 md:grid md:grid-cols-5 md:gap-8 w-full mt-4",
+        if(@view_mode == :database,
+          do: "flex flex-col-reverse md:h-[calc(100vh-12rem)]",
+          else: "flex flex-col"
+        )
       ]}>
-        <!-- Dynamic Content Area: In HTML first, but on mobile appears second (bottom) due to flex-col-reverse, on desktop appears first (left) -->
+        <!-- Dynamic Content Area -->
         <div class={[
           "col-span-3 flex flex-col min-w-0",
           if(@view_mode == :database, do: "md:h-full md:overflow-hidden", else: "")
@@ -228,15 +336,9 @@ defmodule FosBjjWeb.VideosDashboardLive do
           <% end %>
         </div>
         
-    <!-- Technique Tree: In HTML second, but on mobile appears first (top) due to flex-col-reverse, on desktop appears second (right) -->
+    <!-- Right Panel -->
         <div class="col-span-2 min-w-0">
-          <.live_component
-            module={FosBjjWeb.TechniqueTreeComponent}
-            id="technique-tree"
-            selected_technique_id={@selected_technique_id}
-            selected_attire={@selected_attire}
-            title_search={@title_search}
-          />
+          {render_right_panel(assigns)}
         </div>
       </div>
 

@@ -1,0 +1,17 @@
+* The goal here is to refactor the way notetaking/displaying works in the app for better UI/UX
+
+  Currently, they are conditionally rendering within my app from video_show_component.ex in the VideoNotesComponent in video_notes_component.ex.
+  The way this shares data with the video for timestamping works as desired, but I dislike the current UI.  I propose that we move videos to the
+  righthand side to better facilitate this.
+
+** List of things to accomplish is as follows:
+  - Move the VideoNotesComponent to the righthand side of the screen, where the technique_tree_live currently sits.
+    - Rather than getting rid of the technique tree live, they should be togglable with a tab based interface (using the appropriate tab component)
+  - The notes hould be rendered in a vertical list of cards, sorted by their video timestamp (earliest timestamps first)
+    - That timestamp should be clickable to navigate to the timestamp in the video
+  - The cards should be rendered with a single line of text with any overflowing content wrapping (with ... to make this visually clear)
+    - On hover after a delay (say 1500ms to start), render the full note body in a popover
+  - Clicking on the note should expand to it occupy as much vertical space as it needs to
+    - There should be an icon button on the left of the expanded note to shrink it back to the original size
+  - We can leave the actual note creating UI mostly as is, with a similar "+ Add Note" button at the top right of the component
+  - We should get rid of unneeded togglability of the "Video Information" section in the video_show_component, as well as associated state.

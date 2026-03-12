@@ -5,30 +5,18 @@ defmodule FosBjjWeb.VideoShowComponent do
   alias FosBjj.Accounts.StudentCoachRelationship
   alias FosBjj.Accounts.UserMessage
   alias FosBjj.Accounts.User
-  import FosBjjWeb.Components.Icon
   import FosBjjWeb.Components.Button
-  import FosBjjWeb.Components.Authorization
   require Ash.Query
 
   @impl true
   def mount(socket) do
-    {:ok, assign(socket, :current_time, 0)}
+    {:ok, socket}
   end
 
   @impl true
   def update(assigns, socket) do
+    previous_video_id = socket.assigns[:video_id]
     socket = assign(socket, assigns)
-
-    # This feels wrong but I'm not sure how else it ought be done
-    socket =
-      if Map.has_key?(socket.assigns, :show_info),
-        do: socket,
-        else: assign(socket, :show_info, true)
-
-    socket =
-      if Map.has_key?(socket.assigns, :show_notes),
-        do: socket,
-        else: assign(socket, :show_notes, true)
 
     socket =
       if Map.has_key?(socket.assigns, :show_share_modal),
@@ -57,10 +45,29 @@ defmodule FosBjjWeb.VideoShowComponent do
         socket
       end
 
+    # Handle seek request from parent (forwarded from VideoNotesComponent)
+    socket =
+      if assigns[:seek_seconds] do
+        push_event(socket, "seek", %{seconds: assigns.seek_seconds})
+      else
+        socket
+      end
+
+    # Handle status request from parent (forwarded from VideoNotesComponent)
+    socket =
+      if assigns[:request_status] do
+        push_event(socket, "request_player_status", %{})
+      else
+        socket
+      end
+
+    video_id = socket.assigns[:video_id]
+
     # Only load video if video_id changed or it's the first load
     socket =
-      if socket.assigns[:video] == nil or socket.assigns[:video_id] != assigns.video_id do
-        load_video(socket, assigns.video_id)
+      if not is_nil(video_id) and
+           (socket.assigns[:video] == nil or previous_video_id != video_id) do
+        load_video(socket, video_id)
       else
         socket
       end
@@ -74,19 +81,10 @@ defmodule FosBjjWeb.VideoShowComponent do
   end
 
   @impl true
-  def handle_event("toggle_info", _, socket) do
-    {:noreply, update(socket, :show_info, &(!&1))}
-  end
-
-  @impl true
-  def handle_event("toggle_notes", _, socket) do
-    {:noreply, update(socket, :show_notes, &(!&1))}
-  end
-
-  @impl true
   def handle_event("player_status_report", %{"current_time" => time}, socket) do
     rounded_time = floor(time)
-    {:noreply, assign(socket, :current_time, rounded_time)}
+    send(self(), {:player_time_update, rounded_time})
+    {:noreply, socket}
   end
 
   @impl true
@@ -262,45 +260,8 @@ defmodule FosBjjWeb.VideoShowComponent do
         </div>
 
         <div id="video-sections-container" class="flex flex-col gap-6">
-          <.verified_user_only current_user={@current_user}>
-            <div class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
-              <div
-                class="p-3 bg-base-200/50 border-b border-base-200 flex justify-between items-center cursor-pointer hover:bg-base-200 transition-colors select-none"
-                phx-click="toggle_notes"
-                phx-target={@myself}
-              >
-                <.h2
-                  size="text-sm"
-                  font_weight="font-bold"
-                  class="uppercase tracking-wide text-base-content/70"
-                >
-                  My Notes
-                </.h2>
-                <.icon
-                  name={if @show_notes, do: "hero-chevron-up", else: "hero-chevron-down"}
-                  class="w-5 h-5 text-base-content/50"
-                />
-              </div>
-
-              <%= if @show_notes do %>
-                <div class="p-4">
-                  <.live_component
-                    module={FosBjjWeb.VideoNotesComponent}
-                    id="video-notes"
-                    video_id={@video.id}
-                    current_user={@current_user}
-                    current_time={@current_time}
-                  />
-                </div>
-              <% end %>
-            </div>
-          </.verified_user_only>
           <div class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
-            <div
-              class="p-3 bg-base-200/50 border-b border-base-200 flex justify-between items-center cursor-pointer hover:bg-base-200 transition-colors select-none"
-              phx-click="toggle_info"
-              phx-target={@myself}
-            >
+            <div class="p-3 bg-base-200/50 border-b border-base-200 flex justify-between items-center select-none">
               <.h2
                 size="text-sm"
                 font_weight="font-bold"
@@ -308,65 +269,59 @@ defmodule FosBjjWeb.VideoShowComponent do
               >
                 Video Information
               </.h2>
-              <.icon
-                name={if @show_info, do: "hero-chevron-up", else: "hero-chevron-down"}
-                class="w-5 h-5 text-base-content/50"
-              />
             </div>
 
-            <%= if @show_info do %>
-              <div class="p-4">
-                <.h1 size="text-xl" font_weight="font-bold" class="mb-4">
-                  {@video.title}
-                </.h1>
+            <div class="p-4">
+              <.h1 size="text-xl" font_weight="font-bold" class="mb-4">
+                {@video.title}
+              </.h1>
 
-                <%= if @video.description do %>
-                  <div class="prose prose-sm max-w-none mb-6">
-                    {@video.description}
+              <%= if @video.description do %>
+                <div class="prose prose-sm max-w-none mb-6">
+                  {@video.description}
+                </div>
+              <% end %>
+
+              <div class="space-y-4 pt-4 border-t border-base-200">
+                <%= if @video.techniques && @video.techniques != [] do %>
+                  <div class="flex items-start gap-3">
+                    <span class="text-xs font-bold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                      Techniques
+                    </span>
+                    <div class="flex flex-wrap gap-2">
+                      <%= for technique <- @video.techniques do %>
+                        <.button
+                          phx-click="select_technique"
+                          phx-target={@myself}
+                          phx-value-technique-id={technique.id}
+                          size="extra_small"
+                          color="primary"
+                          rounded="full"
+                          variant="default"
+                        >
+                          {technique.name} ({technique.video_count})
+                        </.button>
+                      <% end %>
+                    </div>
                   </div>
                 <% end %>
 
-                <div class="space-y-4 pt-4 border-t border-base-200">
-                  <%= if @video.techniques && @video.techniques != [] do %>
-                    <div class="flex items-start gap-3">
-                      <span class="text-xs font-bold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                        Techniques
-                      </span>
-                      <div class="flex flex-wrap gap-2">
-                        <%= for technique <- @video.techniques do %>
-                          <.button
-                            phx-click="select_technique"
-                            phx-target={@myself}
-                            phx-value-technique-id={technique.id}
-                            size="extra_small"
-                            color="primary"
-                            rounded="full"
-                            variant="default"
-                          >
-                            {technique.name} ({technique.video_count})
-                          </.button>
-                        <% end %>
-                      </div>
+                <%= if @video.grips && @video.grips != [] do %>
+                  <div class="flex items-start gap-3">
+                    <span class="text-xs font-bold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                      Grips
+                    </span>
+                    <div class="flex flex-wrap gap-2">
+                      <%= for grip <- @video.grips do %>
+                        <.badge variant="outline" color="secondary" size="extra_small" class="px-2">
+                          {grip.label}
+                        </.badge>
+                      <% end %>
                     </div>
-                  <% end %>
-
-                  <%= if @video.grips && @video.grips != [] do %>
-                    <div class="flex items-start gap-3">
-                      <span class="text-xs font-bold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                        Grips
-                      </span>
-                      <div class="flex flex-wrap gap-2">
-                        <%= for grip <- @video.grips do %>
-                          <.badge variant="outline" color="secondary" size="extra_small" class="px-2">
-                            {grip.label}
-                          </.badge>
-                        <% end %>
-                      </div>
-                    </div>
-                  <% end %>
-                </div>
+                  </div>
+                <% end %>
               </div>
-            <% end %>
+            </div>
           </div>
         </div>
         <.modal
@@ -457,7 +412,7 @@ defmodule FosBjjWeb.VideoShowComponent do
             current_time: currentTime
           });
         });
-        },
+                },
 
                 destroyed() {
                   if (this.player) this.player.destroy();
@@ -505,6 +460,14 @@ defmodule FosBjjWeb.VideoShowComponent do
                 if (this.pendingSeek !== null) {
                   event.target.seekTo(this.pendingSeek, true);
                   this.pendingSeek = null;
+                }
+              },
+              'onStateChange': (event) => {
+                // Report time on pause
+                if (event.data === YT.PlayerState.PAUSED) {
+                  this.pushEventTo(this.el, "player_status_report", {
+                    current_time: this.player.getCurrentTime()
+                  });
                 }
               }
             }

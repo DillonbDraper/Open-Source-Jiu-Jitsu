@@ -1,0 +1,11 @@
+* Todo ideas before I really show off app/code
+
+1. Additional code cleanup
+   - Change messy stringification/atomification and go towards all atom keys
+   - Deprecate native selects in favor of combobox
+   - Extend combobox to take options directly(?)
+   - Extend table(?)
+
+2. Change note taking to a togglable left side view in video detail (toggles to technique tree)
+
+3. Update tickets on github/especially the readme for better presentability 
