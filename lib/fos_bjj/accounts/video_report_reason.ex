@@ -42,6 +42,7 @@ defmodule FosBjj.Accounts.VideoReportReason do
     %{name: "duplicate", label: "Duplicate"},
     %{name: "low_quality", label: "Low Quality"},
     %{name: "broken_link", label: "Broken Link"},
+    %{name: "wrong_category", label: "Wrong Category/Location in Technique Tree"},
     %{name: "inappropriate_off_topic", label: "Inappropriate / Off Topic"}
   ]
 

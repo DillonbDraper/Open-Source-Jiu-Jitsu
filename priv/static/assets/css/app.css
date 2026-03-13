@@ -6071,12 +6071,6 @@
   .border-base-300 {
     border-color: var(--color-base-300);
   }
-  .border-base-300\/40 {
-    border-color: var(--color-base-300);
-    @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-base-300) 40%, transparent);
-    }
-  }
   .border-base-300\/60 {
     border-color: var(--color-base-300);
     @supports (color: color-mix(in lab, red, red)) {

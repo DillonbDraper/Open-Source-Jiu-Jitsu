@@ -66,6 +66,7 @@ defmodule FosBjj.JiuJitsu.SubPosition do
     %{name: "leg_grab", label: "Leg Grab", position_name: "standing"},
     %{name: "ashi_waza", label: "Ashi Waza", position_name: "standing"},
     %{name: "sacrifice_sutemi_waza", label: "Sacrifice (Sutemi Waza)", position_name: "standing"},
+    %{name: "guard_pulling", label: "Guard Pulling", position_name: "standing"},
     %{name: "closed_guard", label: "Closed Guard", position_name: "guard"},
     %{name: "open_guard", label: "Open Guard", position_name: "guard"},
     %{name: "half_guard", label: "Half Guard", position_name: "guard"},

@@ -56,7 +56,8 @@ defmodule FosBjj.JiuJitsu.Action do
     %{name: "breaks", label: "Breaks"},
     %{name: "setups", label: "Setups"},
     %{name: "maintaining", label: "Maintaining"},
-    %{name: "back_takes", label: "Back Takes"}
+    %{name: "back_takes", label: "Back Takes"},
+    %{name: "guard_pulls", label: "Guard Pulls"}
   ]
 
   @impl true

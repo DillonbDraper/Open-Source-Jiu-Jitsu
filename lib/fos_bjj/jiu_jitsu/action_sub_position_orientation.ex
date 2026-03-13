@@ -90,6 +90,8 @@ defmodule FosBjj.JiuJitsu.ActionSubPositionOrientation do
     {"sacrifice_sutemi_waza", "offense", "setups"},
     {"sacrifice_sutemi_waza", "offense", "transitions"},
     {"sacrifice_sutemi_waza", "defense", "transitions"},
+    {"guard_pulling", "offense", "guard_pulls"},
+    {"guard_pulling", "defense", "passes"},
     {"closed_guard", "bottom", "sweeps"},
     {"closed_guard", "bottom", "submissions"},
     {"closed_guard", "bottom", "transitions"},
