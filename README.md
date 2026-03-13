@@ -1,12 +1,15 @@
 # Open Source Jiu-Jitsu
 
-Open Source Jiu Jitsu (OSSBJJ) is a web application designed to organize and enable the searching of a curated collection of free Brazilian Jiu Jitsu instructional videos, with all entries approved by a verified expert.  Over time, it aims to develop into a complete educational platform for the subject.
+Open Source Jiu Jitsu (OSSBJJ) is a web application designed to organize and enable the searching of a curated collection of free Brazilian Jiu Jitsu instructional videos, with all entries approved by a verified expert. It aims to provide an alternative to the flood of unvetted, flashy, short form tiktok/instagram content that I believe does as much (or more) harm that good to peoples' Jiu Jitsu.  Over time, the goal is to develop into a complete educational platform for the subject.
+
+## Technical
+OSSBJJ is built primarily in the Elixir anguage using Phoenix Liveview and the Ash framework, leveraging the Mishka Chelekom library for UI components
 
 ## Installation
 
 These instructions are for running the app locally for development.  Simply visiting the URL ([OSSBJJ.org](https://ossbjj.org)) should be how the majority of users interface with the app.
 
-The included nix.flake should handle all needed dependencies dependencies for those using the nix package manager.  For those not using the nix package manager, a .tool-versions should point asdf/mise/your preferred installation solution towards compatible versions of erlang/elixir. 
+The included nix.flake should handle all needed dependencies dependencies for those using the nix package manager.  For those not using the nix package manager, a .tool-versions should point asdf/mise/your preferred installation solution towards compatible versions of erlang, elixir, and postgres. 
 
 To set up local data for development, a running postgres instance at port 5432 is required.  The version of postgres to use can be found in the flake.nix.  To run the database in a docker container, use the following command, substituting the username and password as you prefer:
 

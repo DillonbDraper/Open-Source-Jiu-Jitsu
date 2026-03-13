@@ -132,37 +132,34 @@ defmodule FosBjjWeb.DatabaseComponent do
             <%= for video <- @videos do %>
               <.card class="h-full flex flex-col relative">
                 <div class="contents">
-                  <%= if assigns[:current_user] && FosBjj.Accounts.User.admin?(@current_user) do %>
-                    <div class="absolute top-3 right-3 z-10">
+                  <div class="pl-3 pr-3 pt-3 pb-2 border-b border-base-200 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                    <.link patch={~p"/videos/#{video.id}"} class="block min-w-0 group/title">
+                      <div class="min-w-0">
+                        <.h2 font_weight="font-bold" class="break-words whitespace-normal">
+                          {video.title}
+                        </.h2>
+                      </div>
+                    </.link>
+
+                    <%= if assigns[:current_user] && FosBjj.Accounts.User.admin?(@current_user) do %>
                       <.button
                         type="button"
                         variant="transparent"
                         phx-click="edit_video"
                         phx-target={@myself}
                         phx-value-video-id={video.id}
-                        class="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                        class="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors shrink-0"
                         title="Edit video"
                       >
                         <.icon name="hero-pencil-solid" class="w-4 h-4" />
                       </.button>
-                    </div>
-                  <% end %>
+                    <% end %>
+                  </div>
 
                   <.link
                     patch={~p"/videos/#{video.id}"}
                     class="block cursor-pointer hover:shadow-xl transition-shadow group min-w-0"
                   >
-                    <div class="pl-3 pr-3 pt-3 pb-2 border-b border-base-200 relative flex justify-between">
-                      <div class="flex-1 min-w-0">
-                        <.h2 font_weight="font-bold" class="break-words whitespace-normal">
-                          {video.title}
-                        </.h2>
-                      </div>
-                      <%= if assigns[:current_user] && FosBjj.Accounts.User.admin?(@current_user) do %>
-                        <div class="w-8 shrink-0"></div>
-                      <% end %>
-                    </div>
-
                     <div class="flex gap-4 p-3">
                       <div class="flex-shrink-0 w-48 relative">
                         <.card_media
@@ -173,7 +170,7 @@ defmodule FosBjjWeb.DatabaseComponent do
                       </div>
 
                       <div class="flex-1 flex items-start">
-                        <.p size="small" class="text-base-content/70 line-clamp-3">
+                        <.p size="small" class="text-base-content/70 line-clamp-5">
                           {video.description}
                         </.p>
                       </div>
