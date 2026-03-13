@@ -301,7 +301,7 @@ defmodule FosBjjWeb.Components.NotesTableComponent do
                 navigate={~p"/videos/#{note.video_id}"}
                 class="link link-primary font-semibold text-blue-600"
               >
-                note.video.title
+                {note.video.title}
               </.link>
             <% end %>
           </:col>
