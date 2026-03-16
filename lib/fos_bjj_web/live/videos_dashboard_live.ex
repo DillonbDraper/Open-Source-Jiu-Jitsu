@@ -223,7 +223,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
       tab_border_size="medium"
     >
       <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
-      <:tab icon="hero-pencil-square">My Notes</:tab>
+      <:tab icon="hero-pencil-square">Video Notes</:tab>
 
       <:panel>
         <.live_component
@@ -252,13 +252,31 @@ defmodule FosBjjWeb.VideosDashboardLive do
     <.tabs
       id="right-panel-tabs"
       color="primary"
-      variant="default"
       size="small"
+      variant="pills"
       full_width_tab
       content_padding="none"
       tab_border_size="medium"
     >
       <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
+      <:tab disabled>
+        <.tooltip
+          id="video-notes-disabled-tooltip"
+          position="bottom"
+          color="dark"
+          inline={true}
+        >
+          <:trigger>
+            <span class="inline-flex items-center gap-1.5">
+              <.icon name="hero-pencil-square" class="tab-icon" />
+              <span>Video Notes</span>
+            </span>
+          </:trigger>
+          <:content>
+            Please login/verify your email to use this feature.
+          </:content>
+        </.tooltip>
+      </:tab>
 
       <:panel>
         <.live_component
@@ -269,6 +287,92 @@ defmodule FosBjjWeb.VideosDashboardLive do
           title_search={@title_search}
         />
       </:panel>
+
+      <:panel></:panel>
+    </.tabs>
+    """
+  end
+
+  defp render_right_panel(
+         %{view_mode: :database, current_user: %{confirmed_at: confirmed_at}} = assigns
+       )
+       when not is_nil(confirmed_at) do
+    ~H"""
+    <.tabs
+      id="database-right-panel-tabs"
+      color="primary"
+      size="small"
+      variant="pills"
+      full_width_tab
+      content_padding="none"
+      tab_border_size="medium"
+    >
+      <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
+      <:tab icon="hero-pencil-square">All Notes</:tab>
+
+      <:panel>
+        <.live_component
+          module={FosBjjWeb.TechniqueTreeComponent}
+          id="technique-tree"
+          selected_technique_id={@selected_technique_id}
+          selected_attire={@selected_attire}
+          title_search={@title_search}
+        />
+      </:panel>
+
+      <:panel>
+        <.live_component
+          module={FosBjjWeb.Components.NotesListComponent}
+          id="database-notes"
+          current_user={@current_user}
+        />
+      </:panel>
+    </.tabs>
+    """
+  end
+
+  defp render_right_panel(%{view_mode: :database} = assigns) do
+    ~H"""
+    <.tabs
+      id="database-right-panel-tabs"
+      color="primary"
+      size="small"
+      variant="pills"
+      full_width_tab
+      content_padding="none"
+      tab_border_size="medium"
+    >
+      <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
+      <:tab disabled>
+        <.tooltip
+          id="database-notes-disabled-tooltip"
+          position="bottom"
+          color="dark"
+          inline={true}
+        >
+          <:trigger>
+            <span class="inline-flex items-center gap-1.5">
+              <.icon name="hero-pencil-square" class="tab-icon" />
+              <span>All Notes</span>
+            </span>
+          </:trigger>
+          <:content>
+            Please login/verify your email to use this feature.
+          </:content>
+        </.tooltip>
+      </:tab>
+
+      <:panel>
+        <.live_component
+          module={FosBjjWeb.TechniqueTreeComponent}
+          id="technique-tree"
+          selected_technique_id={@selected_technique_id}
+          selected_attire={@selected_attire}
+          title_search={@title_search}
+        />
+      </:panel>
+
+      <:panel></:panel>
     </.tabs>
     """
   end

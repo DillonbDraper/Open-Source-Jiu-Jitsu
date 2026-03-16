@@ -115,6 +115,7 @@ defmodule FosBjjWeb.Components.Tabs do
     attr :icon_class, :string, doc: "Determines custom class for the icon"
     attr :icon_position, :string, doc: "Determines icon position"
     attr :active, :boolean, doc: "Indicates whether the element is currently active and visible"
+    attr :disabled, :boolean, doc: "Disables tab selection while keeping the tab visible"
     attr :badge, :string, doc: "Add badge to tab"
     attr :badge_color, :string, doc: "badge color"
     attr :badge_position, :string, doc: "badge position"
@@ -265,21 +266,17 @@ defmodule FosBjjWeb.Components.Tabs do
         <button
           :for={{tab, index} <- Enum.with_index(@tab, 1)}
           id={"#{@id}-tab-header-#{index}"}
-          phx-click={
-            if is_nil(tab[:on_select]) do
-              hide_tab(@id, length(@tab)) |> show_tab(@id, index)
-            else
-              tab[:on_select] |> hide_tab(@id, length(@tab)) |> show_tab(@id, index)
-            end
-          }
+          phx-click={tab_click(tab, @id, length(@tab), index)}
           role="tab"
           aria-selected={@active_index == index}
+          aria-disabled={tab[:disabled] == true}
           aria-controls={"#{@id}-tab-panel-#{index}"}
-          tabindex={(@active_index == index && "0") || "-1"}
+          tabindex={if(tab[:disabled], do: "-1", else: (@active_index == index && "0") || "-1")}
           class={[
             "tab-trigger flex flex-row flex-nowrap justify-center items-center gap-1.5 leading-5",
             "transition-all duration-400 delay-100 disabled:opacity-80",
             tab[:icon_position] == "end" && tab[:badge_position] == "end" && "flex-row-reverse",
+            tab[:disabled] && "cursor-not-allowed opacity-60",
             tab[:class]
           ]}
         >
@@ -318,6 +315,18 @@ defmodule FosBjjWeb.Components.Tabs do
       </div>
     </div>
     """
+  end
+
+  defp tab_click(tab, id, tab_count, index) do
+    if tab[:disabled] == true do
+      nil
+    else
+      if is_nil(tab[:on_select]) do
+        hide_tab(id, tab_count) |> show_tab(id, index)
+      else
+        tab[:on_select] |> hide_tab(id, tab_count) |> show_tab(id, index)
+      end
+    end
   end
 
   defp content_position("start") do

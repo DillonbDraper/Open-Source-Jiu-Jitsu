@@ -6,6 +6,7 @@ defmodule FosBjjWeb.Layouts do
   use FosBjjWeb, :html
   import FosBjjWeb.Components.Navbar
   import FosBjjWeb.Components.Popover
+  alias FosBjj.Accounts.User
   alias FosBjjWeb.InboxLive
 
   # Embed all files in layouts/* within this module.
@@ -77,7 +78,6 @@ defmodule FosBjjWeb.Layouts do
 
             <.popover
               id="user-menu"
-              phx-update="ignore"
               clickable
               position="bottom"
               color="white"
@@ -104,9 +104,29 @@ defmodule FosBjjWeb.Layouts do
                   </.p>
                 </div>
                 <div class="py-1">
-                  <.link navigate={~p"/profile"} class="block px-4 py-2 text-base hover:bg-gray-100">
-                    User Profile
-                  </.link>
+                  <%= if User.verified?(@current_user) do %>
+                    <.link navigate={~p"/profile"} class="block px-4 py-2 text-base hover:bg-gray-100">
+                      User Profile
+                    </.link>
+                  <% else %>
+                    <.tooltip
+                      id="user-profile-disabled-tooltip"
+                      position="left"
+                      color="dark"
+                      inline={true}
+                    >
+                      <:trigger>
+                        <span
+                          id="user-profile-disabled"
+                          class="block px-4 py-2 text-base text-gray-400 cursor-not-allowed"
+                          aria-disabled="true"
+                        >
+                          User Profile
+                        </span>
+                      </:trigger>
+                      <:content>Please login/verify your email to use this feature.</:content>
+                    </.tooltip>
+                  <% end %>
                   <.link href={~p"/sign-out"} class="block px-4 py-2 text-base hover:bg-gray-100">
                     Sign Out
                   </.link>

@@ -64,6 +64,7 @@ defmodule FosBjjWeb.Components.Pagination do
   attr :on_last, JS, default: %JS{}, doc: "Custom JS module for on_last action"
   attr :on_next, JS, default: %JS{}, doc: "Custom JS module for on_next action"
   attr :on_previous, JS, default: %JS{}, doc: "Custom JS module for on_previous action"
+  attr :target, :any, default: nil, doc: "Optional target for pagination events"
 
   attr :size, :string,
     default: "medium",
@@ -139,14 +140,23 @@ defmodule FosBjjWeb.Components.Pagination do
   slot :end_items, required: false, doc: "Determines the end items which accept heex"
 
   attr :rest, :global,
-    include: ~w(disabled hide_one_page show_edges hide_controls grouped),
+    include: ~w(disabled hide_one_page show_edges hide_controls grouped phx-target),
     doc:
       "Global attributes can define defaults which are merged with attributes provided by the caller"
 
   def pagination(
         %{siblings: siblings, boundaries: boundaries, total: total, active: active} = assigns
       ) do
-    assigns = assign(assigns, %{siblings: build_pagination(total, active, siblings, boundaries)})
+    push_target =
+      assigns[:target] ||
+        Map.get(assigns.rest, :"phx-target") ||
+        Map.get(assigns.rest, "phx-target")
+
+    assigns =
+      assign(assigns,
+        siblings: build_pagination(total, active, siblings, boundaries),
+        push_target: push_target
+      )
 
     ~H"""
     <nav
@@ -171,6 +181,7 @@ defmodule FosBjjWeb.Components.Pagination do
         on_action={{"first", @on_first}}
         page={{nil, @active}}
         params={@params}
+        target={@push_target}
         label={@first_label}
         class={@first_label_class}
         aria_label={gettext("First page")}
@@ -182,6 +193,7 @@ defmodule FosBjjWeb.Components.Pagination do
         on_action={{"previous", @on_previous}}
         page={{nil, @active}}
         params={@params}
+        target={@push_target}
         label={@previous_label}
         class={@prev_label_class}
         aria_label={gettext("Previous page")}
@@ -194,6 +206,7 @@ defmodule FosBjjWeb.Components.Pagination do
             on_action={{"select", @on_select}}
             page={{range, @active}}
             params={@params}
+            target={@push_target}
             class={@pages_label_class}
           />
         <% else %>
@@ -221,6 +234,7 @@ defmodule FosBjjWeb.Components.Pagination do
         on_action={{"next", @on_next}}
         page={{nil, @active}}
         params={@params}
+        target={@push_target}
         label={@next_label}
         class={@next_label_class}
         aria_label={gettext("Next page")}
@@ -232,6 +246,7 @@ defmodule FosBjjWeb.Components.Pagination do
         on_action={{"last", @on_last}}
         page={{nil, @active}}
         params={@params}
+        target={@push_target}
         label={@last_label}
         class={@last_label_class}
         aria_label={gettext("Last page")}
@@ -250,6 +265,7 @@ defmodule FosBjjWeb.Components.Pagination do
 
   attr :page, :list, required: true, doc: "Specifies pagination pages"
   attr :on_action, JS, default: %JS{}, doc: "Custom JS module for on_action action"
+  attr :target, :any, default: nil, doc: "Optional target for pagination events"
   attr :label, :string, required: false, doc: "Icon displayed alongside of an item"
   attr :disabled, :boolean, required: false, doc: "Specifies whether the element is disabled"
   attr :aria_label, :string, default: nil, doc: "Accessible label for screen readers"
@@ -273,8 +289,12 @@ defmodule FosBjjWeb.Components.Pagination do
         @class
       ]}
       phx-click={
-        elem(@on_action, 1)
-        |> JS.push("pagination", value: Map.merge(%{action: "select", page: elem(@page, 0)}, @params))
+        push_pagination_event(
+          elem(@on_action, 1),
+          %{action: "select", page: elem(@page, 0)},
+          @params,
+          @target
+        )
       }
       disabled={elem(@page, 0) == elem(@page, 1)}
     >
@@ -290,8 +310,7 @@ defmodule FosBjjWeb.Components.Pagination do
       aria-disabled={@disabled}
       aria-label={@aria_label}
       phx-click={
-        elem(@on_action, 1)
-        |> JS.push("pagination", value: Map.merge(%{action: elem(@on_action, 0)}, @params))
+        push_pagination_event(elem(@on_action, 1), %{action: elem(@on_action, 0)}, @params, @target)
       }
       disabled={@disabled}
     >
@@ -299,6 +318,14 @@ defmodule FosBjjWeb.Components.Pagination do
       <span :if={Map.get(@label, :type) != :icon} class="pagination-text">{@label.value}</span>
     </button>
     """
+  end
+
+  defp push_pagination_event(js, base_payload, params, nil) do
+    JS.push(js, "pagination", value: Map.merge(base_payload, params))
+  end
+
+  defp push_pagination_event(js, base_payload, params, target) do
+    JS.push(js, "pagination", value: Map.merge(base_payload, params), target: target)
   end
 
   # We got the original code from mantine.dev pagination hook and changed some numbers

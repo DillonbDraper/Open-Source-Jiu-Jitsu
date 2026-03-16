@@ -7,7 +7,7 @@ defmodule FosBjjWeb.InboxLiveTest do
   alias FosBjjWeb.InboxLive
 
   test "open_inbox shows modal and unread badge", %{conn: conn} do
-    recipient = user_fixture()
+    recipient = user_fixture(%{confirmed: true})
     message = message_fixture(%{type: :video_shared_by_coach, recipient: recipient})
 
     {:ok, view, _html} =
@@ -23,9 +23,22 @@ defmodule FosBjjWeb.InboxLiveTest do
     assert has_element?(view, "#inbox-message-#{message.id}")
   end
 
+  test "unverified user sees disabled inbox trigger", %{conn: conn} do
+    unverified_user = user_fixture()
+
+    {:ok, view, _html} =
+      live_isolated(conn, InboxLive, session: %{"current_user" => unverified_user})
+
+    assert has_element?(view, "#inbox-open-disabled")
+    assert has_element?(view, "#inbox-open-disabled-tooltip")
+    refute has_element?(view, "#inbox-open-button")
+    refute has_element?(view, "#inbox-unread-badge")
+    refute has_element?(view, "#inbox-modal")
+  end
+
   test "select_message marks as read and navigates to shared video", %{conn: conn} do
-    recipient = user_fixture()
-    sender = user_fixture(%{role: "coach"})
+    recipient = user_fixture(%{confirmed: true})
+    sender = user_fixture(%{role: "coach", confirmed: true})
     video = video_fixture(%{user: sender})
 
     message =
@@ -58,7 +71,7 @@ defmodule FosBjjWeb.InboxLiveTest do
   end
 
   test "mark_as_read updates list and system preview", %{conn: conn} do
-    recipient = user_fixture()
+    recipient = user_fixture(%{confirmed: true})
 
     system_message =
       message_fixture(%{type: :system_notification, recipient: recipient, body: nil})

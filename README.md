@@ -1,6 +1,6 @@
 # Open Source Jiu-Jitsu
 
-Open Source Jiu Jitsu (OSSBJJ) is a web application designed to organize and enable the searching of a curated collection of free Brazilian Jiu Jitsu instructional videos, with all entries approved by a verified expert. It aims to provide an alternative to the flood of unvetted, flashy, short form tiktok/instagram content that I believe does as much (or more) harm that good to peoples' Jiu Jitsu.  Over time, the goal is to develop into a complete educational platform for the subject.
+Open Source Jiu Jitsu (OSSBJJ) is a web application designed to organize and enable the searching of a curated collection of free Brazilian Jiu Jitsu instructional videos, with all entries approved by a verified expert. It aims to provide an alternative to the flood of unvetted, flashy, short form tiktok/instagram content that I believe does usually does more harm than good to peoples' Jiu Jitsu.  Over time, the goal is to develop into a complete educational platform for the subject.
 
 ## Technical
 OSSBJJ is built primarily in the Elixir anguage using Phoenix Liveview and the Ash framework, leveraging the Mishka Chelekom library for UI components

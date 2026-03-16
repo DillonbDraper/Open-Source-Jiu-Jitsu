@@ -5,23 +5,26 @@ defmodule FosBjjWeb.InboxLive do
   """
   use FosBjjWeb, :live_view
 
+  alias FosBjj.Accounts.User
   alias FosBjj.Accounts.UserMessage
   require Ash.Query
 
   @impl true
   def mount(_params, session, socket) do
     user = session["current_user"]
+    verified_user = User.verified?(user)
 
     socket =
       socket
       |> assign(:current_user, user)
+      |> assign(:verified_user, verified_user)
       |> assign(:show_modal, false)
       |> assign(:selected_message, nil)
       |> assign(:messages, [])
       |> assign(:unread_count, 0)
 
     socket =
-      if user do
+      if verified_user do
         unread_count = get_unread_count(user)
         messages = get_inbox_messages(user)
 
@@ -37,7 +40,11 @@ defmodule FosBjjWeb.InboxLive do
 
   @impl true
   def handle_event("open_inbox", _, socket) do
-    {:noreply, assign(socket, :show_modal, true)}
+    if socket.assigns.verified_user do
+      {:noreply, assign(socket, :show_modal, true)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -46,6 +53,11 @@ defmodule FosBjjWeb.InboxLive do
      socket
      |> assign(:show_modal, false)
      |> assign(:selected_message, nil)}
+  end
+
+  @impl true
+  def handle_event("select_message", _params, %{assigns: %{verified_user: false}} = socket) do
+    {:noreply, socket}
   end
 
   @impl true
@@ -77,6 +89,11 @@ defmodule FosBjjWeb.InboxLive do
   end
 
   @impl true
+  def handle_event("mark_as_read", _params, %{assigns: %{verified_user: false}} = socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("mark_as_read", %{"id" => id}, socket) do
     message_id = String.to_integer(id)
     user = socket.assigns.current_user
@@ -98,6 +115,11 @@ defmodule FosBjjWeb.InboxLive do
   @impl true
   def handle_event("back_to_list", _, socket) do
     {:noreply, assign(socket, :selected_message, nil)}
+  end
+
+  @impl true
+  def handle_event("open_shared_video", _params, %{assigns: %{verified_user: false}} = socket) do
+    {:noreply, socket}
   end
 
   @impl true
@@ -173,31 +195,52 @@ defmodule FosBjjWeb.InboxLive do
     ~H"""
     <div class="relative">
       <div class="relative inline-flex items-center justify-center">
-        <.button
-          id="inbox-open-button"
-          type="button"
-          phx-click="open_inbox"
-          variant="transparent"
-          color="natural"
-          size="small"
-          class="text-white hover:text-white/80"
-        >
-          <.icon name="hero-envelope" class="w-8 h-8" />
-        </.button>
-
-        <%= if @unread_count > 0 do %>
-          <.badge
-            id="inbox-unread-badge"
-            badge_position="top-0 left-1/2 -translate-x-1/2 -translate-y-1.5 z-10"
-            variant="default"
-            color="danger"
-            size="extra_small"
-            rounded="full"
-            circle
-            class="font-bold"
+        <%= if @verified_user do %>
+          <.button
+            id="inbox-open-button"
+            type="button"
+            phx-click="open_inbox"
+            variant="transparent"
+            color="natural"
+            size="small"
+            class="text-white hover:text-white/80"
           >
-            {@unread_count}
-          </.badge>
+            <.icon name="hero-envelope" class="w-8 h-8" />
+          </.button>
+
+          <%= if @unread_count > 0 do %>
+            <.badge
+              id="inbox-unread-badge"
+              badge_position="top-0 left-1/2 -translate-x-1/2 -translate-y-1.5 z-10"
+              variant="default"
+              color="danger"
+              size="extra_small"
+              rounded="full"
+              circle
+              class="font-bold"
+            >
+              {@unread_count}
+            </.badge>
+          <% end %>
+        <% else %>
+          <.tooltip id="inbox-open-disabled-tooltip" position="bottom" color="dark" inline={true}>
+            <:trigger>
+              <span class="inline-flex cursor-not-allowed" aria-disabled="true">
+                <.button
+                  id="inbox-open-disabled"
+                  type="button"
+                  variant="transparent"
+                  color="natural"
+                  size="small"
+                  disabled
+                  class="text-white/50 cursor-not-allowed"
+                >
+                  <.icon name="hero-envelope" class="w-8 h-8" />
+                </.button>
+              </span>
+            </:trigger>
+            <:content>Please login/verify your email to use this feature.</:content>
+          </.tooltip>
         <% end %>
       </div>
 

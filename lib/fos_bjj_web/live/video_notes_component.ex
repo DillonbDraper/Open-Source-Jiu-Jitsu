@@ -198,6 +198,14 @@ defmodule FosBjjWeb.VideoNotesComponent do
     "#{minutes}:#{padded_seconds}"
   end
 
+  defp format_note_datetime(nil), do: "--"
+
+  defp format_note_datetime(%DateTime{} = datetime) do
+    Calendar.strftime(datetime, "%b %d, %Y %I:%M %p")
+  end
+
+  defp format_note_datetime(_), do: "--"
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -230,6 +238,12 @@ defmodule FosBjjWeb.VideoNotesComponent do
                       <.icon name="hero-chevron-up" class="w-5 h-5" />
                     </button>
                     <div class="flex-1 min-w-0">
+                      <div class="mb-1 flex justify-end">
+                        <span class="text-xs text-base-content/60 whitespace-nowrap">
+                          {format_note_datetime(note.inserted_at)}
+                        </span>
+                      </div>
+
                       <div class="whitespace-pre-wrap text-base leading-relaxed">{note.body}</div>
                       <div class="flex items-center justify-between mt-2 pt-2 border-t border-base-200">
                         <%= if note.video_timestamp do %>
@@ -275,7 +289,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
                 variant="default"
               >
                 <.card_content class="pl-4 pr-3 py-2">
-                  <div class="flex items-center gap-2.5">
+                  <div class="flex items-start gap-2.5">
                     <button
                       type="button"
                       phx-click="toggle_note"
@@ -291,23 +305,29 @@ defmodule FosBjjWeb.VideoNotesComponent do
                       <span class="min-w-0 truncate text-base">{note.body}</span>
                     </button>
 
-                    <%= if note.video_timestamp do %>
-                      <.button
-                        type="button"
-                        variant="transparent"
-                        size="extra_small"
-                        class="font-mono text-sm text-blue-600 hover:underline whitespace-nowrap cursor-pointer shrink-0"
-                        phx-click="seek_video"
-                        phx-target={@myself}
-                        phx-value-seconds={note.video_timestamp}
-                      >
-                        {format_timestamp(note.video_timestamp)}
-                      </.button>
-                    <% else %>
-                      <div class="font-mono text-sm text-base-content/70 whitespace-nowrap shrink-0">
-                        {format_timestamp(note.video_timestamp)}
-                      </div>
-                    <% end %>
+                    <div class="flex shrink-0 flex-col items-end gap-1">
+                      <span class="text-xs text-base-content/60 whitespace-nowrap">
+                        {format_note_datetime(note.inserted_at)}
+                      </span>
+
+                      <%= if note.video_timestamp do %>
+                        <.button
+                          type="button"
+                          variant="transparent"
+                          size="extra_small"
+                          class="font-mono text-sm text-blue-600 hover:underline whitespace-nowrap cursor-pointer shrink-0"
+                          phx-click="seek_video"
+                          phx-target={@myself}
+                          phx-value-seconds={note.video_timestamp}
+                        >
+                          {format_timestamp(note.video_timestamp)}
+                        </.button>
+                      <% else %>
+                        <div class="font-mono text-sm text-base-content/70 whitespace-nowrap shrink-0">
+                          {format_timestamp(note.video_timestamp)}
+                        </div>
+                      <% end %>
+                    </div>
                   </div>
                 </.card_content>
               </.card>

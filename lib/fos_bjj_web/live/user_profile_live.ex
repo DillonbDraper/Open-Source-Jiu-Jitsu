@@ -13,7 +13,6 @@ defmodule FosBjjWeb.UserProfileLive do
   alias FosBjjWeb.VideoLive.VideoFormComponent
   alias FosBjjWeb.Components.ReceivedMessagesTable
   alias FosBjjWeb.Components.SentMessagesTable
-  alias FosBjjWeb.Components.NotesTableComponent
   alias FosBjjWeb.Components.CoachesTableComponent
   alias FosBjjWeb.Components.FollowersTableComponent
   alias FosBjjWeb.Components.UserProfilePanel
@@ -25,7 +24,7 @@ defmodule FosBjjWeb.UserProfileLive do
 
   require Ash.Query
 
-  on_mount({AshAuthentication.Phoenix.LiveSession, {:live_user_required, otp_app: :fos_bjj}})
+  on_mount({FosBjjWeb.LiveUserAuth, :live_user_required})
 
   @impl true
   def mount(_params, _session, socket) do
@@ -764,12 +763,6 @@ defmodule FosBjjWeb.UserProfileLive do
         />
 
         <%= if FosBjj.Accounts.User.verified?(@current_user) do %>
-          <.live_component
-            module={NotesTableComponent}
-            id="notes-table"
-            current_user={@current_user}
-          />
-
           <.tabs
             id="profile-messages-tabs"
             variant="nav_pills"
