@@ -64,11 +64,26 @@ defmodule FosBjjWeb.Live.Auth.SignInLive do
           </div>
         </:register_extra>
       </.live_component>
+
+      <div id="google-sign-in">
+        <.live_component
+          module={Components.OAuth2}
+          id="google-sign-in-component"
+          strategy={google_strategy()}
+          overrides={@overrides}
+          auth_routes_prefix={@auth_routes_prefix}
+          gettext_fn={@gettext_fn}
+        />
+      </div>
     </div>
     """
   end
 
   defp password_strategy do
     AshAuthentication.Info.strategy!(FosBjj.Accounts.User, :password)
+  end
+
+  defp google_strategy do
+    AshAuthentication.Info.strategy!(FosBjj.Accounts.User, :google)
   end
 end

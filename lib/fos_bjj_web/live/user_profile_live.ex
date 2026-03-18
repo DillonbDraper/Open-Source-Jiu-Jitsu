@@ -357,35 +357,49 @@ defmodule FosBjjWeb.UserProfileLive do
       |> Map.put("bjj_belt", normalize_blank(params["bjj_belt"]))
       |> Map.put("role", params["role"] || socket.assigns.current_user.role_name)
 
-    case AshPhoenix.Form.submit(socket.assigns.profile_form,
-           params: cleaned_params,
-           actor: socket.assigns.current_user
-         ) do
-      {:ok, updated_user} ->
-        _ = persist_primary_academy(updated_user, primary_academy_id)
-        updated_user = Ash.load!(updated_user, [:academies], actor: updated_user)
+    if user_name_taken?(socket.assigns.current_user, cleaned_params["user_name"]) do
+      form =
+        socket.assigns.profile_form
+        |> AshPhoenix.Form.validate(cleaned_params, actor: socket.assigns.current_user)
+        |> AshPhoenix.Form.add_error(
+          Ash.Error.Changes.InvalidAttribute.exception(
+            field: :user_name,
+            message: "That username is already taken. Please choose another one."
+          )
+        )
 
-        {selected_academy_ids, academy_lookup, updated_primary_academy_id, academy_memberships} =
-          get_user_academy_state(updated_user)
+      {:noreply, assign(socket, :profile_form, form)}
+    else
+      case AshPhoenix.Form.submit(socket.assigns.profile_form,
+             params: cleaned_params,
+             actor: socket.assigns.current_user
+           ) do
+        {:ok, updated_user} ->
+          _ = persist_primary_academy(updated_user, primary_academy_id)
+          updated_user = Ash.load!(updated_user, [:academies], actor: updated_user)
 
-        profile_form = build_profile_form(updated_user, selected_academy_ids, %{})
+          {selected_academy_ids, academy_lookup, updated_primary_academy_id, academy_memberships} =
+            get_user_academy_state(updated_user)
 
-        {:noreply,
-         socket
-         |> assign(:current_user, updated_user)
-         |> assign(:show_profile_modal, false)
-         |> assign(:selected_academy_ids, selected_academy_ids)
-         |> assign(:academy_lookup, academy_lookup)
-         |> assign(:primary_academy_id, updated_primary_academy_id)
-         |> assign(:academy_memberships, academy_memberships)
-         |> assign(:show_academy_search, false)
-         |> assign(:academy_search_query, "")
-         |> assign(:academy_search_results, [])
-         |> assign(:profile_form, profile_form)
-         |> put_flash(:success, "Profile updated successfully")}
+          profile_form = build_profile_form(updated_user, selected_academy_ids, %{})
 
-      {:error, form} ->
-        {:noreply, assign(socket, :profile_form, form)}
+          {:noreply,
+           socket
+           |> assign(:current_user, updated_user)
+           |> assign(:show_profile_modal, false)
+           |> assign(:selected_academy_ids, selected_academy_ids)
+           |> assign(:academy_lookup, academy_lookup)
+           |> assign(:primary_academy_id, updated_primary_academy_id)
+           |> assign(:academy_memberships, academy_memberships)
+           |> assign(:show_academy_search, false)
+           |> assign(:academy_search_query, "")
+           |> assign(:academy_search_results, [])
+           |> assign(:profile_form, profile_form)
+           |> put_flash(:success, "Profile updated successfully")}
+
+        {:error, form} ->
+          {:noreply, assign(socket, :profile_form, form)}
+      end
     end
   end
 
@@ -681,6 +695,19 @@ defmodule FosBjjWeb.UserProfileLive do
     if primary_id in academy_ids, do: primary_id, else: List.first(academy_ids)
   end
 
+  defp user_name_taken?(_current_user, nil), do: false
+  defp user_name_taken?(_current_user, ""), do: false
+
+  defp user_name_taken?(current_user, user_name) do
+    User
+    |> Ash.Query.filter(user_name == ^user_name and id != ^current_user.id)
+    |> Ash.exists?(authorize?: false)
+    |> case do
+      {:ok, exists?} -> exists?
+      _ -> false
+    end
+  end
+
   defp persist_primary_academy(_user, nil), do: :ok
 
   defp persist_primary_academy(user, primary_id) do
@@ -967,6 +994,13 @@ defmodule FosBjjWeb.UserProfileLive do
             phx-submit="save_profile"
           >
             <div class="grid gap-4">
+              <.input
+                type="text"
+                field={@profile_form[:user_name]}
+                label="Username"
+                required
+              />
+
               <.input
                 type="select"
                 field={@profile_form[:bjj_belt]}

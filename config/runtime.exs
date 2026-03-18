@@ -24,7 +24,10 @@ config :fos_bjj, FosBjjWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
 config :fos_bjj,
-  contributor_application_email: System.get_env("CONTRIBUTOR_APPLICATION_EMAIL")
+  contributor_application_email: System.get_env("CONTRIBUTOR_APPLICATION_EMAIL"),
+  google_client_id: System.get_env("OSSBJJ_GOOGLE_CLIENT_ID"),
+  google_client_secret: System.get_env("OSSBJJ_GOOGLE_CLIENT_SECRET"),
+  google_redirect_uri: System.get_env("OSSBJJ_GOOGLE_REDIRECT_URI")
 
 if config_env() == :prod do
   database_url =

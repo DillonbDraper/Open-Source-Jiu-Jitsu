@@ -18,7 +18,7 @@ defmodule FosBjj.Accounts.User do
         confirm_on_update?(false)
         require_interaction?(true)
         confirmed_at_field(:confirmed_at)
-        auto_confirm_actions([:reset_password_with_token])
+        auto_confirm_actions([:reset_password_with_token, :register_with_google])
         sender(FosBjj.Accounts.User.Senders.SendNewUserConfirmationEmail)
       end
     end
@@ -42,6 +42,13 @@ defmodule FosBjj.Accounts.User do
           password_reset_action_name(:reset_password_with_token)
           request_password_reset_action_name(:request_password_reset_token)
         end
+      end
+
+      google :google do
+        client_id(FosBjj.Secrets)
+        client_secret(FosBjj.Secrets)
+        redirect_uri(FosBjj.Secrets)
+        registration_enabled?(true)
       end
     end
   end
@@ -186,6 +193,34 @@ defmodule FosBjj.Accounts.User do
       end
     end
 
+    create :register_with_google do
+      description("Sign in or register a user with Google OAuth.")
+
+      argument :user_info, :map do
+        allow_nil?(false)
+      end
+
+      argument :oauth_tokens, :map do
+        allow_nil?(false)
+        sensitive?(true)
+      end
+
+      upsert?(true)
+      upsert_identity(:unique_email)
+      upsert_fields([:confirmed_at])
+
+      change(AshAuthentication.GenerateTokenChange)
+
+      change(fn changeset, _ ->
+        user_info = Ash.Changeset.get_argument(changeset, :user_info)
+        email = Map.get(user_info, "email")
+
+        changeset
+        |> Ash.Changeset.change_attribute(:email, email)
+        |> Ash.Changeset.change_attribute(:user_name, email)
+      end)
+    end
+
     action :request_password_reset_token do
       description("Send password reset instructions to a user if they exist.")
 
@@ -271,7 +306,7 @@ defmodule FosBjj.Accounts.User do
 
     update :update_profile do
       require_atomic?(false)
-      accept([:bjj_belt, :other_high_level_experience])
+      accept([:user_name, :bjj_belt, :other_high_level_experience])
       argument(:academy_ids, {:array, :integer})
 
       argument(:role, :string,
@@ -392,7 +427,10 @@ defmodule FosBjj.Accounts.User do
 
   identities do
     identity(:unique_email, [:email])
-    identity(:unique_user_name, [:user_name])
+
+    identity :unique_user_name, [:user_name] do
+      message("That username is already taken. Please choose another one.")
+    end
   end
 
   @doc "Check if user has verified their email"
