@@ -11,7 +11,7 @@ These instructions are for running the app locally for development.  Simply visi
 
 The included nix.flake should handle all needed dependencies dependencies for those using the nix package manager.  For those not using the nix package manager, a .tool-versions should point asdf/mise/your preferred installation solution towards compatible versions of erlang, elixir, and postgres. 
 
-To set up local data for development, a running postgres instance at port 5432 is required.  The version of postgres to use can be found in the flake.nix.  To run the database in a docker container, use the following command, substituting the username and password as you prefer:
+To set up local data for development, a running postgres instance (defaulting here to port 5432) required.  The version of postgres to use can be found in the flake.nix.  To run the database in a docker container, use the following command, substituting the username and password as you prefer:
 
 ```bash
 docker run --name fos_bjj_db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=fos_bjj_dev -p 5432:5432 -v postgres_data:/var/lib/postgresql -d postgres:18 

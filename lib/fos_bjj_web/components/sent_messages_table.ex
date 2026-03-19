@@ -308,7 +308,7 @@ defmodule FosBjjWeb.Components.SentMessagesTable do
         </.table>
 
         <%= if @sent_messages.count > page_size() do %>
-          <div class="mt-4 flex justify-center">
+          <div class="mt-4">
             <.pagination
               total={ceil(@sent_messages.count / page_size())}
               active={@sent_messages_page}

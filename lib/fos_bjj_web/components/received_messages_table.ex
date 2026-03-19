@@ -336,7 +336,7 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
         </.table>
 
         <%= if @messages.count > 10 do %>
-          <div class="mt-4 flex justify-center">
+          <div class="mt-4">
             <.pagination
               total={ceil(@messages.count / 10)}
               active={@messages_page}

@@ -495,7 +495,7 @@ defmodule FosBjjWeb.Components.NotesListComponent do
       </.scroll_area>
 
       <%= if @notes.count > 10 do %>
-        <div class="p-4 border-t border-base-200 bg-base-100 flex justify-center">
+        <div class="p-4 border-t border-base-200 bg-base-100">
           <.pagination
             total={ceil(@notes.count / 10)}
             active={@notes_page}

@@ -5065,6 +5065,9 @@
   .min-w-full {
     min-width: 100%;
   }
+  .min-w-max {
+    min-width: max-content;
+  }
   .flex-1 {
     flex: 1;
   }
@@ -10159,6 +10162,16 @@
       animation: var(--animate-spin);
     }
   }
+  .max-sm\:hidden {
+    @media (width < 40rem) {
+      display: none;
+    }
+  }
+  .max-sm\:gap-1\.5 {
+    @media (width < 40rem) {
+      gap: calc(var(--spacing) * 1.5);
+    }
+  }
   .sm\:order-last {
     @media (width >= 40rem) {
       order: 9999;
@@ -10187,6 +10200,11 @@
   .sm\:flex {
     @media (width >= 40rem) {
       display: flex;
+    }
+  }
+  .sm\:hidden {
+    @media (width >= 40rem) {
+      display: none;
     }
   }
   .sm\:w-96 {
@@ -25765,6 +25783,13 @@
       }
     }
   }
+  .max-sm\:\[\&_\.pagination-button\]\:h-7 {
+    @media (width < 40rem) {
+      & .pagination-button {
+        height: calc(var(--spacing) * 7);
+      }
+    }
+  }
   .dark\:\[\&_\.pagination-button\]\:border-base-border-dark {
     &:where([data-theme=dark], [data-theme=dark] *) {
       & .pagination-button {
@@ -27141,6 +27166,13 @@
       padding-inline: calc(var(--spacing) * 2);
     }
   }
+  .max-sm\:\[\&_\.pagination-control\]\:px-2 {
+    @media (width < 40rem) {
+      & .pagination-control {
+        padding-inline: calc(var(--spacing) * 2);
+      }
+    }
+  }
   .\[\&_\.pagination-control\>\.pagination-icon\]\:h-6 {
     & .pagination-control>.pagination-icon {
       height: calc(var(--spacing) * 6);
@@ -27164,6 +27196,13 @@
   .\[\&_\.pagination-control\>\.pagination-icon\]\:h-10 {
     & .pagination-control>.pagination-icon {
       height: calc(var(--spacing) * 10);
+    }
+  }
+  .max-sm\:\[\&_\.pagination-control\>\.pagination-icon\]\:h-7 {
+    @media (width < 40rem) {
+      & .pagination-control>.pagination-icon {
+        height: calc(var(--spacing) * 7);
+      }
     }
   }
   .\[\&_\.pagination-separator\]\:h-6 {
@@ -27194,6 +27233,21 @@
   .\[\&_\.pagination-separator\]\:w-full {
     & .pagination-separator {
       width: 100%;
+    }
+  }
+  .max-sm\:\[\&_\.pagination-separator\]\:h-7 {
+    @media (width < 40rem) {
+      & .pagination-separator {
+        height: calc(var(--spacing) * 7);
+      }
+    }
+  }
+  .max-sm\:\[\&_\.pagination-separator\]\:text-sm {
+    @media (width < 40rem) {
+      & .pagination-separator {
+        font-size: var(--text-sm);
+        line-height: var(--tw-leading, var(--text-sm--line-height));
+      }
     }
   }
   .\[\&_\.password-field-wrapper\]\:rounded {
@@ -44209,6 +44263,14 @@
       height: calc(var(--spacing) * 7);
     }
   }
+  .max-sm\:\[\&_\:not\(\.pagination-separator\)\>\.pagination-icon\]\:size-4 {
+    @media (width < 40rem) {
+      & :not(.pagination-separator)>.pagination-icon {
+        width: calc(var(--spacing) * 4);
+        height: calc(var(--spacing) * 4);
+      }
+    }
+  }
   .\[\&_div\.whitespace-nowrap\]\:py-1\.5 {
     & div.whitespace-nowrap {
       padding-block: calc(var(--spacing) * 1.5);
@@ -46936,6 +46998,13 @@
       padding-inline: calc(var(--spacing) * 3);
     }
   }
+  .max-sm\:\[\&\.grouped-pagination_\.pagination-button\]\:min-w-7 {
+    @media (width < 40rem) {
+      &.grouped-pagination .pagination-button {
+        min-width: calc(var(--spacing) * 7);
+      }
+    }
+  }
   .dark\:\[\&\.grouped-pagination_\.pagination-button\]\:border-base-border-dark {
     &:where([data-theme=dark], [data-theme=dark] *) {
       &.grouped-pagination .pagination-button {
@@ -46966,6 +47035,13 @@
   .\[\&\.grouped-pagination_\.pagination-control\]\:min-w-10 {
     &.grouped-pagination .pagination-control {
       min-width: calc(var(--spacing) * 10);
+    }
+  }
+  .max-sm\:\[\&\.grouped-pagination_\.pagination-control\]\:min-w-7 {
+    @media (width < 40rem) {
+      &.grouped-pagination .pagination-control {
+        min-width: calc(var(--spacing) * 7);
+      }
     }
   }
   .\[\&\.grouped-pagination_\.pagination-control\:not\(\:last-child\)\]\:border-r {
@@ -48160,6 +48236,11 @@
       opacity: 0%;
     }
   }
+  .\[\&\:not\(\.grouped-pagination\)\]\:flex-nowrap {
+    &:not(.grouped-pagination) {
+      flex-wrap: nowrap;
+    }
+  }
   .\[\&\:not\(\.grouped-pagination\)\]\:flex-wrap {
     &:not(.grouped-pagination) {
       flex-wrap: wrap;
@@ -48269,6 +48350,13 @@
     &:not(.grouped-pagination) .pagination-button {
       border-style: var(--tw-border-style);
       border-width: 5px;
+    }
+  }
+  .max-sm\:\[\&\:not\(\.grouped-pagination\)_\.pagination-button\]\:w-7 {
+    @media (width < 40rem) {
+      &:not(.grouped-pagination) .pagination-button {
+        width: calc(var(--spacing) * 7);
+      }
     }
   }
   .\[\&\:not\(\.list-items-gap\)\]\:rounded {

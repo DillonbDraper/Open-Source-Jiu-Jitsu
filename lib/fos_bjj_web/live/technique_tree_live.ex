@@ -320,18 +320,21 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                                         <.link
                                           patch={"/database?technique_id=#{technique.id}&attire=#{@selected_attire}"}
                                           class={[
-                                            "btn btn-ghost btn-s btn-block justify-start font-normal h-auto py-1.5 px-2 text-left whitespace-normal leading-tight",
+                                            "btn btn-ghost btn-block justify-start h-auto py-1.5 px-2 text-left whitespace-normal leading-tight",
                                             @selected_technique_id == "#{technique.id}" &&
                                               "bg-primary/10 text-primary"
                                           ]}
                                         >
-                                          <span class="flex-1">
-                                            {technique.name} ({technique.video_count})
+                                          <span class="flex-1 text-base font-normal">
+                                            {technique.name}
+                                            <span class="text-sm opacity-60 ml-1">
+                                              ({technique.video_count})
+                                            </span>
                                           </span>
                                         </.link>
                                       <% end %>
                                       <%= if Enum.empty?(techniques) do %>
-                                        <span class="text-xs text-base-content/50 italic px-2 py-1">
+                                        <span class="text-base text-base-content/50 italic px-2 py-1">
                                           No techniques found
                                         </span>
                                       <% end %>
@@ -386,7 +389,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
           |> Enum.filter(& &1)
           |> Enum.join(" ")
         }
-        style={"padding-left: #{@level * 0.75 + 0.5}rem"}
+        style={"padding-left: #{@level * 1 + 1}rem"}
       >
         <%= if @expanded do %>
           <.icon
@@ -399,9 +402,9 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
             class="w-4 h-4 shrink-0 text-base-content/70 group-hover:text-base-content"
           />
         <% end %>
-        <span class="text-sm select-none">
+        <span class="text-base select-none">
           {@label}
-          <span class="text-xs opacity-60 ml-1">({@count})</span>
+          <span class="text-sm opacity-60 ml-1">({@count})</span>
         </span>
       </.button>
       <%= if @expanded do %>

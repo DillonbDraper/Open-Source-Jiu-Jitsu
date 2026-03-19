@@ -159,103 +159,117 @@ defmodule FosBjjWeb.Components.Pagination do
       )
 
     ~H"""
-    <nav
-      :if={show_pagination?(@rest[:hide_one_page], @total)}
-      id={@id}
-      class={[
-        default_classes(),
-        color_variant(@variant, @color),
-        border_size(@border, @variant),
-        rounded_size(@rounded),
-        size_class(@size),
-        border_class(@color),
-        (!is_nil(@rest[:grouped]) && "gap-0 grouped-pagination") || space_class(@space),
-        @class
-      ]}
-      {@rest}
-    >
-      {render_slot(@start_items)}
+    <div :if={show_pagination?(@rest[:hide_one_page], @total)} class="w-full overflow-x-auto">
+      <nav
+        id={@id}
+        class={[
+          default_classes(),
+          mobile_compact_classes(),
+          color_variant(@variant, @color),
+          border_size(@border, @variant),
+          rounded_size(@rounded),
+          size_class(@size),
+          border_class(@color),
+          (!is_nil(@rest[:grouped]) && "gap-0 grouped-pagination") || space_class(@space),
+          @class
+        ]}
+        {@rest}
+      >
+        {render_slot(@start_items)}
 
-      <.item_button
-        :if={@rest[:show_edges]}
-        on_action={{"first", @on_first}}
-        page={{nil, @active}}
-        params={@params}
-        target={@push_target}
-        label={@first_label}
-        class={@first_label_class}
-        aria_label={gettext("First page")}
-        disabled={@active <= 1}
-      />
+        <.item_button
+          :if={@rest[:show_edges]}
+          on_action={{"first", @on_first}}
+          page={{nil, @active}}
+          params={@params}
+          target={@push_target}
+          label={@first_label}
+          class={@first_label_class}
+          aria_label={gettext("First page")}
+          disabled={@active <= 1}
+        />
 
-      <.item_button
-        :if={is_nil(@rest[:hide_controls])}
-        on_action={{"previous", @on_previous}}
-        page={{nil, @active}}
-        params={@params}
-        target={@push_target}
-        label={@previous_label}
-        class={@prev_label_class}
-        aria_label={gettext("Previous page")}
-        disabled={@active <= 1}
-      />
+        <.item_button
+          :if={is_nil(@rest[:hide_controls])}
+          on_action={{"previous", @on_previous}}
+          page={{nil, @active}}
+          params={@params}
+          target={@push_target}
+          label={@previous_label}
+          class={@prev_label_class}
+          aria_label={gettext("Previous page")}
+          disabled={@active <= 1}
+        />
 
-      <div :for={range <- @siblings.range}>
-        <%= if is_integer(range) do %>
-          <.item_button
-            on_action={{"select", @on_select}}
-            page={{range, @active}}
-            params={@params}
-            target={@push_target}
-            class={@pages_label_class}
-          />
-        <% else %>
-          <div
-            class={["pagination-separator flex justify-center items-center", @separator_class]}
-            aria-hidden="true"
-          >
-            <.icon
-              :if={Map.get(@separator, :type) == :icon}
-              name={@separator.value}
-              class={["pagination-icon", @separator_icon_class]}
+        <div :for={range <- @siblings.range}>
+          <%= if is_integer(range) do %>
+            <.item_button
+              on_action={{"select", @on_select}}
+              page={{range, @active}}
+              params={@params}
+              target={@push_target}
+              class={@pages_label_class}
             />
-            <span
-              :if={Map.get(@separator, :type) != :icon}
-              class={["pagination-text", @separator_text_class]}
+          <% else %>
+            <div
+              class={["pagination-separator flex justify-center items-center", @separator_class]}
+              aria-hidden="true"
             >
-              {@separator.value}
-            </span>
-          </div>
-        <% end %>
-      </div>
+              <.icon
+                :if={Map.get(@separator, :type) == :icon}
+                name={@separator.value}
+                class={["pagination-icon", @separator_icon_class]}
+              />
+              <span
+                :if={Map.get(@separator, :type) != :icon}
+                class={["pagination-text", @separator_text_class]}
+              >
+                {@separator.value}
+              </span>
+            </div>
+          <% end %>
+        </div>
 
-      <.item_button
-        :if={is_nil(@rest[:hide_controls])}
-        on_action={{"next", @on_next}}
-        page={{nil, @active}}
-        params={@params}
-        target={@push_target}
-        label={@next_label}
-        class={@next_label_class}
-        aria_label={gettext("Next page")}
-        disabled={@active >= @total}
-      />
+        <.item_button
+          :if={is_nil(@rest[:hide_controls])}
+          on_action={{"next", @on_next}}
+          page={{nil, @active}}
+          params={@params}
+          target={@push_target}
+          label={@next_label}
+          class={@next_label_class}
+          aria_label={gettext("Next page")}
+          disabled={@active >= @total}
+        />
 
-      <.item_button
-        :if={@rest[:show_edges]}
-        on_action={{"last", @on_last}}
-        page={{nil, @active}}
-        params={@params}
-        target={@push_target}
-        label={@last_label}
-        class={@last_label_class}
-        aria_label={gettext("Last page")}
-        disabled={@active >= @total}
-      />
+        <.item_button
+          :if={@rest[:show_edges]}
+          on_action={{"last", @on_last}}
+          page={{nil, @active}}
+          params={@params}
+          target={@push_target}
+          label={@last_label}
+          class={@last_label_class}
+          aria_label={gettext("Last page")}
+          disabled={@active >= @total}
+        />
 
-      {render_slot(@end_items)}
-    </nav>
+        {render_slot(@end_items)}
+      </nav>
+    </div>
     """
+  end
+
+  defp mobile_compact_classes do
+    [
+      "max-sm:gap-1.5",
+      "max-sm:[&:not(.grouped-pagination)_.pagination-button]:w-7",
+      "max-sm:[&.grouped-pagination_.pagination-button]:min-w-7 max-sm:[&.grouped-pagination_.pagination-control]:min-w-7",
+      "max-sm:[&_.pagination-button]:h-7 max-sm:[&_.pagination-control>.pagination-icon]:h-7",
+      "max-sm:[&_.pagination-control]:px-2",
+      "max-sm:[&_.pagination-separator]:h-7 max-sm:[&_.pagination-separator]:text-sm",
+      "max-sm:[&_:not(.pagination-separator)>.pagination-icon]:size-4"
+    ]
   end
 
   @doc type: :component
@@ -1566,7 +1580,7 @@ defmodule FosBjjWeb.Components.Pagination do
 
   defp default_classes() do
     [
-      "w-fit flex [&.grouped-pagination>*]::flex-1 [&:not(.grouped-pagination)]:justify-start [&:not(.grouped-pagination)]:items-center [&:not(.grouped-pagination)]:flex-wrap  [&_.pagination-button.active-pagination-button]:font-medium [&.grouped-pagination]:overflow-hidden"
+      "mx-auto min-w-max w-fit flex [&.grouped-pagination>*]::flex-1 [&:not(.grouped-pagination)]:justify-start [&:not(.grouped-pagination)]:items-center [&:not(.grouped-pagination)]:flex-nowrap [&_.pagination-button.active-pagination-button]:font-medium [&.grouped-pagination]:overflow-hidden"
     ]
   end
 

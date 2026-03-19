@@ -247,7 +247,7 @@ defmodule FosBjjWeb.DatabaseComponent do
       </.scroll_area>
 
       <%= if @total_videos > 10 do %>
-        <div class="p-4 border-t border-base-200 bg-base-100 flex justify-center">
+        <div class="p-4 border-t border-base-200 bg-base-100">
           <.pagination
             total={ceil(@total_videos / 10)}
             active={@current_page}

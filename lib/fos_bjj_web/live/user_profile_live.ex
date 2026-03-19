@@ -899,7 +899,7 @@ defmodule FosBjjWeb.UserProfileLive do
                 </.table>
 
                 <%= if @total_videos > 5 do %>
-                  <div class="mt-4 flex justify-center">
+                  <div class="mt-4">
                     <.pagination
                       total={ceil(@total_videos / 5)}
                       active={@current_page}
