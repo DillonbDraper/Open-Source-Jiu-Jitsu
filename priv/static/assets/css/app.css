@@ -3095,12 +3095,6 @@
   .me-2 {
     margin-inline-end: calc(var(--spacing) * 2);
   }
-  .modal-action {
-    margin-top: calc(0.25rem * 6);
-    display: flex;
-    justify-content: flex-end;
-    gap: calc(0.25rem * 2);
-  }
   .mt-0\.5 {
     margin-top: calc(var(--spacing) * 0.5);
   }

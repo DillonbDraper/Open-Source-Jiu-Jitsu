@@ -3,7 +3,6 @@ defmodule FosBjjWeb.VideoNotesComponent do
 
   alias FosBjj.JiuJitsu.VideoNote
   import FosBjjWeb.Components.Card
-  alias FosBjjWeb.Components.Modal
   import FosBjjWeb.Components.Button
   import FosBjjWeb.Components.Icon
   import FosBjjWeb.Components.ScrollArea
@@ -14,7 +13,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
   def mount(socket) do
     socket =
       socket
-      |> assign_new(:show_modal, fn -> false end)
+      |> assign_new(:show_note_form, fn -> false end)
       |> assign_new(:form, fn -> to_form(%{"body" => "", "minutes" => 0, "seconds" => 0}) end)
       |> assign_new(:notes, fn -> [] end)
       |> assign_new(:expanded_note_ids, fn -> [] end)
@@ -59,6 +58,11 @@ defmodule FosBjjWeb.VideoNotesComponent do
   end
 
   @impl true
+  def handle_event("add_note", _, %{assigns: %{show_note_form: true}} = socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("add_note", _, socket) do
     minutes = div(socket.assigns.current_time, 60)
     seconds = rem(socket.assigns.current_time, 60)
@@ -67,13 +71,13 @@ defmodule FosBjjWeb.VideoNotesComponent do
 
     {:noreply,
      socket
-     |> assign(:show_modal, true)
+     |> assign(:show_note_form, true)
      |> assign(:form, to_form(%{"body" => "", "minutes" => minutes, "seconds" => seconds}))}
   end
 
   @impl true
-  def handle_event("close_modal", _, socket) do
-    {:noreply, assign(socket, :show_modal, false)}
+  def handle_event("close_note_form", _, socket) do
+    {:noreply, assign(socket, :show_note_form, false)}
   end
 
   @impl true
@@ -116,7 +120,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
       {:ok, _note} ->
         socket =
           socket
-          |> assign(:show_modal, false)
+          |> assign(:show_note_form, false)
           |> assign(:form, to_form(%{"body" => "", "minutes" => 0, "seconds" => 0}))
           |> load_notes()
           |> put_flash(:success, "Note added successfully")
@@ -169,7 +173,7 @@ defmodule FosBjjWeb.VideoNotesComponent do
   defp normalize_note_id(id), do: id
 
   defp maybe_sync_form_timestamp(socket, current_time) do
-    if socket.assigns[:show_modal] == true do
+    if socket.assigns[:show_note_form] == true do
       existing_body =
         case socket.assigns.form.params do
           %{"body" => body} -> body
@@ -211,7 +215,15 @@ defmodule FosBjjWeb.VideoNotesComponent do
     ~H"""
     <div class="mt-2 h-[calc(70vh-4rem)] flex flex-col gap-2 rounded-lg border border-base-200/80 bg-base-100 p-2 shadow-sm">
       <div class="flex justify-end mb-1">
-        <.button phx-click="add_note" phx-target={@myself} color="primary" size="small">
+        <.button
+          id="video-notes-add-button"
+          phx-click="add_note"
+          phx-target={@myself}
+          color="primary"
+          size="small"
+          disabled={@show_note_form}
+          class={if @show_note_form, do: "opacity-60 cursor-not-allowed", else: ""}
+        >
           <.icon name="hero-plus" class="w-4 h-4 mr-1" /> Add Note
         </.button>
       </div>
@@ -339,59 +351,83 @@ defmodule FosBjjWeb.VideoNotesComponent do
               No notes yet. Click "Add Note" to get started.
             </div>
           <% end %>
+
+          <%= if @show_note_form do %>
+            <.card
+              id="video-note-inline-card"
+              class="border border-primary/20 rounded-lg bg-base-100"
+              color="base"
+              variant="default"
+            >
+              <.card_content class="p-2">
+                <.form
+                  for={@form}
+                  id="video-note-inline-form"
+                  phx-submit="save_note"
+                  phx-target={@myself}
+                  class="flex flex-col gap-2"
+                >
+                  <div class="flex items-end gap-1.5">
+                    <div class="w-20">
+                      <.input
+                        id="video-note-minutes"
+                        field={@form[:minutes]}
+                        type="number"
+                        label="Min"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <div class="pb-2 text-sm font-semibold text-base-content/70">:</div>
+                    <div class="w-20">
+                      <.input
+                        id="video-note-seconds"
+                        field={@form[:seconds]}
+                        type="number"
+                        label="Sec"
+                        placeholder="00"
+                        min="0"
+                        max="59"
+                      />
+                    </div>
+
+                    <div class="ml-auto flex items-center gap-1.5 pb-1">
+                      <.button
+                        id="video-note-cancel-button"
+                        type="button"
+                        color="ghost"
+                        size="extra_small"
+                        phx-click="close_note_form"
+                        phx-target={@myself}
+                      >
+                        Cancel
+                      </.button>
+                      <.button
+                        id="video-note-save-button"
+                        type="submit"
+                        color="primary"
+                        size="extra_small"
+                      >
+                        Save
+                      </.button>
+                    </div>
+                  </div>
+
+                  <.input
+                    id="video-note-body"
+                    field={@form[:body]}
+                    type="textarea"
+                    label="Note"
+                    placeholder="Enter your note here..."
+                    required
+                    class="h-16"
+                  />
+                </.form>
+              </.card_content>
+            </.card>
+          <% end %>
         </div>
       </.scroll_area>
-
-      <Modal.modal
-        :if={@show_modal}
-        id="add-note-modal"
-        show={@show_modal}
-        title="Add New Note"
-        on_cancel={JS.push("close_modal", target: @myself)}
-      >
-        <div class="p-1">
-          <.form for={@form} phx-submit="save_note" phx-target={@myself} class="flex flex-col gap-4">
-            <div class="flex items-end gap-2">
-              <div class="flex-1">
-                <.input
-                  field={@form[:minutes]}
-                  type="number"
-                  label="Min"
-                  placeholder="0"
-                  min="0"
-                />
-              </div>
-              <div class="pb-3 font-bold text-lg">:</div>
-              <div class="flex-1">
-                <.input
-                  field={@form[:seconds]}
-                  type="number"
-                  label="Sec"
-                  placeholder="00"
-                  min="0"
-                  max="59"
-                />
-              </div>
-            </div>
-
-            <.input
-              field={@form[:body]}
-              type="textarea"
-              label="Note"
-              placeholder="Enter your note here..."
-              required
-              class="h-24"
-            />
-
-            <div class="modal-action">
-              <.button type="button" color="ghost" phx-click="close_modal" phx-target={@myself}>
-                Cancel
-              </.button>
-              <.button type="submit" color="primary">Save Note</.button>
-            </div>
-          </.form>
-        </div>
-      </Modal.modal>
     </div>
     """
   end

@@ -6,6 +6,8 @@ defmodule FosBjjWeb.VideoNotesComponentTest do
 
   alias FosBjj.JiuJitsu.VideoNote
 
+  require Ash.Query
+
   defmodule HostLive do
     use FosBjjWeb, :live_view
 
@@ -184,6 +186,82 @@ defmodule FosBjjWeb.VideoNotesComponentTest do
 
     refute has_element?(view, expanded_one)
     assert has_element?(view, expanded_two)
+  end
+
+  test "add note opens inline form with prepopulated timestamp", %{conn: conn} do
+    user = user_fixture(%{confirmed: true})
+    video = video_fixture(%{user: user})
+
+    {:ok, view, _html} =
+      live_isolated(conn, HostLive,
+        session: %{"current_user" => user, "video" => video, "current_time" => 125}
+      )
+
+    refute has_element?(view, "#video-note-inline-form")
+
+    view
+    |> element("#video-notes-add-button")
+    |> render_click()
+
+    assert has_element?(view, "#video-note-inline-form")
+    assert has_element?(view, "#video-note-minutes[value=\"2\"]")
+    assert has_element?(view, "#video-note-seconds[value=\"5\"]")
+    assert has_element?(view, "#video-notes-add-button[disabled]")
+    refute has_element?(view, "#add-note-modal")
+  end
+
+  test "inline note form can be canceled", %{conn: conn} do
+    user = user_fixture(%{confirmed: true})
+    video = video_fixture(%{user: user})
+
+    {:ok, view, _html} =
+      live_isolated(conn, HostLive, session: %{"current_user" => user, "video" => video})
+
+    view
+    |> element("#video-notes-add-button")
+    |> render_click()
+
+    assert has_element?(view, "#video-note-inline-form")
+
+    view
+    |> element("#video-note-cancel-button")
+    |> render_click()
+
+    refute has_element?(view, "#video-note-inline-form")
+    refute has_element?(view, "#video-notes-add-button[disabled]")
+  end
+
+  test "inline note form saves and closes", %{conn: conn} do
+    user = user_fixture(%{confirmed: true})
+    video = video_fixture(%{user: user})
+
+    {:ok, view, _html} =
+      live_isolated(conn, HostLive, session: %{"current_user" => user, "video" => video})
+
+    view
+    |> element("#video-notes-add-button")
+    |> render_click()
+
+    view
+    |> form("#video-note-inline-form", %{
+      "body" => "Inline saved note",
+      "minutes" => "1",
+      "seconds" => "11"
+    })
+    |> render_submit()
+
+    refute has_element?(view, "#video-note-inline-form")
+    refute has_element?(view, "#video-notes-add-button[disabled]")
+
+    note =
+      VideoNote
+      |> Ash.Query.filter(
+        video_id == ^video.id and user_id == ^user.id and body == ^"Inline saved note"
+      )
+      |> Ash.Query.for_read(:read_all)
+      |> Ash.read_one!(actor: user)
+
+    assert note.video_timestamp == 71
   end
 
   defp create_note!(user, video, attrs) do
