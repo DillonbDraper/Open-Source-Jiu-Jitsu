@@ -76,55 +76,74 @@ defmodule FosBjjWeb.Components.SentMessagesTable do
   end
 
   defp list_sent_message_groups(user, query, page) do
-    offset = (page - 1) * @page_size
+    # Query 1: paginated distinct message groups
+    groups_query =
+      UserMessage
+      |> Ash.Query.for_read(:sent_message_groups, %{sender_id: user.id})
+      |> Ash.Query.load([:shared_video])
+      |> maybe_filter_search(query)
 
-    groups =
-      user
-      |> sent_messages_query(query)
-      |> Ash.read!(actor: user)
-      |> Enum.group_by(& &1.message_group_id)
-      |> Enum.map(fn {group_id, messages} ->
-        representative = hd(messages)
+    page_result =
+      Ash.read!(groups_query,
+        actor: user,
+        page: [limit: @page_size, offset: (page - 1) * @page_size, count: true]
+      )
 
-        recipients =
-          messages
-          |> Enum.map(&%{id: &1.recipient_id, name: recipient_name(&1), received: &1.received})
-          |> Enum.sort_by(&String.downcase(&1.name))
+    representatives = page_result.results
+    total_count = page_result.count
 
-        %{
-          id: group_id,
-          message_group_id: group_id,
-          type: representative.type,
-          body: representative.body,
-          shared_video: representative.shared_video,
-          inserted_at: representative.inserted_at,
-          recipient_count: length(messages),
-          recipients: recipients
-        }
-      end)
-      |> Enum.sort_by(& &1.inserted_at, {:desc, NaiveDateTime})
+    if representatives == [] do
+      %{results: [], count: 0}
+    else
+      # Query 2: load all recipients for the current page's groups
+      group_ids = Enum.map(representatives, & &1.message_group_id)
 
-    %{results: Enum.slice(groups, offset, @page_size), count: length(groups)}
+      all_messages =
+        UserMessage
+        |> Ash.Query.for_read(:group_recipients, %{
+          message_group_ids: group_ids,
+          sender_id: user.id
+        })
+        |> Ash.Query.load([:recipient])
+        |> Ash.read!(actor: user)
+
+      recipients_by_group = Enum.group_by(all_messages, & &1.message_group_id)
+
+      results =
+        Enum.map(representatives, fn rep ->
+          group_messages = Map.get(recipients_by_group, rep.message_group_id, [])
+
+          recipients =
+            group_messages
+            |> Enum.map(&%{id: &1.recipient_id, name: recipient_name(&1), received: &1.received})
+            |> Enum.sort_by(&String.downcase(&1.name))
+
+          %{
+            id: rep.message_group_id,
+            message_group_id: rep.message_group_id,
+            type: rep.type,
+            body: rep.body,
+            shared_video: rep.shared_video,
+            inserted_at: rep.inserted_at,
+            recipient_count: length(group_messages),
+            recipients: recipients
+          }
+        end)
+
+      %{results: results, count: total_count}
+    end
   end
 
-  defp sent_messages_query(user, query) do
-    UserMessage
-    |> Ash.Query.filter(sender_id == ^user.id)
-    |> Ash.Query.load([:shared_video, :recipient])
-    |> then(fn q ->
-      if query != "" do
-        query_string = "%#{query}%"
+  defp maybe_filter_search(query, search) when search in [nil, ""], do: query
 
-        Ash.Query.filter(
-          q,
-          (not is_nil(body) and ilike(body, ^query_string)) or
-            (not is_nil(shared_video_id) and ilike(shared_video.title, ^query_string))
-        )
-      else
-        q
-      end
-    end)
-    |> Ash.Query.sort(inserted_at: :desc)
+  defp maybe_filter_search(query, search) do
+    query_string = "%#{search}%"
+
+    Ash.Query.filter(
+      query,
+      (not is_nil(body) and ilike(body, ^query_string)) or
+        (not is_nil(shared_video_id) and ilike(shared_video.title, ^query_string))
+    )
   end
 
   defp recipient_name(%{recipient: nil}), do: "Unknown recipient"

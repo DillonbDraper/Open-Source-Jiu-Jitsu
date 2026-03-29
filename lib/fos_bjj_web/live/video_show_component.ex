@@ -119,8 +119,13 @@ defmodule FosBjjWeb.VideoShowComponent do
        socket
        |> assign(:show_share_modal, false)
        |> assign(:share_form, to_form(%{"message" => ""}))
-       |> put_flash(:success, "Video shared with #{count} student(s)")}
+       |> notify_parent_flash(:success, "Video shared with #{count} student(s)")}
     end
+  end
+
+  defp notify_parent_flash(socket, kind, message) do
+    send(self(), {:video_share_flash, kind, message})
+    socket
   end
 
   defp get_student_count(coach) do
