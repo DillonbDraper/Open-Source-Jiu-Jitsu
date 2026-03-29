@@ -11,8 +11,6 @@ defmodule FosBjjWeb.UserProfileLive do
   alias FosBjjWeb.AcademyLive.NewAcademyForm
   alias FosBjjWeb.ContributorApplicationForm
   alias FosBjjWeb.VideoLive.VideoFormComponent
-  alias FosBjjWeb.Components.ReceivedMessagesTable
-  alias FosBjjWeb.Components.SentMessagesTable
   alias FosBjjWeb.Components.CoachesTableComponent
   alias FosBjjWeb.Components.FollowersTableComponent
   alias FosBjjWeb.Components.UserProfilePanel
@@ -790,41 +788,6 @@ defmodule FosBjjWeb.UserProfileLive do
         />
 
         <%= if FosBjj.Accounts.User.verified?(@current_user) do %>
-          <.tabs
-            id="profile-messages-tabs"
-            variant="nav_pills"
-            color="primary"
-            rounded="large"
-            size="medium"
-            padding="small"
-            gap="small"
-            content_padding="none"
-            class="bg-base-200/70 rounded-xl p-1"
-          >
-            <:tab active>Received Messages</:tab>
-            <:tab :if={@current_user.role_name in ["coach", "contributor", "admin"]}>
-              Sent Messages
-            </:tab>
-
-            <:panel class="pt-4">
-              <.live_component
-                module={ReceivedMessagesTable}
-                id="received-messages-table"
-                current_user={@current_user}
-              />
-            </:panel>
-            <:panel
-              :if={@current_user.role_name in ["coach", "contributor", "admin"]}
-              class="pt-4"
-            >
-              <.live_component
-                module={SentMessagesTable}
-                id="sent-messages-table"
-                current_user={@current_user}
-              />
-            </:panel>
-          </.tabs>
-
           <.live_component
             module={CoachesTableComponent}
             id="coaches-table"

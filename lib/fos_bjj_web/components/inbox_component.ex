@@ -325,14 +325,14 @@ defmodule FosBjjWeb.Components.InboxComponent do
         <div class="border-t border-gray-200 dark:border-gray-700 pt-4 text-center">
           <.button_link
             id={"#{@id}-view-all"}
-            navigate="/profile"
+            navigate={~p"/messages"}
             variant="transparent"
             color="primary"
             size="small"
             phx-click="close_inbox"
             phx-target={@myself}
           >
-            View all messages in profile
+            View all Messages in Message Center
           </.button_link>
         </div>
       </.modal>

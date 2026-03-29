@@ -105,8 +105,19 @@ defmodule FosBjjWeb.Layouts do
                 </div>
                 <div class="py-1">
                   <%= if User.verified?(@current_user) do %>
-                    <.link navigate={~p"/profile"} class="block px-4 py-2 text-base hover:bg-gray-100">
+                    <.link
+                      id="user-menu-profile-link"
+                      navigate={~p"/profile"}
+                      class="block px-4 py-2 text-base hover:bg-gray-100"
+                    >
                       User Profile
+                    </.link>
+                    <.link
+                      id="user-menu-messages-link"
+                      navigate={~p"/messages"}
+                      class="block px-4 py-2 text-base hover:bg-gray-100"
+                    >
+                      Message Center
                     </.link>
                   <% else %>
                     <.tooltip
@@ -122,6 +133,23 @@ defmodule FosBjjWeb.Layouts do
                           aria-disabled="true"
                         >
                           User Profile
+                        </span>
+                      </:trigger>
+                      <:content>Please login/verify your email to use this feature.</:content>
+                    </.tooltip>
+                    <.tooltip
+                      id="user-messages-disabled-tooltip"
+                      position="left"
+                      color="dark"
+                      inline={true}
+                    >
+                      <:trigger>
+                        <span
+                          id="user-messages-disabled"
+                          class="block px-4 py-2 text-base text-gray-400 cursor-not-allowed"
+                          aria-disabled="true"
+                        >
+                          Message Center
                         </span>
                       </:trigger>
                       <:content>Please login/verify your email to use this feature.</:content>

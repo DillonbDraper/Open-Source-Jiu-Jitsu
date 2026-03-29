@@ -50,6 +50,7 @@ defmodule FosBjjWeb.Router do
       # on_mount {FosBjjWeb.LiveUserAuth, :live_no_user}
       live("/videos/new", VideoLive.NewVideoForm, :new_video_form)
       live("/profile", UserProfileLive)
+      live("/messages", MessagesLive)
       live("/admin/users", UserManagementLive)
     end
   end

@@ -192,7 +192,7 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
 
   defp message_trigger_class(message) do
     [
-      "truncate max-w-xs cursor-help block",
+      "truncate max-w-xl lg:max-w-2xl cursor-help block",
       message.received && "text-base-content/80",
       !message.received && "font-semibold"
     ]
@@ -203,17 +203,17 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={@id} class="card bg-base-100 shadow-sm border border-base-200 p-6">
-      <.h3 class="text-lg font-medium mb-4">Received Messages</.h3>
+    <div id={@id} class="card bg-base-100 shadow-sm border border-base-200 p-6 lg:p-8">
+      <.h3 class="text-xl font-semibold mb-5">Received Messages</.h3>
       <%= if @messages.results == [] do %>
         <div
           id="messages-empty-state"
-          class="rounded-xl border border-dashed border-base-200 bg-base-50 px-4 py-10 text-center"
+          class="rounded-xl border border-dashed border-base-200 bg-base-50 px-6 py-14 text-center"
         >
-          <.p class="text-sm text-base-content/70">You have no messages.</.p>
+          <.p class="text-base text-base-content/70">You have no messages.</.p>
         </div>
       <% else %>
-        <div class="mb-4">
+        <div class="mb-5">
           <form phx-change="search_messages" phx-submit="search_messages" phx-target={@myself}>
             <.search_field
               name="query"
@@ -227,10 +227,10 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
         </div>
 
         <.table
-          padding="extra_small"
+          padding="small"
           border="medium"
           rows={@messages.results}
-          table_body_class="[&_div.whitespace-nowrap]:py-1.5 [&_td.relative.w-14]:w-24"
+          table_body_class="[&_td.relative.w-14]:w-28"
         >
           <:col :let={message} label="From">
             <span class={[
@@ -263,26 +263,6 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
                 <% end %>
                 <%= if message_body_present?(message) do %>
                   <div class="whitespace-pre-line">{message.body}</div>
-                <% end %>
-                <%= if shared_video_available?(message) do %>
-                  <div class="mt-3 pt-3 border-t border-gray-600">
-                    <.link
-                      navigate={~p"/videos/#{message.shared_video.id}"}
-                      class="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
-                    >
-                      <.icon name="hero-play-circle" class="w-4 h-4" />
-                      Watch: {shared_video_title(message)}
-                    </.link>
-                  </div>
-                <% else %>
-                  <%= if shared_video_deleted?(message) do %>
-                    <div class="mt-3 pt-3 border-t border-gray-600 text-gray-400">
-                      <span class="inline-flex items-center gap-1 cursor-not-allowed">
-                        <.icon name="hero-no-symbol" class="w-4 h-4" />
-                        Video deleted by contributor: {shared_video_title(message)}
-                      </span>
-                    </div>
-                  <% end %>
                 <% end %>
               </:content>
             </.popover>
@@ -319,6 +299,24 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
                   <:content>Mark as read</:content>
                 </.tooltip>
               <% end %>
+              <%= if shared_video_available?(message) do %>
+                <.tooltip
+                  id={"message-video-link-tooltip-#{message.id}"}
+                  position="left"
+                  color="dark"
+                >
+                  <:trigger>
+                    <.link
+                      id={"message-video-link-#{message.id}"}
+                      navigate={~p"/videos/#{message.shared_video.id}"}
+                      class="inline-flex items-center p-1 text-gray-500 hover:text-primary transition-colors"
+                    >
+                      <.icon name="hero-play-circle" class="w-5 h-5" />
+                    </.link>
+                  </:trigger>
+                  <:content>Open shared video: {shared_video_title(message)}</:content>
+                </.tooltip>
+              <% end %>
               <.button
                 id={"message-delete-#{message.id}"}
                 type="button"
@@ -336,7 +334,7 @@ defmodule FosBjjWeb.Components.ReceivedMessagesTable do
         </.table>
 
         <%= if @messages.count > 10 do %>
-          <div class="mt-4">
+          <div class="mt-6">
             <.pagination
               total={ceil(@messages.count / 10)}
               active={@messages_page}
