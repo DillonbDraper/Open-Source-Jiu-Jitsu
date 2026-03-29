@@ -36,44 +36,46 @@ defmodule FosBjjWeb.Live.Auth.SignInLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="grid h-screen place-items-center bg-base-100">
-      <.live_component
-        module={Components.Banner}
-        id="sign-in-banner"
-        overrides={@overrides}
-        gettext_fn={@gettext_fn}
-      />
-
-      <.live_component
-        module={Components.Password}
-        id="password-sign-in"
-        strategy={password_strategy()}
-        path={@path}
-        reset_path={@reset_path}
-        register_path={@register_path}
-        live_action={@live_action}
-        overrides={@overrides}
-        current_tenant={@current_tenant}
-        context={@context}
-        auth_routes_prefix={@auth_routes_prefix}
-        gettext_fn={@gettext_fn}
-      >
-        <:register_extra :let={form}>
-          <div class="mt-2 mb-2 dark:text-white">
-            <.input field={form[:user_name]} type="text" label="Username" required />
-          </div>
-        </:register_extra>
-      </.live_component>
-
-      <div id="google-sign-in">
+    <div class="min-h-screen bg-base-100 flex items-center justify-center px-4">
+      <div class="w-full max-w-sm">
         <.live_component
-          module={Components.OAuth2}
-          id="google-sign-in-component"
-          strategy={google_strategy()}
+          module={Components.Banner}
+          id="sign-in-banner"
           overrides={@overrides}
-          auth_routes_prefix={@auth_routes_prefix}
           gettext_fn={@gettext_fn}
         />
+
+        <.live_component
+          module={Components.Password}
+          id="password-sign-in"
+          strategy={password_strategy()}
+          path={@path}
+          reset_path={@reset_path}
+          register_path={@register_path}
+          live_action={@live_action}
+          overrides={@overrides}
+          current_tenant={@current_tenant}
+          context={@context}
+          auth_routes_prefix={@auth_routes_prefix}
+          gettext_fn={@gettext_fn}
+        >
+          <:register_extra :let={form}>
+            <div class="mt-2 mb-2 dark:text-white">
+              <.input field={form[:user_name]} type="text" label="Username" required />
+            </div>
+          </:register_extra>
+        </.live_component>
+
+        <div id="google-sign-in">
+          <.live_component
+            module={Components.OAuth2}
+            id="google-sign-in-component"
+            strategy={google_strategy()}
+            overrides={@overrides}
+            auth_routes_prefix={@auth_routes_prefix}
+            gettext_fn={@gettext_fn}
+          />
+        </div>
       </div>
     </div>
     """
