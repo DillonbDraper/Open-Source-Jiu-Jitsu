@@ -21,6 +21,8 @@ defmodule FosBjjWeb.InboxLiveTest do
 
     assert has_element?(view, "#inbox-modal")
     assert has_element?(view, "#inbox-message-#{message.id}")
+    assert has_element?(view, "#inbox-view-all[href='/messages']")
+    assert has_element?(view, "#inbox-view-all", "View all Messages in Message Center")
   end
 
   test "unverified user sees disabled inbox trigger", %{conn: conn} do

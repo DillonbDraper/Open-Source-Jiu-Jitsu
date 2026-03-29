@@ -15,7 +15,8 @@ defmodule FosBjjWeb.UserProfileLiveTest do
       |> init_test_session(%{})
       |> Helpers.store_in_session(user)
 
-    assert {:ok, _view, _html} = live(conn, ~p"/profile")
+    assert {:ok, view, _html} = live(conn, ~p"/profile")
+    refute has_element?(view, "#profile-messages-tabs")
   end
 
   test "unverified users are redirected from profile", %{conn: conn} do

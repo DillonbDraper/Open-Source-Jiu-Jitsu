@@ -14,6 +14,11 @@ defmodule FosBjjWeb.AuthOverrides do
 
   # Use custom sign-in form that shows "Email or Username" label
   override AshAuthentication.Phoenix.Components.Password do
+    set(:root_class, "mt-2 mb-2")
     set(:sign_in_form_module, FosBjjWeb.Components.Auth.CustomSignInForm)
+  end
+
+  override AshAuthentication.Phoenix.Components.OAuth2 do
+    set(:root_class, "w-full mt-0 mb-2")
   end
 end

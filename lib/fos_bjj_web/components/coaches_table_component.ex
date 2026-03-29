@@ -350,7 +350,7 @@ defmodule FosBjjWeb.Components.CoachesTableComponent do
                   Are you sure you wish to follow coach {@selected_coach.user_name}?
                 </.p>
                 <.p size="text-sm" class="opacity-80 mt-1">
-                  OSSBJJ takes no responsibility for any messages broadcast alongside videos to watch.
+                  OSSBJJ takes no responsibility for messages broadcast by coaches you follow.
                 </.p>
               </div>
             </div>

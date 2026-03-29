@@ -145,6 +145,11 @@ defmodule FosBjjWeb.VideosDashboardLive do
   end
 
   @impl true
+  def handle_info({:video_share_flash, kind, message}, socket) do
+    {:noreply, put_flash(socket, kind, message)}
+  end
+
+  @impl true
   def handle_info({:player_time_update, time}, socket) do
     {:noreply, assign(socket, :current_time, time)}
   end

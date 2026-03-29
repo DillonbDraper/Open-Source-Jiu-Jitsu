@@ -103,4 +103,73 @@ defmodule FosBjj.Accounts.UserMessageTest do
 
     assert length(messages) == 5
   end
+
+  describe "authorization policies" do
+    test "user cannot read another user's messages" do
+      recipient = user_fixture()
+      other_user = user_fixture()
+      _message = message_fixture(%{type: :system_notification, recipient: recipient})
+
+      # other_user should get no results when trying to read recipient's messages
+      results =
+        UserMessage
+        |> Ash.Query.for_read(:list_for_user, %{user_id: recipient.id})
+        |> Ash.read!(actor: other_user, page: [limit: 10, offset: 0, count: true])
+
+      assert results.count == 0
+      assert results.results == []
+    end
+
+    test "user cannot destroy another user's message" do
+      recipient = user_fixture()
+      other_user = user_fixture()
+      message = message_fixture(%{type: :system_notification, recipient: recipient})
+
+      assert_raise Ash.Error.Forbidden, fn ->
+        Ash.destroy!(message, actor: other_user)
+      end
+    end
+
+    test "recipient can destroy their own message" do
+      recipient = user_fixture()
+      message = message_fixture(%{type: :system_notification, recipient: recipient})
+
+      assert :ok = Ash.destroy!(message, actor: recipient)
+    end
+
+    test "sender can read messages they sent" do
+      sender = user_fixture(%{role: "coach"})
+      recipient = user_fixture()
+      video = video_fixture(%{user: sender})
+
+      _message =
+        Ash.create!(
+          UserMessage,
+          %{body: "Check this", recipient_id: recipient.id, shared_video_id: video.id},
+          action: :send,
+          actor: sender
+        )
+
+      results =
+        UserMessage
+        |> Ash.Query.for_read(:sent_message_groups, %{sender_id: sender.id})
+        |> Ash.read!(actor: sender, page: [limit: 10, offset: 0, count: true])
+
+      assert results.count == 1
+    end
+
+    test "non-coach cannot send messages" do
+      sender = user_fixture()
+      recipient = user_fixture()
+
+      assert_raise Ash.Error.Forbidden, fn ->
+        Ash.create!(
+          UserMessage,
+          %{body: "Test", recipient_id: recipient.id},
+          action: :send,
+          actor: sender
+        )
+      end
+    end
+  end
 end

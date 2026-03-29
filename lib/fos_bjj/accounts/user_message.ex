@@ -2,11 +2,36 @@ defmodule FosBjj.Accounts.UserMessage do
   use Ash.Resource,
     otp_app: :fos_bjj,
     domain: FosBjj.Accounts,
-    data_layer: AshPostgres.DataLayer
+    data_layer: AshPostgres.DataLayer,
+    authorizers: [Ash.Policy.Authorizer]
 
   postgres do
     table("user_messages")
     repo(FosBjj.Repo)
+  end
+
+  policies do
+    # Admins bypass all checks
+    bypass actor_attribute_equals(:role_name, "admin") do
+      authorize_if(always())
+    end
+
+    # System messages (no actor) are always allowed for create
+    bypass action(:send_system_message) do
+      authorize_if(always())
+    end
+
+    # Coaches and contributors can send messages
+    policy action(:send) do
+      authorize_if(actor_attribute_equals(:role_name, "coach"))
+      authorize_if(actor_attribute_equals(:role_name, "contributor"))
+    end
+
+    # Recipients and senders can read, mark_as_read, and destroy their own messages
+    policy action_type([:read, :update, :destroy]) do
+      authorize_if(expr(recipient_id == ^actor(:id)))
+      authorize_if(expr(sender_id == ^actor(:id)))
+    end
   end
 
   actions do
@@ -54,6 +79,28 @@ defmodule FosBjj.Accounts.UserMessage do
         |> Ash.Query.sort(received: :asc, inserted_at: :desc)
         |> Ash.Query.limit(5)
       end)
+    end
+
+    read :sent_message_groups do
+      argument(:sender_id, :integer, allow_nil?: false)
+
+      filter(expr(sender_id == ^arg(:sender_id)))
+
+      prepare(fn query, _context ->
+        query
+        |> Ash.Query.distinct(:message_group_id)
+        |> Ash.Query.distinct_sort(inserted_at: :desc)
+        |> Ash.Query.sort(inserted_at: :desc)
+      end)
+
+      pagination(offset?: true, countable: true)
+    end
+
+    read :group_recipients do
+      argument(:message_group_ids, {:array, :uuid}, allow_nil?: false)
+      argument(:sender_id, :integer, allow_nil?: false)
+
+      filter(expr(sender_id == ^arg(:sender_id) and message_group_id in ^arg(:message_group_ids)))
     end
   end
 
