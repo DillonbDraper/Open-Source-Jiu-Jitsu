@@ -311,11 +311,12 @@ defmodule FosBjjWeb.VideosDashboardLive do
       full_width_tab
       content_padding="none"
       tab_border_size="medium"
+      class="md:h-full md:min-h-0 md:flex md:flex-col md:[&>[role='tablist']+div]:flex-1 md:[&>[role='tablist']+div]:min-h-0 md:[&_.tab-content]:h-full md:[&_.tab-content]:min-h-0"
     >
       <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
       <:tab icon="hero-pencil-square">All Notes</:tab>
 
-      <:panel>
+      <:panel class="md:h-full md:min-h-0">
         <.live_component
           module={FosBjjWeb.TechniqueTreeComponent}
           id="technique-tree"
@@ -325,7 +326,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
         />
       </:panel>
 
-      <:panel>
+      <:panel class="md:h-full md:min-h-0 md:overflow-hidden">
         <.live_component
           module={FosBjjWeb.Components.NotesListComponent}
           id="database-notes"
@@ -346,6 +347,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
       full_width_tab
       content_padding="none"
       tab_border_size="medium"
+      class="md:h-full md:min-h-0 md:flex md:flex-col md:[&>[role='tablist']+div]:flex-1 md:[&>[role='tablist']+div]:min-h-0 md:[&_.tab-content]:h-full md:[&_.tab-content]:min-h-0"
     >
       <:tab icon="hero-rectangle-group" active>Technique Tree</:tab>
       <:tab disabled>
@@ -367,7 +369,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
         </.tooltip>
       </:tab>
 
-      <:panel>
+      <:panel class="md:h-full md:min-h-0">
         <.live_component
           module={FosBjjWeb.TechniqueTreeComponent}
           id="technique-tree"
@@ -377,7 +379,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
         />
       </:panel>
 
-      <:panel></:panel>
+      <:panel class="md:h-full md:min-h-0"></:panel>
     </.tabs>
     """
   end
@@ -414,14 +416,14 @@ defmodule FosBjjWeb.VideosDashboardLive do
       <div class={[
         "gap-4 md:grid md:grid-cols-5 md:gap-8 w-full mt-4",
         if(@view_mode == :database,
-          do: "flex flex-col-reverse md:h-[calc(100vh-12rem)]",
+          do: "flex flex-col-reverse md:h-[calc(100vh-12rem)] md:min-h-0",
           else: "flex flex-col"
         )
       ]}>
         <!-- Dynamic Content Area -->
         <div class={[
           "col-span-3 flex flex-col min-w-0",
-          if(@view_mode == :database, do: "md:h-full md:overflow-hidden", else: "")
+          if(@view_mode == :database, do: "md:h-full md:min-h-0 md:overflow-hidden", else: "")
         ]}>
           <%= if @view_mode == :database do %>
             <.live_component
@@ -446,7 +448,10 @@ defmodule FosBjjWeb.VideosDashboardLive do
         </div>
         
     <!-- Right Panel -->
-        <div class="col-span-2 min-w-0">
+        <div class={[
+          "col-span-2 min-w-0",
+          if(@view_mode == :database, do: "md:h-full md:min-h-0 md:overflow-hidden", else: "")
+        ]}>
           {render_right_panel(assigns)}
         </div>
       </div>
