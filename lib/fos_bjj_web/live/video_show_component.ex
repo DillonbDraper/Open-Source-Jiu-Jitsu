@@ -16,6 +16,7 @@ defmodule FosBjjWeb.VideoShowComponent do
   @impl true
   def update(assigns, socket) do
     previous_video_id = socket.assigns[:video_id]
+    previous_seek_time = socket.assigns[:seek_time]
     socket = assign(socket, assigns)
 
     socket =
@@ -39,7 +40,12 @@ defmodule FosBjjWeb.VideoShowComponent do
       end
 
     socket =
-      if assigns[:seek_time] do
+      if should_seek_to_timestamp?(
+           assigns,
+           previous_video_id,
+           previous_seek_time,
+           socket.assigns[:video_id]
+         ) do
         push_event(socket, "seek", %{seconds: assigns.seek_time})
       else
         socket
@@ -73,6 +79,12 @@ defmodule FosBjjWeb.VideoShowComponent do
       end
 
     {:ok, socket}
+  end
+
+  defp should_seek_to_timestamp?(assigns, previous_video_id, previous_seek_time, current_video_id) do
+    Map.has_key?(assigns, :seek_time) and
+      not is_nil(assigns.seek_time) and
+      (previous_video_id != current_video_id or previous_seek_time != assigns.seek_time)
   end
 
   @impl true
@@ -390,95 +402,187 @@ defmodule FosBjjWeb.VideoShowComponent do
         </div>
       <% end %>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".YouTubeSeeker">
-                export default {
-                mounted() {
-        this.videoId = this.el.dataset.videoId;
-        this.pendingSeek = null;
-        this.playerReady = false;
-        this.loadYouTubeAPI();
+                    export default {
+                    mounted() {
+            this.videoId = this.el.dataset.videoId;
+            this.pendingSeek = null;
+            this.pauseAfterSeek = false;
+            this.pauseAfterSeekIssued = false;
+            this.pauseAfterSeekTimer = null;
+            this.playerReady = false;
+            this.loadYouTubeAPI();
 
-        this.handleEvent("seek", ({ seconds }) => {
-          if (this.playerReady && this.player && typeof this.player.seekTo === 'function') {
-            this.player.seekTo(seconds, true);
-          } else {
-            this.pendingSeek = seconds;
-          }
-        });
+            this.handleEvent("seek", ({ seconds }) => {
+              if (this.playerReady && this.player) {
+                this.seekWithoutPlayback(seconds, this.player);
+              } else {
+                this.pendingSeek = seconds;
+              }
+            });
 
-        this.handleEvent("request_player_status", () => {
-          if (!this.player || !this.player.getCurrentTime) return;
-          this.player.pauseVideo();
+            this.handleEvent("request_player_status", () => {
+              if (!this.player || !this.player.getCurrentTime) return;
+              this.player.pauseVideo();
+              this.reportCurrentTime();
+            });
+                    },
 
-          const currentTime = this.player.getCurrentTime();
+                    destroyed() {
+                      this.clearPauseAfterSeek();
+                      if (this.player) this.player.destroy();
+                    },
 
-          // Send result back to the specific component that owns this hook
-          // 'player_status_report' must match handle_event in the Elixir component
-          this.pushEventTo(this.el, "player_status_report", {
-            current_time: currentTime
-          });
-        });
+                    loadYouTubeAPI() {
+                      // If API is ready, init immediately
+                      if (window.YT && window.YT.Player) {
+                        this.initPlayer();
+                        return;
+                      }
+
+                      // Standard queueing mechanism for the async script load
+                      window.onYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady || [];
+                      const existingCallback = window.onYouTubeIframeAPIReady;
+
+                      window.onYouTubeIframeAPIReady = () => {
+                        if (existingCallback && typeof existingCallback === 'function') existingCallback();
+                        this.initPlayer();
+                      };
+
+                      if (!document.getElementById("youtube-api-script")) {
+                        const tag = document.createElement('script');
+                        tag.id = "youtube-api-script";
+                        tag.src = "https://www.youtube.com/iframe_api";
+                        document.head.appendChild(tag);
+                      }
+                    },
+
+                    initPlayer() {
+                // We grab the ID of the sacrificial child div
+                const playerId = this.el.dataset.playerId;
+
+        this.player = new YT.Player(playerId, {
+        videoId: this.videoId,
+                height: '100%', // Ensure the iframe fills the wrapper
+                width: '100%',
+                playerVars: {
+                  'playsinline': 1,
+                  'modestbranding': 1
+                },
+                events: {
+                  'onReady': (event) => {
+                    this.playerReady = true;
+                    if (this.pendingSeek !== null) {
+                      this.seekWithoutPlayback(this.pendingSeek, event.target);
+                      this.pendingSeek = null;
+                    }
+                  },
+                  'onStateChange': (event) => {
+                    if (
+                      this.pauseAfterSeek &&
+                        !this.pauseAfterSeekIssued &&
+                        event.data === YT.PlayerState.PLAYING
+                    ) {
+                      this.pauseAfterSeekIssued = true;
+
+                      if (this.player && typeof this.player.pauseVideo === 'function') {
+                        window.setTimeout(() => this.player.pauseVideo(), 0);
+                      }
+                    }
+
+                    if (
+                      this.pauseAfterSeek &&
+                        (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.CUED)
+                    ) {
+                      this.clearPauseAfterSeek();
+                    }
+
+                    // Report time on pause
+                    if (event.data === YT.PlayerState.PAUSED) {
+                      this.reportCurrentTime();
+                    }
+                  }
+                }
+                });
                 },
 
-                destroyed() {
-                  if (this.player) this.player.destroy();
-                },
+                seekWithoutPlayback(seconds, player) {
+                  if (!player) return;
 
-                loadYouTubeAPI() {
-                  // If API is ready, init immediately
-                  if (window.YT && window.YT.Player) {
-                    this.initPlayer();
+                  const playerState = this.getPlayerState(player);
+
+                  if (playerState === YT.PlayerState.PAUSED) {
+                    if (typeof player.seekTo !== 'function') return;
+                    this.clearPauseAfterSeek();
+                    player.seekTo(seconds, true);
+                    this.reportCurrentTime();
                     return;
                   }
 
-                  // Standard queueing mechanism for the async script load
-                  window.onYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady || [];
-                  const existingCallback = window.onYouTubeIframeAPIReady;
+                  if (playerState === YT.PlayerState.PLAYING) {
+                    if (typeof player.seekTo !== 'function') return;
+                    this.clearPauseAfterSeek();
+                    player.seekTo(seconds, true);
 
-                  window.onYouTubeIframeAPIReady = () => {
-                    if (existingCallback && typeof existingCallback === 'function') existingCallback();
-                    this.initPlayer();
-                  };
+                    if (typeof player.pauseVideo === 'function') {
+                      window.setTimeout(() => player.pauseVideo(), 0);
+                    }
 
-                  if (!document.getElementById("youtube-api-script")) {
-                    const tag = document.createElement('script');
-                    tag.id = "youtube-api-script";
-                    tag.src = "https://www.youtube.com/iframe_api";
-                    document.head.appendChild(tag);
+                    return;
                   }
+
+                  if (typeof player.loadVideoById === 'function') {
+                    this.armPauseAfterSeek();
+                    player.loadVideoById({
+                      videoId: this.videoId,
+                      startSeconds: seconds
+                    });
+                    return;
+                  }
+
+                  if (typeof player.seekTo !== 'function') return;
+
+                  this.armPauseAfterSeek();
+
+                  player.seekTo(seconds, true);
                 },
 
-                initPlayer() {
-            // We grab the ID of the sacrificial child div
-            const playerId = this.el.dataset.playerId;
+                getPlayerState(player) {
+                  if (!window.YT || !YT.PlayerState || typeof player.getPlayerState !== 'function') {
+                    return null;
+                  }
 
-            this.player = new YT.Player(playerId, { // <--- Use the child ID here
-            videoId: this.videoId,
-            height: '100%', // Ensure the iframe fills the wrapper
-            width: '100%',
-            playerVars: {
-              'playsinline': 1,
-              'modestbranding': 1
-            },
-            events: {
-              'onReady': (event) => {
-                this.playerReady = true;
-                if (this.pendingSeek !== null) {
-                  event.target.seekTo(this.pendingSeek, true);
-                  this.pendingSeek = null;
-                }
-              },
-              'onStateChange': (event) => {
-                // Report time on pause
-                if (event.data === YT.PlayerState.PAUSED) {
+                  return player.getPlayerState();
+                },
+
+                reportCurrentTime() {
+                  if (!this.player || typeof this.player.getCurrentTime !== 'function') return;
+
+                  // Send result back to the specific component that owns this hook
+                  // 'player_status_report' must match handle_event in the Elixir component
                   this.pushEventTo(this.el, "player_status_report", {
                     current_time: this.player.getCurrentTime()
                   });
+                },
+
+                armPauseAfterSeek() {
+                  this.pauseAfterSeek = true;
+                  this.pauseAfterSeekIssued = false;
+
+                  clearTimeout(this.pauseAfterSeekTimer);
+                  this.pauseAfterSeekTimer = window.setTimeout(() => {
+                    this.clearPauseAfterSeek();
+                  }, 2500);
+                },
+
+                clearPauseAfterSeek() {
+                  this.pauseAfterSeek = false;
+                  this.pauseAfterSeekIssued = false;
+
+                  clearTimeout(this.pauseAfterSeekTimer);
+                  this.pauseAfterSeekTimer = null;
                 }
-              }
-            }
-            });
-            }
-                }
+                    }
+          
       </script>
     </div>
     """
