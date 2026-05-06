@@ -87,4 +87,18 @@ defmodule FosBjjWeb.TechniqueTreeLiveTest do
 
     assert_patch(view, "/database?attire=both")
   end
+
+  test "position count is distinct per video when one video has multiple techniques", %{
+    conn: conn
+  } do
+    data = position_tree_same_video_multiple_techniques_fixture()
+
+    {:ok, view, _html} = live(conn, "/database")
+
+    assert has_element?(
+             view,
+             "button[phx-value-level=position][phx-value-pos=\"#{data.position_name}\"]",
+             "(1)"
+           )
+  end
 end

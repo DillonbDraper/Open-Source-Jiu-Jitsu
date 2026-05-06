@@ -201,6 +201,27 @@ defmodule FosBjj.Fixtures do
     }
   end
 
+  def position_tree_same_video_multiple_techniques_fixture do
+    data = position_tree_fixture()
+
+    technique_two =
+      Ash.create!(
+        Technique,
+        %{
+          name: "Technique extra #{unique_integer()}",
+          orientation_name: data.orientation_name,
+          sub_position_name: data.sub_position_name,
+          action_name: data.action_with_technique
+        },
+        action: :create,
+        actor: data.user
+      )
+
+    Ash.create!(VideoTechnique, %{video_id: data.video.id, technique_id: technique_two.id})
+
+    Map.put(data, :technique_two, technique_two)
+  end
+
   def message_fixture(attrs \\ %{}) do
     type = Map.get(attrs, :type, :video_shared_by_coach)
     recipient = Map.get(attrs, :recipient, user_fixture())

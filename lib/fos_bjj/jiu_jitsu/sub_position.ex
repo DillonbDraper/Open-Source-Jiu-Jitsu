@@ -37,6 +37,8 @@ defmodule FosBjj.JiuJitsu.SubPosition do
 
   aggregates do
     count :video_count, [:techniques, :videos] do
+      field(:id)
+      uniq?(true)
       filter(expr(is_nil(deleted_at)))
     end
   end
