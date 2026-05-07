@@ -56,7 +56,8 @@ defmodule FosBjj.JiuJitsu.Grip do
     %{name: "single_pant_cuff", label: "Single Pant Cuff"},
     %{name: "crossface", label: "Crossface"},
     %{name: "russian_tie", label: "Russian Tie"},
-    %{name: "russian_tie_with_belt", label: "Russian Tie w/ Belt"}
+    %{name: "russian_tie_with_belt", label: "Russian Tie w/ Belt"},
+    %{name: "head_and_arm", label: "Head and Arm"}
   ]
 
   @impl true

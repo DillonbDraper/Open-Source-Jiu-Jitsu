@@ -169,42 +169,42 @@ defmodule FosBjjWeb.DatabaseComponent do
                         />
                       </div>
 
-                      <div class="flex-1 flex items-start">
+                      <div class="flex-1 min-w-0 flex flex-col justify-between">
                         <.p size="small" class="text-base-content/70 line-clamp-5">
                           {video.description}
                         </.p>
                       </div>
                     </div>
                   </.link>
-                  <div class="p-3 pt-2 border-t border-base-200 space-y-2">
-                    <%= if video.techniques && video.techniques != [] do %>
-                      <div class="flex items-start gap-2">
-                        <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                          Techniques
-                        </span>
-                        <div class="flex flex-wrap gap-1.5">
-                          <%= for technique <- video.techniques do %>
-                            <.button
-                              phx-click="select_technique"
-                              phx-target={@myself}
-                              phx-value-technique-id={technique.id}
-                              size="extra_small"
-                              color="primary"
-                              rounded="full"
-                              variant="default"
-                            >
-                              {technique.name}
-                              <span class="text-xs opacity-70 ml-1">
-                                ({technique.video_count})
-                              </span>
-                            </.button>
-                          <% end %>
-                        </div>
-                      </div>
-                    <% end %>
+                  <div class="p-3 pt-2 border-t border-base-200">
+                    <div class="flex gap-3">
+                      <div class="w-4/5 min-w-0 space-y-2">
+                        <%= if video.techniques && video.techniques != [] do %>
+                          <div class="flex items-start gap-2">
+                            <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
+                              Techniques
+                            </span>
+                            <div class="flex flex-wrap gap-1.5">
+                              <%= for technique <- video.techniques do %>
+                                <.button
+                                  phx-click="select_technique"
+                                  phx-target={@myself}
+                                  phx-value-technique-id={technique.id}
+                                  size="extra_small"
+                                  color="primary"
+                                  rounded="full"
+                                  variant="default"
+                                >
+                                  {technique.name}
+                                  <span class="text-xs opacity-70 ml-1">
+                                    ({technique.video_count})
+                                  </span>
+                                </.button>
+                              <% end %>
+                            </div>
+                          </div>
+                        <% end %>
 
-                    <div class="flex items-end justify-between gap-2">
-                      <div class="flex-1">
                         <%= if video.grips && video.grips != [] do %>
                           <div class="flex items-start gap-2">
                             <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
@@ -221,22 +221,28 @@ defmodule FosBjjWeb.DatabaseComponent do
                         <% end %>
                       </div>
 
-                      <.tooltip position="left" inline={true}>
-                        <:trigger>
-                          <span class={[
-                            "inline-flex transition-all",
-                            if(video.attire == :gi,
-                              do: "text-green-600 opacity-100",
-                              else: "text-gray-400 opacity-100"
-                            )
-                          ]}>
-                            <.icon name="custom-gi" class="w-6 h-6" />
-                          </span>
-                        </:trigger>
-                        <:content>
-                          {if video.attire == :gi, do: "Gi", else: "No-Gi"}
-                        </:content>
-                      </.tooltip>
+                      <div class="w-1/5 min-w-[110px] flex flex-col items-end justify-end gap-1 shrink-0">
+                        <.tooltip position="left" inline={true}>
+                          <:trigger>
+                            <span class={[
+                              "inline-flex transition-all",
+                              if(video.attire == :gi,
+                                do: "text-green-600 opacity-100",
+                                else: "text-gray-400 opacity-100"
+                              )
+                            ]}>
+                              <.icon name="custom-gi" class="w-6 h-6" />
+                            </span>
+                          </:trigger>
+                          <:content>
+                            {if video.attire == :gi, do: "Gi", else: "No-Gi"}
+                          </:content>
+                        </.tooltip>
+
+                        <span class="text-xs text-base-content/60 italic whitespace-nowrap text-right">
+                          Uploaded: {Calendar.strftime(video.inserted_at, "%m/%d/%Y")}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
