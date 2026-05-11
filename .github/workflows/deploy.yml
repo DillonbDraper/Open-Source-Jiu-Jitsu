@@ -2,11 +2,12 @@ name: Deploy to VM
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: prod
     env:
       MIX_ENV: prod
     steps:
@@ -17,7 +18,7 @@ jobs:
         with:
           elixir-version: '1.19.4'
           otp-version: '28.1.1'
-          
+
       - name: Cache Deps & Build
         uses: actions/cache@v3
         with:
@@ -61,4 +62,3 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             /usr/local/bin/finish_deploy.sh
-
