@@ -47,7 +47,7 @@ This by default runs the app at port 4000, which should be accessible in your br
 
 ## Contributing
 
-All pull requests are welcome, as well as opening an issue if you have a desired feature or find a bug.
+All pull requests are welcomed with gratitude, as well as opening an issue if you have a desired feature or find a bug. 
 
 ## License
 
