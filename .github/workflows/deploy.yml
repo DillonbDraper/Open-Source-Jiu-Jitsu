@@ -61,4 +61,4 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            /usr/local/bin/finish_deploy.sh
+            sudo /usr/local/bin/finish_deploy.sh
