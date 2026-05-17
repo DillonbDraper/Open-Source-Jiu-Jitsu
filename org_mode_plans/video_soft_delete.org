@@ -5,3 +5,4 @@
 ** Currently, messages and notes may reference videos, which may be deleted.  When a video is deleted, it should trigger a system message to all users with messages/notes referencing a video explaining that that video has been deleted by contributor.
 *** Links to disabled videos should be disabled in those messages/notes.
 *** Notes should have a toggle by the table that enables users to toggle on/off showing notes for deleted videos.  It should be off by default.
+* Complete

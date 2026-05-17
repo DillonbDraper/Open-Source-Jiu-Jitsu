@@ -14,3 +14,5 @@
 **** Upon clicking that manage report button, a modal should appear prompting the user to either delete the video or mark as resolved without deleting.
 ***** If the user chooses not to delete the video, a required textfield should appear for their reason to choose not to delete it.  Upon save, the report is marked as reviewed, and a message is dispatched the user who reported with the body being the explanation of why it was not deleted.
 ***** If the user chooses to delete, they should be prompted one last time confirming they are SURE they wish to delete the video.  This will be a soft delete.  Additionally, a message will be dispatched to those with messages/notes referencing the video explaining that it has been deleted and why.
+
+* Complete

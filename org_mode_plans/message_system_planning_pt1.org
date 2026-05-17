@@ -44,3 +44,4 @@ Modify `root.html.heex` (or the relevant layout file containing the navbar) to a
   - **Action:** Clicking a message body or a check-icon button triggers `mark_read` Clicking the message body show also show a popover with the full message body in readable font.
     - 
   - **UX:** When a user marks a message as read in this modal, decrease the `@unread_message_count` in the socket immediately (optimistic UI update) so the red bubble updates without a refresh.
+* Complete

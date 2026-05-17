@@ -49,3 +49,4 @@
   - Use `Phoenix.Component.icon` (CoreComponents) for the icons.
   - Use the existing `FosBjj.JiuJitsu` resources for data fetching.
   - Clicking a Technique leaf node should navigate to `~p"/techniques/:id"` (This does not yet exist).
+* Complete

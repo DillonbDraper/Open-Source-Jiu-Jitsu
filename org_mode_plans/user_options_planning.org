@@ -69,3 +69,4 @@ Create a separate LiveView for admins to view system users.
     Filtering: Add a simple filter to the table to filter users by Role.
 
     Note: Do not implement editing/deleting users yet, just the read-only table.
+* Complete

@@ -25,6 +25,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:techniques_map, %{})
       |> assign(:counts_map, %{})
       |> assign(:actions_map, %{})
+      |> assign(:position_video_counts, nil)
       |> assign(:selected_attire, "both")
       |> assign(:title_search, nil)
       |> assign(:form, to_form(%{}))
@@ -162,7 +163,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         positions =
           Position
           |> Ash.Query.for_read(:read)
-          |> Ash.Query.load([:orientations, :video_count])
+          |> Ash.Query.load(:orientations)
           |> Ash.read!()
           |> sort_by_label()
 
@@ -175,9 +176,27 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         socket
         |> assign(:positions, positions)
         |> assign(:sub_positions, sub_positions)
+        |> start_async(:load_position_video_counts, fn ->
+          Position
+          |> Ash.Query.for_read(:read)
+          |> Ash.Query.load(:video_count)
+          |> Ash.read!()
+          |> Map.new(fn p -> {p.name, p.video_count} end)
+        end)
       end
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_async(:load_position_video_counts, {:ok, counts}, socket) do
+    {:noreply, assign(socket, :position_video_counts, counts)}
+  end
+
+  def handle_async(:load_position_video_counts, {:exit, reason}, socket) do
+    require Logger
+    Logger.error("Failed to load position video counts: #{inspect(reason)}")
+    {:noreply, assign(socket, :position_video_counts, %{})}
   end
 
   @impl true
@@ -249,7 +268,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
             <.tree_node
               id={pos_id}
               label={position.label}
-              count={position.video_count}
+              count={@position_video_counts && Map.get(@position_video_counts, position.name)}
               expanded={expanded?(@expanded_ids, pos_id)}
               level={0}
               click_params={%{"level" => "position", "pos" => position.name}}
@@ -404,7 +423,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
         <% end %>
         <span class="text-base select-none">
           {@label}
-          <span class="text-sm opacity-60 ml-1">({@count})</span>
+          <span :if={not is_nil(@count)} class="text-sm opacity-60 ml-1">({@count})</span>
         </span>
       </.button>
       <%= if @expanded do %>

@@ -17,3 +17,4 @@
    - The table should have inline options to mark unread messages as read (turn the check button green for read messages), as well as an option for delete that uses a phx-confirm modal to make sure the user knows that the deletion is permanent.
    - The table should be paginated like the notes and similarly dense, with up to 10 messages per page.
    - For longer messages whose body does not fit in the table, a popover on hover should be used to display the full text. 
+* Complete

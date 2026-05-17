@@ -15,3 +15,4 @@
     - There should be an icon button on the left of the expanded note to shrink it back to the original size
   - We can leave the actual note creating UI mostly as is, with a similar "+ Add Note" button at the top right of the component
   - We should get rid of unneeded togglability of the "Video Information" section in the video_show_component, as well as associated state.
+* Complete

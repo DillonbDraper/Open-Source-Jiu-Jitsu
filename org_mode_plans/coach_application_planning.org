@@ -10,3 +10,4 @@
       - This table will be surfaced in user_management_live for admins to have the ability to approve/deny coach applications.  Users with denied applications should be disabled from applying again, and have the button apply hidden.
 	  
 -
+* Complete
