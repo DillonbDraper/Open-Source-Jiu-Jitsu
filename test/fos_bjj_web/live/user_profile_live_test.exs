@@ -57,6 +57,32 @@ defmodule FosBjjWeb.UserProfileLiveTest do
     assert updated_user.user_name == new_user_name
   end
 
+  test "student users can change their profile role to coach", %{conn: conn} do
+    {user, _token} = user_with_token_fixture(%{confirmed: true, role: "student"})
+
+    conn =
+      conn
+      |> init_test_session(%{})
+      |> Helpers.store_in_session(user)
+
+    {:ok, view, _html} = live(conn, ~p"/profile")
+
+    view
+    |> element("#edit-profile")
+    |> render_click()
+
+    assert has_element?(view, "#profile_role")
+
+    view
+    |> form("#user-profile-form", %{
+      "profile" => %{"user_name" => user.user_name, "role" => "coach"}
+    })
+    |> render_submit()
+
+    updated_user = Ash.get!(User, user.id, authorize?: false)
+    assert updated_user.role_name == "coach"
+  end
+
   test "profile username save shows helpful error when username is taken", %{conn: conn} do
     taken_name = "taken_name_#{unique_integer()}"
     _another_existing = user_fixture(%{confirmed: true, user_name: taken_name})

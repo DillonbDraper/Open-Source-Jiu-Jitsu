@@ -310,11 +310,21 @@ defmodule FosBjj.Accounts.User do
       argument(:academy_ids, {:array, :integer})
 
       argument(:role, :string,
-        allow_nil?: false,
+        allow_nil?: true,
         constraints: [match: ~r/^(student|coach)$/]
       )
 
-      change(set_attribute(:role_name, arg(:role)))
+      change(fn changeset, _context ->
+        current_role = changeset.data.role_name
+        requested_role = Ash.Changeset.get_argument(changeset, :role)
+
+        if current_role in ["student", "coach"] and requested_role in ["student", "coach"] do
+          Ash.Changeset.change_attribute(changeset, :role_name, requested_role)
+        else
+          changeset
+        end
+      end)
+
       change(manage_relationship(:academy_ids, :academies, type: :append_and_remove))
     end
   end

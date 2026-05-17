@@ -330,11 +330,7 @@ defmodule FosBjjWeb.UserProfileLive do
   def handle_event("validate_profile", %{"profile" => params}, socket) do
     academy_ids = socket.assigns.selected_academy_ids
 
-    cleaned_params =
-      params
-      |> Map.put("academy_ids", academy_ids)
-      |> Map.put("bjj_belt", normalize_blank(params["bjj_belt"]))
-      |> Map.put("role", params["role"] || socket.assigns.current_user.role_name)
+    cleaned_params = normalize_profile_params(params, socket.assigns.current_user, academy_ids)
 
     form =
       AshPhoenix.Form.validate(socket.assigns.profile_form, cleaned_params,
@@ -349,11 +345,7 @@ defmodule FosBjjWeb.UserProfileLive do
     academy_ids = socket.assigns.selected_academy_ids
     primary_academy_id = ensure_primary_id(academy_ids, socket.assigns.primary_academy_id)
 
-    cleaned_params =
-      params
-      |> Map.put("academy_ids", academy_ids)
-      |> Map.put("bjj_belt", normalize_blank(params["bjj_belt"]))
-      |> Map.put("role", params["role"] || socket.assigns.current_user.role_name)
+    cleaned_params = normalize_profile_params(params, socket.assigns.current_user, academy_ids)
 
     if user_name_taken?(socket.assigns.current_user, cleaned_params["user_name"]) do
       form =
@@ -603,10 +595,7 @@ defmodule FosBjjWeb.UserProfileLive do
   end
 
   defp build_profile_form(user, academy_ids, params) do
-    form_params =
-      params
-      |> Map.put_new("role", user.role_name)
-      |> Map.put("academy_ids", academy_ids)
+    form_params = normalize_profile_params(params, user, academy_ids)
 
     user
     |> AshPhoenix.Form.for_update(:update_profile, as: "profile", actor: user)
@@ -724,6 +713,29 @@ defmodule FosBjjWeb.UserProfileLive do
   defp normalize_blank(nil), do: nil
   defp normalize_blank(""), do: nil
   defp normalize_blank(value), do: value
+
+  defp normalize_profile_params(params, user, academy_ids) do
+    params
+    |> Map.put("academy_ids", academy_ids)
+    |> Map.put("bjj_belt", normalize_blank(params["bjj_belt"]))
+    |> maybe_put_profile_role(user)
+  end
+
+  defp maybe_put_profile_role(params, %{role_name: role}) when role in ["student", "coach"] do
+    Map.put(params, "role", params["role"] || role)
+  end
+
+  defp maybe_put_profile_role(params, _user), do: Map.delete(params, "role")
+
+  defp profile_role_editable?(%{role_name: role}), do: role in ["student", "coach"]
+  defp profile_role_editable?(_user), do: false
+
+  defp role_label("admin"), do: "Administrator"
+  defp role_label("contributor"), do: "Contributor"
+  defp role_label("coach"), do: "Coach"
+  defp role_label("student"), do: "Student"
+  defp role_label(role) when is_binary(role), do: String.capitalize(role)
+  defp role_label(_role), do: "Not set"
 
   defp role_options do
     [
@@ -972,12 +984,24 @@ defmodule FosBjjWeb.UserProfileLive do
                 options={UserProfilePanel.belt_options()}
               />
 
-              <.input
-                type="select"
-                field={@profile_form[:role]}
-                label="Role"
-                options={role_options()}
-              />
+              <%= if profile_role_editable?(@current_user) do %>
+                <.input
+                  type="select"
+                  field={@profile_form[:role]}
+                  label="Role"
+                  options={role_options()}
+                />
+              <% else %>
+                <div id="profile-role-readonly" class="fieldset mb-2">
+                  <span class="label mb-1">Role</span>
+                  <div class="w-full rounded-lg border border-base-300 bg-base-200/40 px-3 py-2 text-sm text-base-content/80">
+                    {role_label(@current_user.role_name)}
+                  </div>
+                  <.p size="text-xs" class="mt-1 text-base-content/60">
+                    Privileged roles are managed by administrators and cannot be changed from profile details.
+                  </.p>
+                </div>
+              <% end %>
 
               <.input
                 type="checkbox"
