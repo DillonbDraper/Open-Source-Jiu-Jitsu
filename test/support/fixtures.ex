@@ -117,13 +117,15 @@ defmodule FosBjj.Fixtures do
     attire = Map.get(attrs, :attire, :gi)
     description = Map.get(attrs, :description, "Test video description")
     thumbnail_url = Map.get(attrs, :thumbnail_url, "https://example.com/thumb.jpg")
+    video_type_name = Map.get(attrs, :video_type_name, "instructional")
 
     params = %{
       video_id: video_id,
       title: title,
       description: description,
       attire: attire,
-      thumbnail_url: thumbnail_url
+      thumbnail_url: thumbnail_url,
+      video_type_name: video_type_name
     }
 
     Ash.create!(Video, params, action: :create, actor: user)

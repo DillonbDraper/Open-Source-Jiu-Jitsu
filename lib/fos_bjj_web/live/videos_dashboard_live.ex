@@ -1,6 +1,7 @@
 defmodule FosBjjWeb.VideosDashboardLive do
   use FosBjjWeb, :live_view
   import FosBjjWeb.Components.Modal
+  alias FosBjjWeb.DatabaseParams
   alias FosBjjWeb.VideoLive.VideoFormComponent
   alias FosBjjWeb.TechniqueLive.NewTechniqueForm
   alias Phoenix.LiveView.JS
@@ -16,6 +17,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:selected_technique_id, nil)
      |> assign(:selected_attire, "both")
      |> assign(:title_search, nil)
+     |> assign(:selected_video_type, "instructional")
      |> assign(:total_videos, 0)
      |> assign(:show_edit_modal, false)
      |> assign(:show_technique_drawer, false)
@@ -35,6 +37,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
     technique_id = params["technique_id"]
     attire = params["attire"] || "both"
     title = params["title"]
+    video_type = DatabaseParams.normalize_video_type(params["video_type"])
 
     seek_time =
       case params["time"] do
@@ -56,6 +59,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:selected_technique_id, technique_id)
      |> assign(:selected_attire, attire)
      |> assign(:title_search, title)
+     |> assign(:selected_video_type, video_type)
      |> assign(:current_page, page)
      |> assign(:seek_time, seek_time)}
   end
@@ -77,7 +81,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
         _ -> params["page"] || current_page
       end
 
-    url_params = build_url_params(socket, page)
+    url_params = DatabaseParams.build(socket.assigns, page: page, include_page?: true)
 
     {:noreply, push_patch(socket, to: ~p"/database?#{url_params}")}
   end
@@ -109,7 +113,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
   def handle_info({:pagination, params}, socket) do
     page = params["page"]
 
-    url_params = build_url_params(socket, page)
+    url_params = DatabaseParams.build(socket.assigns, page: page, include_page?: true)
 
     {:noreply, push_patch(socket, to: ~p"/database?#{url_params}")}
   end
@@ -191,28 +195,6 @@ defmodule FosBjjWeb.VideosDashboardLive do
      |> assign(:show_technique_drawer, false)}
   end
 
-  defp build_url_params(socket, page) do
-    # Build URL params preserving current filters
-    url_params = []
-
-    url_params =
-      if socket.assigns.selected_technique_id,
-        do: [technique_id: socket.assigns.selected_technique_id] ++ url_params,
-        else: url_params
-
-    url_params =
-      if socket.assigns.selected_attire && socket.assigns.selected_attire != "both",
-        do: [attire: socket.assigns.selected_attire] ++ url_params,
-        else: url_params
-
-    url_params =
-      if socket.assigns.title_search && socket.assigns.title_search != "",
-        do: [title: socket.assigns.title_search] ++ url_params,
-        else: url_params
-
-    [page: page] ++ url_params
-  end
-
   defp render_right_panel(
          %{view_mode: :video_show, current_user: %{confirmed_at: confirmed_at}} = assigns
        )
@@ -237,6 +219,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
           selected_technique_id={@selected_technique_id}
           selected_attire={@selected_attire}
           title_search={@title_search}
+          selected_video_type={@selected_video_type}
         />
       </:panel>
       <:panel>
@@ -290,6 +273,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
           selected_technique_id={@selected_technique_id}
           selected_attire={@selected_attire}
           title_search={@title_search}
+          selected_video_type={@selected_video_type}
         />
       </:panel>
 
@@ -323,6 +307,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
           selected_technique_id={@selected_technique_id}
           selected_attire={@selected_attire}
           title_search={@title_search}
+          selected_video_type={@selected_video_type}
         />
       </:panel>
 
@@ -376,6 +361,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
           selected_technique_id={@selected_technique_id}
           selected_attire={@selected_attire}
           title_search={@title_search}
+          selected_video_type={@selected_video_type}
         />
       </:panel>
 
@@ -392,6 +378,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
       selected_technique_id={@selected_technique_id}
       selected_attire={@selected_attire}
       title_search={@title_search}
+      selected_video_type={@selected_video_type}
     />
     """
   end
@@ -432,6 +419,7 @@ defmodule FosBjjWeb.VideosDashboardLive do
               selected_technique_id={@selected_technique_id}
               selected_attire={@selected_attire}
               title_search={@title_search}
+              selected_video_type={@selected_video_type}
               current_page={@current_page || 1}
               current_user={assigns[:current_user]}
             />
@@ -441,6 +429,10 @@ defmodule FosBjjWeb.VideosDashboardLive do
               id="video-show-component"
               video_id={@video_id}
               selected_technique_id={@selected_technique_id}
+              selected_attire={@selected_attire}
+              title_search={@title_search}
+              selected_video_type={@selected_video_type}
+              current_page={@current_page || 1}
               current_user={assigns[:current_user]}
               seek_time={@seek_time}
             />

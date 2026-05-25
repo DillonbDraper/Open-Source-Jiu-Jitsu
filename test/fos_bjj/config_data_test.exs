@@ -12,6 +12,7 @@ defmodule FosBjj.ConfigDataTest do
   alias FosBjj.JiuJitsu.Position
   alias FosBjj.JiuJitsu.PositionOrientation
   alias FosBjj.JiuJitsu.SubPosition
+  alias FosBjj.JiuJitsu.VideoType
 
   test "list includes config-managed resources" do
     resources = ConfigData.list()
@@ -24,6 +25,7 @@ defmodule FosBjj.ConfigDataTest do
     assert PositionOrientation in resources
     assert ActionSubPositionOrientation in resources
     assert VideoReportReason in resources
+    assert VideoType in resources
   end
 
   test "sync_all is safe to run repeatedly" do

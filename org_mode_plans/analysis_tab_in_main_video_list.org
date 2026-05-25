@@ -1,0 +1,149 @@
+* A Second Video Type For OSSBJJ
+
+** Goal: Add an "analysis" tab to the to our app's database component.  This separates out a new kind of video the app can have, dedicated to analysis and studies rather than direct technique instruction.
+
+** Implementation
+- Need a new field "type" field on videos to differentiate.  Can be a string key.  Should be a foreign key to a ref table, which can follow the current ref table convention in the application that position, subposition, etc. follow.  That table can be called "video_types".  For now, it just needs two types: instructional and analysis.
+  - The migration to create this new field/table should assign all existing videos to the "instructional" type. That should also be the default for the field.
+  - The add/edit video form should have a required field for the type.
+- To show this in the UI, we should use a tabular interface like we do for the technique_tree and the message tables.  This should have two tabs labeled "Instructional" and "Analysis".
+  - Each of those tabs should have a count in parenthesis to their immediate right like the counts in the technique tree.  This will allow the users to see the distribution of video content before they click to change views.  I.E.  If the user is viewing a given specific technique, and there are 3 instructional videos and one analysis video showing it, the tabs should read "Instructional (3)" and "Analysis (1)"
+  - The views rendered can be separate live components or part of the same one, whichever is simpler/cleaner.
+-----
+* Collaborative Plan
+** Goal
+Add first-class video typing so videos can be categorized as either instructional or analysis, expose the type in video create/edit flows, backfill existing videos as instructional, and render the database video list behind two count-bearing tabs: Instructional and Analysis.
+
+** Current Understanding
+- Videos are modeled by =FosBjj.JiuJitsu.Video= in =lib/fos_bjj/jiu_jitsu/video.ex= using Ash/Postgres.
+- Existing config/reference tables such as positions and sub-positions use dedicated Ash resources plus =use FosBjj.ConfigData.Schema= and code-defined =@config_values=.
+- The app guideline says schema changes should be made by changing Ash resources and running =mix ash.codegen <name>=, not by hand-authoring migrations.
+- The current database list lives in =lib/fos_bjj_web/live/database_component.ex= and filters by technique, attire, title search, soft deletion, and pagination.
+- Video add/edit UI lives in =lib/fos_bjj_web/live/video_live/video_form_component.ex= and already loads other reference data such as techniques and grips.
+
+** Assumptions
+- =instructional= should be the default video type for new videos and for all existing rows.
+- =analysis= videos use the same metadata, technique relationships, grip relationships, detail view, reporting, notes, and permissions as instructional videos unless future specs say otherwise.
+- Counts in the new tabs should respect the currently selected filters/search context where possible: selected technique, attire filter, title search, and =deleted_at IS NULL=.
+- Pagination should apply within the active tab, not across both video types combined.
+- The implementation branch/worktree for this plan should originate from =main= or =master= according to the org-plans skill execution rules.
+
+** Questions
+- [ ] Should the tab counts include all videos for the current technique/attire/search filters, or should title search be ignored for counts so tabs describe the broader selected technique?
+  - They should count for title search, can ignore gi/nogi and count total videos onl.
+- [ ] Should URL state include the selected video type tab, e.g. =?video_type=analysis=, so refresh/back/share preserves the active tab?
+  - Good question, but no.  Default the instructional tab on navigation.
+- [ ] Should non-admin users ever see the type on the video card, or is the tab separation enough?
+  - Tab separation is enough.
+- [ ] Should the add/edit form use a radio group, segmented control, or combobox for the required video type field?
+  - Combobox.
+
+** Risks And Dependencies
+- [ ] Ash relationship naming needs to be exact: the =Video= resource should likely store =video_type_name= and =belongs_to :video_type, FosBjj.JiuJitsu.VideoType= using =name= as the destination key.
+- [ ] Backfilling and defaults should be represented in Ash-generated migrations; inspect generated migrations before accepting them.
+- [ ] Existing tests or fixtures that create videos may fail until they inherit the default or explicitly set =video_type_name=.
+- [ ] Adding a second count query path can introduce inconsistency with the video list query if filters diverge.
+- [ ] Avoid =String.to_atom/1= on request/user params when adding the type filter; use strings or validated allow-lists.
+
+** Milestones
+*** 1. Create the video type reference resource
+**** Steps
+- [ ] Add =lib/fos_bjj/jiu_jitsu/video_type.ex= modeled after other config resources.
+- [ ] Define =name= as the primary key string and =label= as required/public.
+- [ ] Add =use FosBjj.ConfigData.Schema=.
+- [ ] Add config values:
+  - [ ] =%{name: "instructional", label: "Instructional"}=
+  - [ ] =%{name: "analysis", label: "Analysis"}=
+- [ ] Register =FosBjj.JiuJitsu.VideoType= in =lib/fos_bjj/jiu_jitsu.ex=.
+**** Validation
+- [ ] =mix compile= recognizes the new resource.
+
+*** 2. Connect videos to video types
+**** Steps
+- [ ] In =FosBjj.JiuJitsu.Video=, add a public required attribute such as =:video_type_name= with default ="instructional"=.
+- [ ] Add a =belongs_to :video_type, FosBjj.JiuJitsu.VideoType= relationship using =video_type_name= as source and =name= as destination.
+- [ ] Include =:video_type_name= in accepted attributes for create and update actions.
+- [ ] Consider loading =:video_type= in common read paths where labels are needed.
+**** Validation
+- [ ] Existing video create/update flows can still submit without manually passing a type because the default applies.
+- [ ] Updating an existing video preserves or changes the selected type correctly.
+
+*** 3. Generate and inspect database migration via Ash
+**** Steps
+- [ ] Run =mix ash.codegen add_video_types= from the plan worktree.
+- [ ] Inspect generated migrations for:
+  - [ ] New =video_types= table.
+  - [ ] =videos.video_type_name= or equivalent foreign key column.
+  - [ ] Default =instructional= and =NOT NULL= behavior after backfill.
+  - [ ] Foreign key to =video_types(name)=.
+- [ ] If generated migration does not backfill safely, adjust resource/migration strategy through Ash-supported workflow and regenerate as needed.
+- [ ] Ensure static config sync/seeding inserts both video types where the app expects config data.
+**** Validation
+- [ ] =mix ecto.migrate= works in dev/test setup if needed.
+- [ ] =mix test= or =mix precommit= does not fail due to migration issues.
+
+*** 4. Add the required type field to video forms
+**** Steps
+- [ ] In =VideoFormComponent.update/2=, load =FosBjj.JiuJitsu.VideoType= alongside techniques and grips.
+- [ ] Assign =:video_types= and ensure edit forms show the existing selected type.
+- [ ] Add a required field in the HEEx form, preferably using existing MishkaChelekom form/radio components to match the app style.
+- [ ] Ensure params submit as =video[video_type_name]=.
+**** Validation
+- [ ] Create form defaults to Instructional.
+- [ ] Create form can submit Analysis.
+- [ ] Edit form displays and updates the existing type.
+
+*** 5. Add database tabs and filtering
+**** Steps
+- [ ] Add selected video type state to =VideosDashboardLive= URL params if preserving active tab is desired.
+- [ ] Pass selected video type into =DatabaseComponent=.
+- [ ] Update =DatabaseComponent.load_videos/3= and =build_videos_query/4= to filter by the active type without converting user params to atoms.
+- [ ] Add count queries for both types using the same technique/attire/title/deleted filters.
+- [ ] Render a tabbed interface above the video list using the app's existing =<.tabs>= component or matching MishkaChelekom components.
+- [ ] Label tabs exactly =Instructional (N)= and =Analysis (N)=.
+- [ ] Reset or clamp pagination when changing tabs so the user does not land on an empty page for a smaller type bucket.
+**** Validation
+- [ ] With no filters, each tab shows only its type and count.
+- [ ] With a selected technique, counts reflect the selected technique.
+- [ ] With attire/title filters, counts and list remain consistent.
+- [ ] Soft-deleted videos are excluded from both counts and lists.
+
+*** 6. Tests and regression coverage
+**** Steps
+- [ ] Add/update Ash resource tests for default video type and relationship behavior where existing video tests live.
+- [ ] Add/update LiveView tests for the database tabs using stable DOM IDs.
+- [ ] Add/update form tests to verify the required type field appears and submits.
+- [ ] Update fixtures/factories to include or rely on the default video type.
+**** Validation
+- [ ] Run focused tests for changed resources/components.
+- [ ] Run =mix precommit= when implementation is complete.
+
+** Execution Checklist
+- [ ] Create the dedicated git worktree/branch for this plan from =main= or =master=.
+- [ ] Implement the Ash resource and relationship changes.
+- [ ] Generate migrations with =mix ash.codegen add_video_types=.
+- [ ] Implement form changes.
+- [ ] Implement database tabs, filtering, and counts.
+- [ ] Add or update tests.
+- [ ] Run =mix precommit=.
+- [ ] Mark this plan complete in the dedicated worktree only after validation passes or the user accepts documented failures.
+
+** Rollback And Cleanup Notes
+- [ ] If the implementation is rejected before merge, remove the dedicated worktree with =git worktree remove <path>= and delete the associated branch.
+- [ ] If migrations were generated but not wanted, revert the Ash resource changes and generated migration files together in the plan branch.
+- [ ] Do not merge this plan branch into =main=/=master= unless explicitly requested.
+
+** Completion Criteria
+- [ ] =video_types= exists with Instructional and Analysis values.
+- [ ] Existing videos are treated as Instructional after migration.
+- [ ] New/edit video form requires and persists video type.
+- [ ] Database component shows Instructional and Analysis tabs with accurate counts.
+- [ ] Active tab filters the visible video list correctly.
+- [ ] Relevant tests and =mix precommit= pass, or any remaining failures are documented with user approval.
+
+* Complete
+- Completed: 2026-05-25
+- Summary: Added video type reference data, connected videos to video types with an instructional default, exposed a required Video Type combobox in add/edit forms, added URL-tracked Instructional/Analysis tabs with filtered lists and counts to the database component, compacted video card technique display with a three-technique preview plus clickable technique cloud, and centralized database URL/query param handling in =FosBjjWeb.DatabaseParams=.
+- Validation: `mix test test/fos_bjj/jiu_jitsu/video_type_test.exs test/fos_bjj/config_data_test.exs` passed; `mix precommit` passed after URL-tracked video type, technique cloud, and parameter-helper changes.
+- Worktree: /home/dillon/fos_bjj/analysis-tab-in-main-video-list
+- Branch: org-plan/analysis-tab-in-main-video-list

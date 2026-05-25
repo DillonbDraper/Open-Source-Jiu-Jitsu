@@ -18,7 +18,7 @@ defmodule FosBjj.JiuJitsu.Video do
     end
 
     create :create do
-      accept([:video_id, :title, :description, :attire, :thumbnail_url])
+      accept([:video_id, :title, :description, :attire, :thumbnail_url, :video_type_name])
       argument(:url, :string)
       change({FosBjj.CustomChanges.ProcessURL, url: :url})
       change(relate_actor(:created_by))
@@ -34,7 +34,8 @@ defmodule FosBjj.JiuJitsu.Video do
         :description,
         :attire,
         :thumbnail_url,
-        :deleted_at
+        :deleted_at,
+        :video_type_name
       ])
 
       argument(:url, :string)
@@ -72,6 +73,12 @@ defmodule FosBjj.JiuJitsu.Video do
       public?(true)
     end
 
+    attribute :video_type_name, :string do
+      allow_nil?(false)
+      default("instructional")
+      public?(true)
+    end
+
     attribute :deleted_at, :utc_datetime_usec do
       allow_nil?(true)
       public?(true)
@@ -106,6 +113,14 @@ defmodule FosBjj.JiuJitsu.Video do
     has_many :notes, FosBjj.JiuJitsu.VideoNote do
       source_attribute(:id)
       destination_attribute(:id)
+      public?(true)
+    end
+
+    belongs_to :video_type, FosBjj.JiuJitsu.VideoType do
+      source_attribute(:video_type_name)
+      destination_attribute(:name)
+      attribute_type(:string)
+      define_attribute?(false)
       public?(true)
     end
 

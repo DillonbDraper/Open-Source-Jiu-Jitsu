@@ -15,6 +15,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
   import FosBjjWeb.Components.RadioField
   import FosBjjWeb.Components.SearchField
   import FosBjjWeb.Components.Popover
+  alias FosBjjWeb.DatabaseParams
   require Ash.Query
 
   @impl true
@@ -28,6 +29,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:position_video_counts, nil)
       |> assign(:selected_attire, "both")
       |> assign(:title_search, nil)
+      |> assign(:selected_video_type, "instructional")
       |> assign(:form, to_form(%{}))
 
     {:ok, socket}
@@ -35,36 +37,23 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
 
   @impl true
   def handle_event("attire_change", %{"attire" => attire}, socket) do
-    # Build query params, preserving technique_id or title search if present
-    params =
-      if socket.assigns.selected_technique_id do
-        "technique_id=#{socket.assigns.selected_technique_id}&attire=#{attire}"
-      else
-        "attire=#{attire}"
-      end
-
-    params =
-      if socket.assigns.title_search do
-        "title=#{socket.assigns.title_search}&attire=#{attire}"
-      else
-        params
-      end
+    params = DatabaseParams.build(socket.assigns, attire: attire, page: 1)
 
     socket =
       socket
       |> assign(:selected_attire, attire)
-      |> push_patch(to: "/database?#{params}")
+      |> push_patch(to: ~p"/database?#{params}")
 
     {:noreply, socket}
   end
 
   def handle_event("title_search", %{"title" => title_search}, socket) do
+    params = DatabaseParams.build(socket.assigns, title: title_search, page: 1)
+
     socket =
       socket
       |> assign(:title_search, title_search)
-      |> push_patch(
-        to: "/database?title=#{title_search}&attire=#{socket.assigns.selected_attire}"
-      )
+      |> push_patch(to: ~p"/database?#{params}")
 
     {:noreply, socket}
   end
@@ -76,7 +65,10 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:selected_technique_id, nil)
       |> assign(:title_search, nil)
       |> assign(:selected_attire, "both")
-      |> push_patch(to: "/database?attire=both")
+      |> push_patch(
+        to:
+          ~p"/database?#{DatabaseParams.build(socket.assigns, clear?: true, include_default_attire?: true)}"
+      )
 
     {:noreply, socket}
   end
@@ -147,6 +139,7 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
       |> assign(:selected_technique_id, new_technique_id)
       |> assign(:title_search, assigns[:title_search])
       |> assign(:selected_attire, assigns[:selected_attire])
+      |> assign(:selected_video_type, assigns[:selected_video_type] || "instructional")
 
     socket =
       if technique_selected? do
@@ -337,7 +330,9 @@ defmodule FosBjjWeb.TechniqueTreeComponent do
                                     <% else %>
                                       <%= for technique <- techniques do %>
                                         <.link
-                                          patch={"/database?technique_id=#{technique.id}&attire=#{@selected_attire}"}
+                                          patch={
+                                            ~p"/database?#{DatabaseParams.build(assigns, technique_id: technique.id, page: 1)}"
+                                          }
                                           class={[
                                             "btn btn-ghost btn-block justify-start h-auto py-1.5 px-2 text-left whitespace-normal leading-tight",
                                             @selected_technique_id == "#{technique.id}" &&

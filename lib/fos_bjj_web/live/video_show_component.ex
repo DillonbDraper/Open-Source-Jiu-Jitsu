@@ -5,6 +5,7 @@ defmodule FosBjjWeb.VideoShowComponent do
   alias FosBjj.Accounts.StudentCoachRelationship
   alias FosBjj.Accounts.UserMessage
   alias FosBjj.Accounts.User
+  alias FosBjjWeb.DatabaseParams
   import FosBjjWeb.Components.Button
   require Ash.Query
 
@@ -89,7 +90,9 @@ defmodule FosBjjWeb.VideoShowComponent do
 
   @impl true
   def handle_event("select_technique", %{"technique-id" => technique_id}, socket) do
-    {:noreply, push_patch(socket, to: ~p"/database?technique_id=#{technique_id}")}
+    params = DatabaseParams.build(socket.assigns, technique_id: technique_id, page: 1)
+
+    {:noreply, push_patch(socket, to: ~p"/database?#{params}")}
   end
 
   @impl true
@@ -189,14 +192,14 @@ defmodule FosBjjWeb.VideoShowComponent do
       Video
       |> Ash.Query.filter(id == ^video_id)
       |> Ash.Query.filter(is_nil(deleted_at))
-      |> Ash.Query.load(techniques: [:video_count], grips: [])
+      |> Ash.Query.load(techniques: [:video_count])
       |> Ash.read_one!()
 
     case video do
       nil ->
         socket
         |> put_flash(:danger, "Video not found")
-        |> push_patch(to: ~p"/database")
+        |> push_patch(to: ~p"/database?#{DatabaseParams.build(socket.assigns)}")
 
       video ->
         assign(socket, :video, video)
@@ -210,7 +213,7 @@ defmodule FosBjjWeb.VideoShowComponent do
       <%= if assigns[:video] do %>
         <div class="flex items-center justify-between">
           <.button_link
-            patch={~p"/database"}
+            patch={~p"/database?#{DatabaseParams.build(assigns)}"}
             variant="transparent"
             color="base"
             size="small"
@@ -318,21 +321,6 @@ defmodule FosBjjWeb.VideoShowComponent do
                         >
                           {technique.name} ({technique.video_count})
                         </.button>
-                      <% end %>
-                    </div>
-                  </div>
-                <% end %>
-
-                <%= if @video.grips && @video.grips != [] do %>
-                  <div class="flex items-start gap-3">
-                    <span class="text-xs font-bold text-base-content/50 uppercase tracking-wide pt-1 min-w-[80px]">
-                      Grips
-                    </span>
-                    <div class="flex flex-wrap gap-2">
-                      <%= for grip <- @video.grips do %>
-                        <.badge variant="outline" color="secondary" size="extra_small" class="px-2">
-                          {grip.label}
-                        </.badge>
                       <% end %>
                     </div>
                   </div>

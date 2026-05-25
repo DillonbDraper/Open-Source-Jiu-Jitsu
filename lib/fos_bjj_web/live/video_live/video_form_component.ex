@@ -36,6 +36,7 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
 
       techniques = Ash.read!(FosBjj.JiuJitsu.Technique)
       grips = Ash.read!(FosBjj.JiuJitsu.Grip)
+      video_types = Ash.read!(FosBjj.JiuJitsu.VideoType)
 
       # Determine if we're creating or updating
       {form, selected_techniques, selected_grips, url_value} =
@@ -75,6 +76,7 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
        |> assign(:form, form)
        |> assign(:techniques, techniques)
        |> assign(:grips, grips)
+       |> assign(:video_types, video_types)
        |> assign(:selected_techniques, selected_techniques)
        |> assign(:selected_grips, selected_grips)
        |> assign(:combobox_version, 0)
@@ -196,20 +198,38 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
             rows="3"
           />
 
-          <div class="space-y-2">
-            <.p size="text-sm" font_weight="font-semibold">Attire *</.p>
-            <.group_radio
-              field={@form[:attire]}
-              variation="horizontal"
-              space="medium"
-              class="flex gap-4"
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="space-y-2">
+              <.p size="text-sm" font_weight="font-semibold">Attire *</.p>
+              <.group_radio
+                field={@form[:attire]}
+                variation="horizontal"
+                space="medium"
+                class="flex gap-4"
+                required
+              >
+                <:radio value="gi" checked={to_string(@form[:attire].value) == "gi"}>Gi</:radio>
+                <:radio value="no_gi" checked={to_string(@form[:attire].value) == "no_gi"}>
+                  No-Gi
+                </:radio>
+              </.group_radio>
+            </div>
+
+            <.combobox
+              id={"video-type-select-#{@id}"}
+              field={@form[:video_type_name]}
+              label="Video Type"
+              value={@form[:video_type_name].value || "instructional"}
+              placeholder="Select video type"
+              searchable={false}
+              size="extra_large"
+              popover="Choose Instructional for direct technique instruction or Analysis for studies, breakdowns, and analytical content."
               required
             >
-              <:radio value="gi" checked={to_string(@form[:attire].value) == "gi"}>Gi</:radio>
-              <:radio value="no_gi" checked={to_string(@form[:attire].value) == "no_gi"}>
-                No-Gi
-              </:radio>
-            </.group_radio>
+              <:option :for={video_type <- @video_types} value={video_type.name}>
+                {video_type.label}
+              </:option>
+            </.combobox>
           </div>
 
           <div class="grid grid-cols-3 gap-2 items-end">

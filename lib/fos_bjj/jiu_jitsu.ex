@@ -14,6 +14,7 @@ defmodule FosBjj.JiuJitsu do
     resource(FosBjj.JiuJitsu.Technique)
     resource(FosBjj.JiuJitsu.PositionOrientation)
     resource(FosBjj.JiuJitsu.ActionSubPositionOrientation)
+    resource(FosBjj.JiuJitsu.VideoType)
     resource(FosBjj.JiuJitsu.Video)
     resource(FosBjj.JiuJitsu.VideoGrip)
     resource(FosBjj.JiuJitsu.TechniqueSubPosition)
