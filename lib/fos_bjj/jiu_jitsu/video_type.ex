@@ -40,7 +40,8 @@ defmodule FosBjj.JiuJitsu.VideoType do
 
   @config_values [
     %{name: "instructional", label: "Instructional"},
-    %{name: "analysis", label: "Analysis"}
+    %{name: "analysis", label: "Analysis"},
+    %{name: "in_action", label: "inAction"}
   ]
 
   @impl true

@@ -18,7 +18,18 @@ defmodule FosBjj.JiuJitsu.Video do
     end
 
     create :create do
-      accept([:video_id, :title, :description, :attire, :thumbnail_url, :video_type_name])
+      accept([
+        :video_id,
+        :title,
+        :description,
+        :attire,
+        :thumbnail_url,
+        :video_type_name,
+        :ready,
+        :source_type,
+        :hosted_video_url
+      ])
+
       argument(:url, :string)
       change({FosBjj.CustomChanges.ProcessURL, url: :url})
       change(relate_actor(:created_by))
@@ -35,7 +46,10 @@ defmodule FosBjj.JiuJitsu.Video do
         :attire,
         :thumbnail_url,
         :deleted_at,
-        :video_type_name
+        :video_type_name,
+        :ready,
+        :source_type,
+        :hosted_video_url
       ])
 
       argument(:url, :string)
@@ -76,6 +90,24 @@ defmodule FosBjj.JiuJitsu.Video do
     attribute :video_type_name, :string do
       allow_nil?(false)
       default("instructional")
+      public?(true)
+    end
+
+    attribute :ready, :boolean do
+      allow_nil?(false)
+      default(true)
+      public?(true)
+    end
+
+    attribute :source_type, :atom do
+      constraints(one_of: [:youtube, :hosted])
+      allow_nil?(false)
+      default(:youtube)
+      public?(true)
+    end
+
+    attribute :hosted_video_url, :string do
+      allow_nil?(true)
       public?(true)
     end
 
@@ -121,6 +153,12 @@ defmodule FosBjj.JiuJitsu.Video do
       destination_attribute(:name)
       attribute_type(:string)
       define_attribute?(false)
+      public?(true)
+    end
+
+    has_one :in_action_staging, FosBjj.JiuJitsu.InActionStaging do
+      source_attribute(:id)
+      destination_attribute(:video_id)
       public?(true)
     end
 

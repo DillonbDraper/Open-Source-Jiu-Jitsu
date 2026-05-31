@@ -33,10 +33,15 @@ defmodule FosBjjWeb.VideoLive.NewVideoForm do
   end
 
   @impl true
-  def handle_info({:video_saved, _video}, socket) do
+  def handle_info({:video_saved, video}, socket) do
+    message =
+      if video.video_type_name == "in_action",
+        do: "inAction video staged successfully",
+        else: "Video added successfully"
+
     {:noreply,
      socket
-     |> put_flash(:success, "Video added successfully")
+     |> put_flash(:success, message)
      |> push_navigate(to: ~p"/database")}
   end
 

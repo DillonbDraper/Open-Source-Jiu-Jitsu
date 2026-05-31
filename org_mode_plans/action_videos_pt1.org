@@ -1,0 +1,11 @@
+* Action Tab Videos
+** Goal: Create InAction Videos accessible from a new "inAction" tab in the main menu.
+ - To accomplish this, we need to add a third video type, like we have for technique and analysis currently.
+ - We can copy existing patterns directly for how to add a third tab to the UI for this.
+ - These "inAction" (camel casing is a reference and intentional for the UI) videos are unique in that they must include a time range as part of the video form
+ - The time range should be limited to a length of 15 seconds maximum
+ - However, rather than the save putting them into the video table directly, inAction videos should be added to a new table called "in_action_staging".
+   This is we will later create a service to clip videos from the range given by the user in the UI.
+ - There are two potential ways to handle this from a data perspective: a flag added to the videos table that would hide them in the UI until somehow updated, and then only having an fkey to the in_action_staging table and the time range on the secondary table, or not creating a video record at all and duplicating much of the data onto the new table.  I lean towards the first solution.
+ - Our service (not part of this initial batch of work) will eventually cut the videos added of this type and upload them into a bucket of some type (cloudflare r2 or amazon s3).  We don't need to worry about actually handling that right now, but we'll need to add support for playback not from youtube for this type of video. Since we will host these videos ourselves, we will need to use the mishka .video component to play them rather than the iframe pattern currently utilized
+ - Notetaking and seeking from notes will also need an expansion to handle for these non-youtube videos, but that can be handled later if we judge it to be too ambition an item in scope to include with this unit of work.

@@ -106,7 +106,8 @@ defmodule FosBjjWeb.DatabaseComponent do
 
     video_type_counts = %{
       instructional: count_videos(technique_id, title, "instructional"),
-      analysis: count_videos(technique_id, title, "analysis")
+      analysis: count_videos(technique_id, title, "analysis"),
+      in_action: count_videos(technique_id, title, "in_action")
     }
 
     # Send total_videos to parent so it can calculate total pages for navigation
@@ -127,6 +128,7 @@ defmodule FosBjjWeb.DatabaseComponent do
     |> filter_by_title(title)
     |> Ash.Query.filter(attire in ^attire_query_param)
     |> Ash.Query.filter(video_type_name == ^video_type)
+    |> Ash.Query.filter(ready == true)
     |> Ash.Query.filter(is_nil(deleted_at))
     |> Ash.Query.sort(inserted_at: :desc)
   end
@@ -138,6 +140,7 @@ defmodule FosBjjWeb.DatabaseComponent do
     |> filter_by_technique(technique_id)
     |> filter_by_title(title)
     |> Ash.Query.filter(video_type_name == ^video_type)
+    |> Ash.Query.filter(ready == true)
     |> Ash.Query.filter(is_nil(deleted_at))
   end
 
@@ -188,7 +191,7 @@ defmodule FosBjjWeb.DatabaseComponent do
   def render(assigns) do
     assigns =
       assign_new(assigns, :video_type_counts, fn ->
-        %{instructional: 0, analysis: 0}
+        %{instructional: 0, analysis: 0, in_action: 0}
       end)
 
     ~H"""
@@ -220,6 +223,15 @@ defmodule FosBjjWeb.DatabaseComponent do
           >
             Analysis ({@video_type_counts.analysis})
           </:tab>
+          <:tab
+            active={@selected_video_type == "in_action"}
+            on_select={
+              JS.push("select_video_type", target: @myself, value: %{video_type: "in_action"})
+            }
+          >
+            inAction ({@video_type_counts.in_action})
+          </:tab>
+          <:panel></:panel>
           <:panel></:panel>
           <:panel></:panel>
         </.tabs>

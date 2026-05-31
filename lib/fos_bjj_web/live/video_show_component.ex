@@ -191,6 +191,7 @@ defmodule FosBjjWeb.VideoShowComponent do
     video =
       Video
       |> Ash.Query.filter(id == ^video_id)
+      |> Ash.Query.filter(ready == true)
       |> Ash.Query.filter(is_nil(deleted_at))
       |> Ash.Query.load(techniques: [:video_count])
       |> Ash.read_one!()
@@ -265,18 +266,31 @@ defmodule FosBjjWeb.VideoShowComponent do
           id="video-player-container"
           class="bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden"
         >
-          <div class="relative w-full" style="padding-bottom: 56.25%;">
-            <div
-              id={"#{@id}-player-wrapper"}
-              phx-hook=".YouTubeSeeker"
-              phx-update="ignore"
-              data-video-id={@video.video_id}
-              data-player-id={"#{@id}-player-target"}
-              class="absolute top-0 left-0 w-full h-full"
+          <%= if @video.source_type == :hosted && @video.hosted_video_url do %>
+            <.video
+              id={"#{@id}-hosted-player"}
+              ratio="video"
+              rounded="large"
+              thumbnail={@video.thumbnail_url}
+              controls
+              class="bg-black"
             >
-              <div id={"#{@id}-player-target"}></div>
+              <:source src={@video.hosted_video_url} type="video/mp4" />
+            </.video>
+          <% else %>
+            <div class="relative w-full" style="padding-bottom: 56.25%;">
+              <div
+                id={"#{@id}-player-wrapper"}
+                phx-hook=".YouTubeSeeker"
+                phx-update="ignore"
+                data-video-id={@video.video_id}
+                data-player-id={"#{@id}-player-target"}
+                class="absolute top-0 left-0 w-full h-full"
+              >
+                <div id={"#{@id}-player-target"}></div>
+              </div>
             </div>
-          </div>
+          <% end %>
         </div>
 
         <div id="video-sections-container" class="flex flex-col gap-6">

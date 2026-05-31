@@ -34,7 +34,7 @@ defmodule FosBjj.JiuJitsu.Position do
     count :video_count, [:sub_positions, :techniques, :videos] do
       field(:id)
       uniq?(true)
-      filter(expr(is_nil(deleted_at)))
+      filter(expr(ready == true and is_nil(deleted_at)))
     end
   end
 

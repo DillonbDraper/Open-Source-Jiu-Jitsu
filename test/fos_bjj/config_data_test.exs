@@ -33,6 +33,10 @@ defmodule FosBjj.ConfigDataTest do
     assert :ok = ConfigData.sync_all()
   end
 
+  test "video type config includes inAction" do
+    assert %{name: "in_action", label: "inAction"} in VideoType.config_values()
+  end
+
   test "sync prunes removed rows and updates existing values" do
     Repo.insert_all("grips", [%{name: "obsolete_grip", label: "To Remove"}],
       on_conflict: :nothing

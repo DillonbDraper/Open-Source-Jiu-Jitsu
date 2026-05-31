@@ -48,12 +48,14 @@ defmodule FosBjjWeb.DatabaseParams do
         do: params ++ [attire: attire],
         else: params
 
-    params = if video_type == "analysis", do: params ++ [video_type: video_type], else: params
+    params =
+      if video_type != @default_video_type, do: params ++ [video_type: video_type], else: params
 
     if include_page? or page_number(page) != 1, do: params ++ [page: page], else: params
   end
 
   def normalize_video_type("analysis"), do: "analysis"
+  def normalize_video_type("in_action"), do: "in_action"
   def normalize_video_type(_video_type), do: @default_video_type
 
   def technique_id_for_query(nil), do: nil
