@@ -59,6 +59,8 @@ defmodule FosBjj.MixProject do
       {:phoenix, "~> 1.8.2"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.13"},
+      {:oban, "~> 2.19"},
+      {:exyt_dlp, "~> 0.1.6"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 4.1"},

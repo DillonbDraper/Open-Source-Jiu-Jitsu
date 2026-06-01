@@ -10,6 +10,7 @@ defmodule FosBjj.Application do
     children = [
       FosBjjWeb.Telemetry,
       FosBjj.Repo,
+      {Oban, Application.fetch_env!(:fos_bjj, Oban)},
       {DNSCluster, query: Application.get_env(:fos_bjj, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: FosBjj.PubSub},
       # Start a worker by calling: FosBjj.Worker.start_link(arg)

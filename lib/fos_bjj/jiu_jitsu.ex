@@ -5,6 +5,9 @@ defmodule FosBjj.JiuJitsu do
     show?(true)
   end
 
+  defdelegate create_in_action_video(params, selected_grips, selected_techniques, current_user),
+    to: FosBjj.JiuJitsu.InActionVideos
+
   resources do
     resource(FosBjj.JiuJitsu.Position)
     resource(FosBjj.JiuJitsu.SubPosition)

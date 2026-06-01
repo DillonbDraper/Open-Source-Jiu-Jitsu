@@ -1,7 +1,6 @@
 defmodule FosBjjWeb.VideoLive.VideoFormComponent do
   use FosBjjWeb, :live_component
   import FosBjjWeb.Components.Button
-  alias FosBjj.JiuJitsu.{InActionStaging, Video}
   alias Phoenix.LiveView.JS
 
   @impl true
@@ -37,7 +36,11 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
 
       techniques = Ash.read!(FosBjj.JiuJitsu.Technique)
       grips = Ash.read!(FosBjj.JiuJitsu.Grip)
-      video_types = Ash.read!(FosBjj.JiuJitsu.VideoType)
+
+      video_types =
+        FosBjj.JiuJitsu.VideoType
+        |> Ash.read!()
+        |> Enum.reject(&(&1.name == "in_action"))
 
       # Determine if we're creating or updating
       {form, selected_techniques, selected_grips, url_value, selected_video_type} =
@@ -81,9 +84,6 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
        |> assign(:selected_techniques, selected_techniques)
        |> assign(:selected_grips, selected_grips)
        |> assign(:selected_video_type, selected_video_type)
-       |> assign(:in_action_start_seconds, nil)
-       |> assign(:in_action_end_seconds, nil)
-       |> assign(:in_action_range_error, nil)
        |> assign(:combobox_version, 0)
        |> assign(:url_value, url_value)}
     end
@@ -107,10 +107,8 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
       |> Map.put("techniques", selected_techniques)
       |> Map.put("grips", selected_grips)
 
-    form_params = Map.drop(cleaned_params, ["start_seconds", "end_seconds"])
-
     form =
-      AshPhoenix.Form.validate(socket.assigns.form, form_params,
+      AshPhoenix.Form.validate(socket.assigns.form, cleaned_params,
         actor: socket.assigns.current_user
       )
 
@@ -119,10 +117,7 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
      |> assign(:form, form)
      |> assign(:selected_techniques, selected_techniques)
      |> assign(:selected_grips, selected_grips)
-     |> assign(:selected_video_type, selected_video_type)
-     |> assign(:in_action_start_seconds, Map.get(params, "start_seconds"))
-     |> assign(:in_action_end_seconds, Map.get(params, "end_seconds"))
-     |> assign(:in_action_range_error, nil)}
+     |> assign(:selected_video_type, selected_video_type)}
   end
 
   @impl true
@@ -149,146 +144,30 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
       )
     end
 
-    if in_action_submission?(cleaned_params, video) do
-      case create_in_action_video(
-             cleaned_params,
-             selected_grips,
-             selected_techniques,
-             current_user
-           ) do
-        {:ok, staged_video} ->
-          send(self(), {:video_saved, staged_video})
+    result =
+      AshPhoenix.Form.submit(socket.assigns.form,
+        params: cleaned_params,
+        before_submit: before_submit,
+        actor: current_user
+      )
 
-          {:noreply,
-           socket
-           |> put_flash(:success, "inAction video staged successfully")}
+    case result do
+      {:ok, updated_video} ->
+        message = if video, do: "Video updated successfully", else: "Video added successfully"
 
-        {:error, {:range, message}} ->
-          {:noreply,
-           socket
-           |> put_flash(:danger, message)
-           |> assign(:in_action_range_error, message)}
+        send(self(), {:video_saved, updated_video})
 
-        {:error, message} when is_binary(message) ->
-          {:noreply,
-           socket
-           |> put_flash(:danger, message)}
+        {:noreply,
+         socket
+         |> put_flash(:success, message)}
 
-        {:error, _error} ->
-          {:noreply,
-           socket
-           |> put_flash(:danger, "Something went wrong")}
-      end
-    else
-      result =
-        AshPhoenix.Form.submit(socket.assigns.form,
-          params: Map.drop(cleaned_params, ["start_seconds", "end_seconds"]),
-          before_submit: before_submit,
-          actor: current_user
-        )
-
-      case result do
-        {:ok, updated_video} ->
-          message = if video, do: "Video updated successfully", else: "Video added successfully"
-
-          send(self(), {:video_saved, updated_video})
-
-          {:noreply,
-           socket
-           |> put_flash(:success, message)}
-
-        {:error, form} ->
-          {:noreply,
-           socket
-           |> put_flash(:danger, "Something went wrong")
-           |> assign(form: form)}
-      end
+      {:error, form} ->
+        {:noreply,
+         socket
+         |> put_flash(:danger, "Something went wrong")
+         |> assign(form: form)}
     end
   end
-
-  defp in_action_submission?(params, nil), do: Map.get(params, "video_type_name") == "in_action"
-  defp in_action_submission?(_params, _video), do: false
-
-  defp create_in_action_video(params, selected_grips, selected_techniques, current_user) do
-    with {:ok, source_video_id} <- source_video_id_from_url(Map.get(params, "url")),
-         {:ok, start_seconds} <- parse_seconds(Map.get(params, "start_seconds"), "Start time"),
-         {:ok, end_seconds} <- parse_seconds(Map.get(params, "end_seconds"), "End time"),
-         :ok <- validate_in_action_range(start_seconds, end_seconds) do
-      video_params = %{
-        video_id: Ecto.UUID.generate(),
-        title: Map.get(params, "title"),
-        description: Map.get(params, "description"),
-        attire: Map.get(params, "attire"),
-        thumbnail_url: "https://img.youtube.com/vi/#{source_video_id}/0.jpg",
-        video_type_name: "in_action",
-        ready: false,
-        source_type: :hosted
-      }
-
-      FosBjj.Repo.transact(fn ->
-        video_changeset =
-          Video
-          |> Ash.Changeset.for_create(:create, video_params, actor: current_user)
-          |> Ash.Changeset.manage_relationship(:grips, selected_grips, type: :append_and_remove)
-          |> Ash.Changeset.manage_relationship(:techniques, selected_techniques,
-            type: :append_and_remove
-          )
-
-        with {:ok, video} <- Ash.create(video_changeset),
-             {:ok, _staging} <-
-               Ash.create(
-                 InActionStaging,
-                 %{
-                   video_id: video.id,
-                   source_url: Map.get(params, "url"),
-                   source_video_id: source_video_id,
-                   start_seconds: start_seconds,
-                   end_seconds: end_seconds
-                 },
-                 actor: current_user
-               ) do
-          {:ok, video}
-        end
-      end)
-    end
-  end
-
-  defp source_video_id_from_url(url) when is_binary(url) do
-    case VideoLinkHelper.extract_id(url) do
-      {_source, video_id} when is_binary(video_id) and video_id != "" -> {:ok, video_id}
-      _ -> {:error, "Enter a valid YouTube URL for the inAction source video"}
-    end
-  rescue
-    _error -> {:error, "Enter a valid YouTube URL for the inAction source video"}
-  end
-
-  defp source_video_id_from_url(_url),
-    do: {:error, "Enter a valid YouTube URL for the inAction source video"}
-
-  defp parse_seconds(value, _label) when is_integer(value), do: {:ok, value}
-
-  defp parse_seconds(value, label) when is_binary(value) do
-    case Integer.parse(value) do
-      {seconds, ""} -> {:ok, seconds}
-      _ -> {:error, {:range, "#{label} must be a whole number of seconds"}}
-    end
-  end
-
-  defp parse_seconds(_value, label),
-    do: {:error, {:range, "#{label} must be a whole number of seconds"}}
-
-  defp validate_in_action_range(start_seconds, end_seconds)
-       when start_seconds < 0 or end_seconds < 0,
-       do: {:error, {:range, "inAction start and end times must be zero or greater"}}
-
-  defp validate_in_action_range(start_seconds, end_seconds) when end_seconds <= start_seconds,
-    do: {:error, {:range, "inAction end time must be after the start time"}}
-
-  defp validate_in_action_range(start_seconds, end_seconds)
-       when end_seconds - start_seconds > 15,
-       do: {:error, {:range, "inAction clips must be 15 seconds or shorter"}}
-
-  defp validate_in_action_range(_start_seconds, _end_seconds), do: :ok
 
   @impl true
   def render(assigns) do
@@ -353,7 +232,7 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
               placeholder="Select video type"
               searchable={false}
               size="extra_large"
-              popover="Choose Instructional for direct technique instruction, Analysis for studies and breakdowns, or inAction for short staged clips from a source video."
+              popover="Choose Instructional for direct technique instruction or Analysis for studies and breakdowns."
               required
             >
               <:option :for={video_type <- @video_types} value={video_type.name}>
@@ -361,43 +240,6 @@ defmodule FosBjjWeb.VideoLive.VideoFormComponent do
               </:option>
             </.combobox>
           </div>
-
-          <%= if @selected_video_type == "in_action" && is_nil(@video) do %>
-            <div class="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-4">
-              <div class="space-y-1">
-                <.p size="text-sm" font_weight="font-semibold">inAction Clip Range</.p>
-                <.p size="extra_small" class="text-base-content/70">
-                  Choose the source video range to stage for clipping. Clips must be 15 seconds or shorter.
-                </.p>
-              </div>
-
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <.number_field
-                  id={"in-action-start-seconds-#{@id}"}
-                  name="video[start_seconds]"
-                  value={@in_action_start_seconds || ""}
-                  label="Start time (seconds)"
-                  min="0"
-                  step="1"
-                  required
-                />
-
-                <.number_field
-                  id={"in-action-end-seconds-#{@id}"}
-                  name="video[end_seconds]"
-                  value={@in_action_end_seconds || ""}
-                  label="End time (seconds)"
-                  min="0"
-                  step="1"
-                  required
-                />
-              </div>
-
-              <.p :if={@in_action_range_error} size="extra_small" class="text-danger">
-                {@in_action_range_error}
-              </.p>
-            </div>
-          <% end %>
 
           <div class="grid grid-cols-3 gap-2 items-end">
             <div class="col-span-2">

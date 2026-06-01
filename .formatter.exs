@@ -2,7 +2,7 @@
   plugins: [
     Phoenix.LiveView.HTMLFormatter
   ],
-  import_deps: [:error_tracker, :ecto, :ecto_sql, :phoenix],
+  import_deps: [:error_tracker, :ecto, :ecto_sql, :oban, :phoenix],
   inputs: [
     "{config,lib,test}/**/*.{heex,ex,exs}",
     "priv/repo/*.ex{,s}",

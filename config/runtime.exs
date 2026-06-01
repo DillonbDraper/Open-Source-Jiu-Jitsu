@@ -27,7 +27,32 @@ config :fos_bjj,
   contributor_application_email: System.get_env("CONTRIBUTOR_APPLICATION_EMAIL"),
   google_client_id: System.get_env("OSSBJJ_GOOGLE_CLIENT_ID"),
   google_client_secret: System.get_env("OSSBJJ_GOOGLE_CLIENT_SECRET"),
-  google_redirect_uri: System.get_env("OSSBJJ_GOOGLE_REDIRECT_URI")
+  google_redirect_uri: System.get_env("OSSBJJ_GOOGLE_REDIRECT_URI"),
+  in_action_video_output_dir:
+    System.get_env("IN_ACTION_VIDEO_OUTPUT_DIR") ||
+      Path.expand("../priv/static/videos/in-action", __DIR__),
+  in_action_video_public_path:
+    System.get_env("IN_ACTION_VIDEO_PUBLIC_PATH") || "/videos/in-action"
+
+oban_queues =
+  case System.get_env("OBAN_QUEUES") do
+    queue when queue in ["video_processing", "all"] ->
+      concurrency =
+        "OBAN_VIDEO_PROCESSING_CONCURRENCY"
+        # Can expand queue later if needed
+        |> System.get_env("1")
+        |> String.to_integer()
+
+      [video_processing: concurrency]
+
+    _ ->
+      false
+  end
+
+config :fos_bjj, Oban,
+  repo: FosBjj.Repo,
+  queues: oban_queues,
+  plugins: false
 
 if config_env() == :prod do
   database_url =

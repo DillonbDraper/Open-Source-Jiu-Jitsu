@@ -56,6 +56,12 @@ defmodule FosBjj.JiuJitsu.Video do
       change({FosBjj.CustomChanges.ProcessURL, url: :url})
       change(relate_actor(:updated_by))
     end
+
+    update :mark_processed_hosted do
+      require_atomic?(false)
+
+      accept([:ready, :source_type, :hosted_video_url])
+    end
   end
 
   attributes do

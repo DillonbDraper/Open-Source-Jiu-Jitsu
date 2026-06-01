@@ -21,8 +21,29 @@ defmodule FosBjj.JiuJitsu.InActionStaging do
     update :update do
       require_atomic?(false)
 
-      accept([:status, :start_seconds, :end_seconds])
+      accept([
+        :status,
+        :start_seconds,
+        :end_seconds,
+        :processed_at,
+        :failed_at,
+        :failure_reason,
+        :storage_key
+      ])
+
       change(relate_actor(:updated_by))
+    end
+
+    update :worker_update do
+      require_atomic?(false)
+
+      accept([
+        :status,
+        :processed_at,
+        :failed_at,
+        :failure_reason,
+        :storage_key
+      ])
     end
   end
 
@@ -53,6 +74,26 @@ defmodule FosBjj.JiuJitsu.InActionStaging do
       constraints(one_of: [:pending, :processing, :processed, :failed])
       allow_nil?(false)
       default(:pending)
+      public?(true)
+    end
+
+    attribute :processed_at, :utc_datetime_usec do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :failed_at, :utc_datetime_usec do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :failure_reason, :string do
+      allow_nil?(true)
+      public?(true)
+    end
+
+    attribute :storage_key, :string do
+      allow_nil?(true)
       public?(true)
     end
 

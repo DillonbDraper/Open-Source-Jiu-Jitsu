@@ -101,9 +101,6 @@ defmodule FosBjjWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", FosBjjWeb do
-  #   pipe_through :api
-  # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:fos_bjj, :dev_routes) do

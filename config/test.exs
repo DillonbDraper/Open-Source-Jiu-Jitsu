@@ -1,7 +1,11 @@
 import Config
+
 config :fos_bjj, token_signing_secret: "UuPEjegRQtH+dxAL5lb0nomtQpYmp5lw"
+
 config :bcrypt_elixir, log_rounds: 1
 config :ash, policies: [show_policy_breakdowns?: true], disable_async?: true
+
+config :fos_bjj, Oban, testing: :manual
 
 # Configure your database
 #
