@@ -23,16 +23,40 @@ end
 config :fos_bjj, FosBjjWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+in_action_video_storage =
+  case System.get_env("IN_ACTION_VIDEO_STORAGE", "local") |> String.downcase() do
+    "r2" -> :r2
+    _ -> :local
+  end
+
+r2_account_id = System.get_env("R2_ACCOUNT_ID")
+
+r2_endpoint =
+  System.get_env("R2_ENDPOINT") ||
+    if is_binary(r2_account_id) and r2_account_id != "" do
+      "https://#{r2_account_id}.r2.cloudflarestorage.com"
+    end
+
 config :fos_bjj,
   contributor_application_email: System.get_env("CONTRIBUTOR_APPLICATION_EMAIL"),
   google_client_id: System.get_env("OSSBJJ_GOOGLE_CLIENT_ID"),
   google_client_secret: System.get_env("OSSBJJ_GOOGLE_CLIENT_SECRET"),
   google_redirect_uri: System.get_env("OSSBJJ_GOOGLE_REDIRECT_URI"),
+  in_action_video_storage: in_action_video_storage,
+  in_action_video_tmp_dir: System.get_env("IN_ACTION_VIDEO_TMP_DIR"),
   in_action_video_output_dir:
     System.get_env("IN_ACTION_VIDEO_OUTPUT_DIR") ||
       Path.expand("../priv/static/videos/in-action", __DIR__),
   in_action_video_public_path:
-    System.get_env("IN_ACTION_VIDEO_PUBLIC_PATH") || "/videos/in-action"
+    System.get_env("IN_ACTION_VIDEO_PUBLIC_PATH") || "/videos/in-action",
+  in_action_video_r2: [
+    account_id: r2_account_id,
+    endpoint: r2_endpoint,
+    bucket: System.get_env("R2_BUCKET"),
+    access_key_id: System.get_env("R2_ACCESS_KEY_ID"),
+    secret_access_key: System.get_env("R2_SECRET_ACCESS_KEY"),
+    public_base_url: System.get_env("R2_PUBLIC_BASE_URL")
+  ]
 
 oban_queues =
   case System.get_env("OBAN_QUEUES") do

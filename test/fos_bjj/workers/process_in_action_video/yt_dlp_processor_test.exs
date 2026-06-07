@@ -21,24 +21,30 @@ defmodule FosBjj.Workers.ProcessInActionVideo.YtDlpProcessorTest do
     previous_exyt_mock = Application.get_env(:exyt_dlp, :exyt_mock)
     previous_output_dir = Application.get_env(:fos_bjj, :in_action_video_output_dir)
     previous_public_path = Application.get_env(:fos_bjj, :in_action_video_public_path)
+    previous_storage = Application.get_env(:fos_bjj, :in_action_video_storage)
+    previous_tmp_dir = Application.get_env(:fos_bjj, :in_action_video_tmp_dir)
 
     output_dir = Path.join(System.tmp_dir!(), "fos-bjj-in-action-test-#{System.unique_integer()}")
 
     Application.put_env(:exyt_dlp, :exyt_mock, FakeExyt)
     Application.put_env(:fos_bjj, :in_action_video_output_dir, output_dir)
     Application.put_env(:fos_bjj, :in_action_video_public_path, "/videos/in-action")
+    Application.put_env(:fos_bjj, :in_action_video_storage, :local)
+    Application.delete_env(:fos_bjj, :in_action_video_tmp_dir)
 
     on_exit(fn ->
       restore_env(:exyt_dlp, :exyt_mock, previous_exyt_mock)
       restore_env(:fos_bjj, :in_action_video_output_dir, previous_output_dir)
       restore_env(:fos_bjj, :in_action_video_public_path, previous_public_path)
+      restore_env(:fos_bjj, :in_action_video_storage, previous_storage)
+      restore_env(:fos_bjj, :in_action_video_tmp_dir, previous_tmp_dir)
       File.rm_rf(output_dir)
     end)
 
     :ok
   end
 
-  test "process downloads the staged section as 720p mp4 and returns local URL metadata" do
+  test "process downloads the staged section as 720p video-only mp4 and returns local URL metadata" do
     staging = staging_fixture(%{start_seconds: 10, end_seconds: 25})
 
     assert {:ok, public_url, storage_key} = YtDlpProcessor.process(staging)
@@ -55,6 +61,8 @@ defmodule FosBjj.Workers.ProcessInActionVideo.YtDlpProcessorTest do
     assert {"format", format} = List.keyfind(opts, "format", 0)
     assert format =~ "height<=720"
     assert format =~ "ext=mp4"
+    assert format =~ "bestvideo"
+    refute format =~ "bestaudio"
   end
 
   test "download_section formats longer ranges for yt-dlp" do

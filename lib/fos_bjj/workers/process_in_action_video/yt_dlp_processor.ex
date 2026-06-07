@@ -1,9 +1,11 @@
 defmodule FosBjj.Workers.ProcessInActionVideo.YtDlpProcessor do
   @moduledoc """
-  Downloads a staged inAction clip with yt-dlp and stores it locally as MP4.
+  Downloads a staged inAction clip with yt-dlp and stores it as MP4.
   """
 
-  @mp4_720p_format "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]"
+  alias FosBjj.Workers.ProcessInActionVideo.Storage
+
+  @mp4_720p_video_only_format "bestvideo[height<=720][ext=mp4]/bestvideo[height<=720]"
 
   def process(staging) do
     output_dir = output_dir()
@@ -12,7 +14,7 @@ defmodule FosBjj.Workers.ProcessInActionVideo.YtDlpProcessor do
     output_path = Path.join(output_dir, output_filename(staging))
 
     opts = [
-      {"format", @mp4_720p_format},
+      {"format", @mp4_720p_video_only_format},
       {"download-sections", download_section(staging)},
       {"merge-output-format", "mp4"},
       {"output", output_path},
@@ -23,7 +25,16 @@ defmodule FosBjj.Workers.ProcessInActionVideo.YtDlpProcessor do
     case Caller.download(staging.source_url, opts) do
       {:ok, _filename} ->
         filename = Path.basename(output_path)
-        {:ok, public_url(filename), storage_key(filename)}
+        storage_key = storage_key(filename)
+
+        case Storage.store(output_path, storage_key, content_type: "video/mp4") do
+          {:ok, _public_url, _storage_key} = result ->
+            maybe_cleanup(output_path)
+            result
+
+          {:error, reason} ->
+            {:error, reason}
+        end
 
       {:error, reason} ->
         {:error, reason}
@@ -37,19 +48,23 @@ defmodule FosBjj.Workers.ProcessInActionVideo.YtDlpProcessor do
   def output_filename(staging), do: "in-action-#{staging.id}.mp4"
 
   defp output_dir do
-    Application.get_env(
-      :fos_bjj,
-      :in_action_video_output_dir,
-      Path.expand("../../../../priv/static/videos/in-action", __DIR__)
-    )
-  end
-
-  defp public_url(filename) do
-    public_path = Application.get_env(:fos_bjj, :in_action_video_public_path, "/videos/in-action")
-    join_url_path(public_path, filename)
+    Application.get_env(:fos_bjj, :in_action_video_tmp_dir) ||
+      Application.get_env(
+        :fos_bjj,
+        :in_action_video_output_dir,
+        Path.expand("../../../../priv/static/videos/in-action", __DIR__)
+      )
   end
 
   defp storage_key(filename), do: join_url_path("in-action", filename)
+
+  defp maybe_cleanup(path) do
+    if Storage.cleanup_after_store?() do
+      File.rm(path)
+    else
+      :ok
+    end
+  end
 
   defp join_url_path(left, right) do
     left = String.trim_trailing(left, "/")
