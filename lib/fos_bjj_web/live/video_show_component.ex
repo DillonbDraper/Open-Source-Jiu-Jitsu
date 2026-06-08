@@ -193,7 +193,7 @@ defmodule FosBjjWeb.VideoShowComponent do
       |> Ash.Query.filter(id == ^video_id)
       |> Ash.Query.filter(ready == true)
       |> Ash.Query.filter(is_nil(deleted_at))
-      |> Ash.Query.load(techniques: [:video_count])
+      |> Ash.Query.load([:in_action_staging, techniques: [:video_count]])
       |> Ash.read_one!()
 
     case video do
@@ -207,8 +207,23 @@ defmodule FosBjjWeb.VideoShowComponent do
     end
   end
 
+  defp in_action_source_url(%{
+         video_type_name: "in_action",
+         in_action_staging: %{source_video_id: source_video_id}
+       })
+       when is_binary(source_video_id) do
+    case String.trim(source_video_id) do
+      "" -> nil
+      video_id -> "https://www.youtube.com/watch?v=#{URI.encode_www_form(video_id)}"
+    end
+  end
+
+  defp in_action_source_url(_video), do: nil
+
   @impl true
   def render(assigns) do
+    assigns = assign(assigns, :in_action_source_url, in_action_source_url(assigns[:video]))
+
     ~H"""
     <div class="w-full flex flex-col gap-6 pb-8">
       <%= if assigns[:video] do %>
@@ -306,9 +321,21 @@ defmodule FosBjjWeb.VideoShowComponent do
             </div>
 
             <div class="p-4">
-              <.h1 size="text-xl" font_weight="font-bold" class="mb-4">
-                {@video.title}
-              </.h1>
+              <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <.h1 size="text-xl" font_weight="font-bold" class="min-w-0">
+                  {@video.title}
+                </.h1>
+
+                <.link
+                  :if={@in_action_source_url}
+                  href={@in_action_source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="shrink-0 text-base font-semibold text-blue-600 underline-offset-4 transition-colors hover:text-blue-700 hover:underline"
+                >
+                  Original Source
+                </.link>
+              </div>
 
               <%= if @video.description do %>
                 <div class="prose prose-sm max-w-none mb-6">
