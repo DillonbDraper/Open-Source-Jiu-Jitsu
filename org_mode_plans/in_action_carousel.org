@@ -1,0 +1,159 @@
+* Plan To Create a Carousel for in action videos.
+** Problem: The goal of in action videos is to allow users to look through short clips. Currently, they have to click out of videos by going back and then click the next one.  This is less than ideal.  We need to build an interface where a single click will go to the "next" video as informed by the video list. There are a number of possible solutions/components.  Some ideas are:
+- A Mishka carousel that stages videos in a list obtained from the video list.
+  - The problem with this is mostly about state passing. If they click into a video and opt into a carousel mode, the state of the list would have to be sent into the video detail view. Or, we could recalculate the list of videos based on the technique path component, or the url, both of which should have available state.
+  - Another version would be to opt into a carousel mode from the video list, and have the videos pop out into a modal that is just the video carousel when they are clicked, rather than opening the video detail. I lean towards this currently as it seems simpler to manage.  If going with this we'd need to include a "InAction Carousel Mode" checkbox or toggle button above the InAction tab. We'd need to quietly query for the next page of videos if the user toggle the carousel past the last one currently loaded in the list.
+  - Any other obvious implementations I'm missing?  I would be open to alternative methodologies for this.
+-----
+* Collaborative Plan
+** Goal
+Build an inAction review mode that lets users browse short inAction clips sequentially from the current Database result set without entering the full video detail page. The first implementation should be a LiveView-managed modal player launched from the database list, with Previous/Next controls informed by the same filters, ordering, and pagination as the list.
+** Final Product Decisions
+- [X] Review/carousel mode defaults to off.
+- [X] The review-mode toggle may render even outside the inAction tab, but the label/help text must make clear it only changes inAction video behavior.
+- [X] Opening the modal remains local UI state; do not patch or change the URL.
+- [X] The modal should include only the player, title, description, source link when relevant, techniques/attire/date metadata, and navigation controls; do not include full detail-page notes/share/report controls in this pass.
+- [X] Next/Previous should move across loaded-page boundaries by querying adjacent pages, but disable at the true beginning/end of the available filtered result set.
+- [X] New clips should load paused for now.
+- [X] YouTube fallback handling is not required for inAction modal playback in the normal path because inAction records should use hosted MP4 output.
+** Relevant Existing Code
+- =lib/fos_bjj_web/live/videos_dashboard_live.ex=: parent LiveView for =/database= and =/videos/:id= patch states; owns query params and total count.
+- =lib/fos_bjj_web/live/database_component.ex=: loads paginated videos, renders video type tabs, video cards, and pagination. This should be the primary implementation target.
+- =lib/fos_bjj_web/live/video_show_component.ex=: existing detail-page player/details; useful as a reference but should not be reused wholesale for the modal because it includes detail-page concerns.
+- =lib/fos_bjj_web/components/carousel.ex=: Mishka carousel component exists but is image-slide oriented; do not force it into controlling video state.
+- =lib/fos_bjj_web/components/modal.ex=, =button.ex=, =card.ex=, =icon.ex=, =typography.ex=, =video.ex=: preferred UI building blocks.
+** Implementation Approach
+Keep the first pass inside =FosBjjWeb.DatabaseComponent=. Add a review-mode toggle and modal-specific assigns/events. When review mode is enabled and the selected video type is ="in_action"=, clicking a video card opens an inAction review modal instead of patching to the video detail route. The modal renders one hosted clip at a time and provides Previous/Next buttons that can query adjacent pages using the same Ash query semantics as the visible list.
+
+Avoid changing routes, migrations, Ash resources, or the existing detail page behavior. Do not attempt to pass an entire list through URL params. Prefer small private helpers in =DatabaseComponent= unless extraction becomes clearly beneficial.
+** Assumptions
+- The filtered result set is ordered by =inserted_at: :desc=, matching the current database list.
+- Page size remains 10 for both visible pagination and review navigation.
+- Review navigation can maintain its own page/index state without changing the visible database page.
+- Only ready, non-deleted inAction videos participate in modal review.
+- Admin edit actions and technique filter buttons on cards must keep their current behavior.
+- No migration or =mix ash.codegen= command is expected.
+** Questions
+- [X] Default mode? Off.
+- [X] Boundary behavior? Query adjacent pages as needed; disable at true first/last result.
+- [X] URL behavior? Local state only.
+- [X] Modal scope? Player plus lightweight metadata only.
+- [X] Autoplay? Load paused.
+- [ ] Should the toggle be visually persistent globally in the database card header, or placed near the inAction tab/list only but still visible enough to discover?
+** Milestones
+*** 1. Prepare reusable page helpers inside =DatabaseComponent=
+**** Steps
+- [ ] Introduce a module attribute such as =@page_size 10= and replace duplicated literal pagination limits where practical.
+- [ ] Keep or refactor private helpers so both the visible list and carousel can call the same query semantics:
+  - [ ] =build_videos_query/4= for filters and sort.
+  - [ ] a helper for reading a page of videos with loaded techniques.
+  - [ ] a helper for finding an index/video in a page by id.
+- [ ] Do not extract a new context/module unless the private helper version becomes awkward.
+**** Validation
+- [ ] Existing database tabs, counts, and pagination continue to work.
+- [ ] =mix format= succeeds after initial changes.
+*** 2. Add review-mode assigns and lifecycle resets
+**** Steps
+- [ ] Initialize missing assigns in =update/2=:
+  - [ ] =:in_action_carousel_enabled?= false.
+  - [ ] =:show_in_action_carousel_modal= false.
+  - [ ] =:in_action_carousel_page= nil.
+  - [ ] =:in_action_carousel_index= nil.
+  - [ ] =:in_action_carousel_videos= []= or current selected carousel page.
+  - [ ] =:in_action_carousel_video= nil.
+- [ ] Close/reset modal state when technique, attire, title, selected video type, visible page, or refresh changes.
+- [ ] Preserve the enabled/disabled preference across ordinary component updates when filters have not changed.
+**** Validation
+- [ ] Toggling review mode does not reload videos unnecessarily.
+- [ ] Changing filters closes stale modal content.
+*** 3. Add events for toggle/open/close/navigation
+**** Steps
+- [ ] Add =handle_event("toggle_in_action_carousel", _, socket)=.
+- [ ] Add =handle_event("open_in_action_carousel", %{"video-id" => video_id}, socket)= that:
+  - [ ] only opens when review mode is enabled and =@selected_video_type == "in_action"=.
+  - [ ] locates the clicked video in the current visible =@videos= list.
+  - [ ] stores current page, index, page videos, and selected video.
+- [ ] Add =handle_event("close_in_action_carousel", _, socket)=.
+- [ ] Add =handle_event("in_action_carousel_next", _, socket)= and =handle_event("in_action_carousel_previous", _, socket)=.
+- [ ] Implement adjacent-page reads for next/previous when moving beyond current carousel page.
+- [ ] Disable navigation at absolute boundaries: first item overall and =@total_videos= last item overall.
+**** Validation
+- [ ] Next/previous within the current page updates the selected video.
+- [ ] Next from page end loads next page's first video when available.
+- [ ] Previous from page start loads previous page's last video when available.
+- [ ] Controls disable at true first and last result.
+*** 4. Render the review-mode toggle and card click behavior
+**** Steps
+- [ ] Render a polished toggle/control with stable IDs:
+  - [ ] =#in-action-carousel-toggle=.
+  - [ ] =#in-action-carousel-status=.
+- [ ] Label it clearly, for example "inAction review mode" and "When enabled, inAction cards open in a modal with next/previous controls."
+- [ ] The toggle may render outside the inAction tab, but disabled/neutral copy should explain it only affects inAction videos.
+- [ ] When review mode is disabled or the selected video type is not ="in_action"=, keep existing =<.link patch=...>= card behavior.
+- [ ] When review mode is enabled and selected video type is ="in_action"=, make the title/thumbnail card open via =phx-click="open_in_action_carousel"= targeted to =@myself= with =phx-value-video-id=.
+- [ ] Preserve admin edit buttons and technique buttons.
+**** Validation
+- [ ] Existing instructional/analysis card navigation remains unchanged.
+- [ ] inAction cards open the modal only when review mode is enabled.
+- [ ] Stable IDs are available for tests.
+*** 5. Render the modal player and metadata
+**** Steps
+- [ ] Add modal markup in =DatabaseComponent.render/1= using existing Mishka components.
+- [ ] Use stable IDs:
+  - [ ] =#in-action-carousel-modal=.
+  - [ ] =#in-action-carousel-player-container=.
+  - [ ] =#in-action-carousel-prev=.
+  - [ ] =#in-action-carousel-next=.
+- [ ] Render hosted MP4 clips with =<.video>= and =@in_action_carousel_video.hosted_video_url=.
+- [ ] If a hosted URL is unexpectedly missing, render a graceful unavailable state rather than adding YouTube fallback complexity in this pass.
+- [ ] Show title, description, attire, upload date, techniques, and original source link when =in_action_staging.source_video_id= is available.
+- [ ] Show a position indicator based on absolute index, e.g. ="3 of 27"=.
+- [ ] Ensure player DOM changes when selected video changes so the old media element does not keep playing.
+**** Validation
+- [ ] Opening modal displays the clicked video's title/player.
+- [ ] Closing modal removes or hides the player and stops playback.
+- [ ] Missing hosted URL shows a graceful message.
+*** 6. Tests and checks
+**** Steps
+- [ ] Add focused LiveView tests under =test/fos_bjj_web/live/= if test factories/fixtures can create minimal videos reliably.
+- [ ] Prefer selectors with stable IDs:
+  - [ ] =#database-video-type-tabs=.
+  - [ ] =#in-action-carousel-toggle=.
+  - [ ] =#in-action-carousel-modal=.
+  - [ ] =#in-action-carousel-next=.
+  - [ ] =#in-action-carousel-prev=.
+- [ ] Test the toggle/control renders and communicates inAction behavior.
+- [ ] Test that modal opens for inAction when enabled.
+- [ ] Test next/previous within a page.
+- [ ] Test cross-page next/previous if fixture setup is practical.
+- [ ] Run targeted tests first, then =mix precommit=.
+**** Validation
+- [ ] Relevant LiveView tests pass.
+- [ ] =mix precommit= passes.
+** Execution Checklist
+- [ ] Switch to execute mode before source edits.
+- [ ] Create/reuse a dedicated worktree/branch if following org-plan execution workflow.
+- [ ] Inspect current =DatabaseComponent=, =VideoShowComponent=, modal/video components, and existing tests before editing.
+- [ ] Implement in small, reviewable steps.
+- [ ] Do not create migrations.
+- [ ] Use MishkaChelekom components where practical.
+- [ ] Avoid raw inline =<script>= tags.
+- [ ] Add stable DOM IDs to new interactive elements.
+- [ ] Run format/tests/precommit.
+** Rollback And Cleanup
+- [ ] If the modal grows too large, keep only the toggle/state groundwork and defer the player to a dedicated component.
+- [ ] If media lifecycle is problematic, ensure the player container receives a video-specific id/key or temporarily show only metadata until fixed.
+- [ ] Remove unused imports/aliases/helpers before final validation.
+- [ ] Do not merge worktree branches back to main without explicit approval.
+** Completion Criteria
+- [ ] Users can turn on inAction review mode from the database UI.
+- [ ] With review mode on, inAction cards open a modal player instead of navigating away.
+- [ ] Previous/Next traverses the current filtered inAction result set and can cross page boundaries.
+- [ ] Previous/Next disables at the true beginning/end of available filtered videos.
+- [ ] Existing database list/detail behavior remains unchanged when review mode is off.
+- [ ] Relevant tests and =mix precommit= pass in execute mode.
+
+* Complete
+- Completed: 2026-06-08
+- Summary: Implemented inAction review mode in the database UI with a modal hosted-video player, local toggle state, previous/next navigation across filtered pages, boundary disabling, lightweight metadata, and regression tests.
+- Validation: mix precommit

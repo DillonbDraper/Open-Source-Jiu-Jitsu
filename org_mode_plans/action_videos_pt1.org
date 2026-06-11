@@ -9,3 +9,91 @@
  - There are two potential ways to handle this from a data perspective: a flag added to the videos table that would hide them in the UI until somehow updated, and then only having an fkey to the in_action_staging table and the time range on the secondary table, or not creating a video record at all and duplicating much of the data onto the new table.  I lean towards the first solution.
  - Our service (not part of this initial batch of work) will eventually cut the videos added of this type and upload them into a bucket of some type (cloudflare r2 or amazon s3).  We don't need to worry about actually handling that right now, but we'll need to add support for playback not from youtube for this type of video. Since we will host these videos ourselves, we will need to use the mishka .video component to play them rather than the iframe pattern currently utilized
  - Notetaking and seeking from notes will also need an expansion to handle for these non-youtube videos, but that can be handled later if we judge it to be too ambition an item in scope to include with this unit of work.
+-----
+* Collaborative Plan
+** Goal
+Add durable original-source attribution for hosted inAction clips so the UI can credit and link back to the YouTube video each clip was cut from.
+
+** Current Findings
+- [X] Existing creation flow already parses the source YouTube ID in `lib/fos_bjj/jiu_jitsu/in_action_videos.ex`.
+- [X] `lib/fos_bjj/jiu_jitsu/in_action_staging.ex` already stores `source_url` and `source_video_id` per inAction video.
+- [X] `Video` has a one-to-one `:in_action_staging` relationship, but `lib/fos_bjj_web/live/video_show_component.ex` only loads `techniques`, so source attribution is not available in the public detail UI.
+- [X] Hosted playback currently uses `@video.source_type == :hosted` and `@video.hosted_video_url`; normal YouTube videos still use `@video.video_id`.
+
+** Recommendation
+Use the existing `in_action_staging` record as the source-of-truth for inAction clip attribution for the first implementation. This avoids an immediate schema migration and preserves existing staged/processed clips. If the team later wants attribution on all hosted videos or wants to decouple public attribution from processing state, add `original_source_url`, `original_source_video_id`, and `original_source_platform` to `videos` via `mix ash.codegen` and backfill from `in_action_staging`.
+
+** Assumptions
+- [ ] `in_action_staging` rows are retained after processing and are safe to expose as public metadata.
+- [ ] The original source is always YouTube for the current inAction workflow.
+- [ ] A link plus visible YouTube ID is sufficient credit for this iteration; channel/title attribution can be added later if desired.
+
+** Questions
+- [ ] Should the UI display only a link label like "Original YouTube source", or also the raw YouTube ID?
+- [ ] Should source attribution be shown only on the video detail page, or also in database cards/list rows for inAction videos?
+- [ ] Do we want to show the clipped range (`start_seconds`-`end_seconds`) as part of the attribution?
+- [ ] Is `in_action_staging` intended to be permanent, or should public attribution move onto `videos` despite requiring a migration?
+
+** Milestones
+*** 1. Make source attribution available to video detail UI
+**** Steps
+- [ ] Update `VideoShowComponent.load_video/2` to load `:in_action_staging` in addition to `techniques: [:video_count]`.
+- [ ] Add small helper functions in `VideoShowComponent` to detect an attributed inAction clip and build a stable YouTube source URL from `source_url` or `source_video_id`.
+- [ ] Guard against missing staging rows so older or malformed hosted videos still render.
+**** Validation
+- [ ] Detail page for a processed hosted inAction video has access to `video.in_action_staging.source_video_id`.
+- [ ] Detail page for instructional/analysis YouTube videos is unchanged.
+
+*** 2. Render source credit in the Video Information panel
+**** Steps
+- [ ] Add a new `Original Source` row in `lib/fos_bjj_web/live/video_show_component.ex` under Video Information.
+- [ ] Render it only when `@video.video_type_name == "in_action"` and a source URL/ID is available.
+- [ ] Use existing MishkaChelekom components where practical, and use `<.icon>` for any iconography.
+- [ ] Link to the original YouTube video with `target="_blank"` and `rel="noopener noreferrer"`.
+- [ ] Include accessible copy such as `Original YouTube source` and optionally the visible ID / clip range.
+**** Validation
+- [ ] The source link is present for hosted inAction videos.
+- [ ] The link is absent for non-inAction videos.
+- [ ] HEEx compiles without inline scripts or non-component form changes.
+
+*** 3. Consider list/card attribution if desired
+**** Steps
+- [ ] If attribution should appear in database cards, update `DatabaseComponent.load_videos/3` to load `:in_action_staging` for inAction rows.
+- [ ] Add a compact "Source" badge/link in the card footer that does not compete with technique tags.
+- [ ] Keep detail-page attribution as the canonical display if list clutter is a concern. **** Validation - [ ] Database list remains responsive and does not introduce N+1 queries. - [ ] Card layout remains balanced across mobile/desktop widths.
+
+*** 4. Tests
+**** Steps
+- [ ] Extend `test/fos_bjj/jiu_jitsu/in_action_videos_test.exs` to assert `source_url` is stored alongside `source_video_id`.
+- [ ] Add/update a LiveView/component test for `VideoShowComponent` verifying the attribution link appears for an inAction hosted video with staging metadata.
+- [ ] Add a negative assertion that non-inAction YouTube videos do not show the inAction source attribution row.
+**** Validation
+- [ ] Run targeted tests for the changed files.
+- [ ] Run `mix precommit` after implementation.
+
+*** 5. Optional migration path if existing staging is not permanent enough
+**** Steps
+- [ ] Add public attributes to `FosBjj.JiuJitsu.Video`: `original_source_url`, `original_source_video_id`, and optionally `original_source_platform`.
+- [ ] Accept these attributes in relevant create/update actions.
+- [ ] Populate them during `create_in_action_video/4` from the parsed YouTube URL/ID.
+- [ ] Generate migrations/snapshots with `mix ash.codegen in_action_source_attribution` rather than hand-writing migrations.
+- [ ] Backfill existing records from `in_action_staging` using an approved Ash/data migration approach.
+**** Validation
+- [ ] Existing inAction videos keep their source attribution after migration.
+- [ ] Normal YouTube videos continue to use `video_id` for playback.
+
+** Execution Checklist
+- [ ] Confirm answer to permanence/display questions.
+- [ ] Implement the no-migration path first unless the team chooses the video-column path.
+- [ ] Update source-loading and source-link rendering.
+- [ ] Add focused tests.
+- [ ] Run targeted tests.
+- [ ] Run `mix precommit`.
+
+** Completion Criteria
+- [ ] Every hosted inAction clip with staging metadata displays an original YouTube source link in the UI.
+- [ ] The displayed link is built from stored data and opens the source video.
+- [ ] Non-inAction videos are unaffected.
+- [ ] Tests cover positive and negative attribution behavior.
+
+* Complete
