@@ -403,7 +403,7 @@ defmodule FosBjjWeb.DatabaseComponent do
     ~H"""
     <div class="w-full h-full flex flex-col bg-base-100 rounded-lg shadow-lg border border-base-200 overflow-hidden">
       <div class="border-b border-base-200 bg-base-100 px-4 pt-4">
-        <div class="mb-3 flex justify-end">
+        <div :if={@selected_video_type == "in_action"} class="mb-3 flex justify-end">
           <div class="inline-flex items-center justify-end gap-2">
             <span class="text-sm font-semibold text-base-content">inAction Mode</span>
 
